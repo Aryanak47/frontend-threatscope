@@ -499,10 +499,10 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                 </div>
 
                 {/* Quality Score and Risk Assessment Row - NEW */}
-                {(hasValidMetric(result.sourceQualityScore) || result.sourceRiskLevel) && (
+                {(hasValidMetric(result.dataQuality) || result.sourceRiskLevel) && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {hasValidMetric(result.sourceQualityScore) && (() => {
-                      const qualityInfo = formatQualityScore(result.sourceQualityScore)
+                    {hasValidMetric(result.dataQuality) && (() => {
+                      const qualityInfo = formatQualityScore(result.dataQuality)
                       return (
                         <div className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
                           <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />

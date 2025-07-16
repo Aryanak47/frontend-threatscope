@@ -116,6 +116,7 @@ export interface SearchResult {
   severity: 'low' | 'medium' | 'high' | 'critical'
   hasPassword?: boolean
   isVerified?: boolean // Now available from backend
+  dataQuality: number // NEW: Data quality percentage from backend
   highlights?: Record<string, string[]>
   additionalData?: Record<string, any>
   
@@ -139,6 +140,7 @@ export interface SearchResult {
     url?: string
     domain?: string
     metadata?: string
+    dataQuality?: number // Also available in data object
     [key: string]: any
   }
 }

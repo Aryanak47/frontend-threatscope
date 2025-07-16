@@ -135,17 +135,35 @@ class ApiClient {
         resultsType: typeof data.results,
         resultsLength: data.results?.length,
         totalResults: data.totalResults,
-        keys: Object.keys(data)
+        keys: Object.keys(data),
+        sampleResult: data.results?.[0] ? {
+          id: data.results[0].id,
+          hasDataQuality: 'dataQuality' in data.results[0],
+          dataQualityValue: data.results[0].dataQuality,
+          allKeys: Object.keys(data.results[0])
+        } : null
       })
       
-      // Ensure results array exists
+      // Ensure results array exists and transform if needed
       if (!data.results) {
         data.results = []
       }
       
+      // Transform and ensure dataQuality field exists on each result
+      const transformedResults = data.results.map(result => ({
+        ...result,
+        // Ensure dataQuality exists (fallback to 0 if missing)
+        dataQuality: result.dataQuality ?? 0,
+        // Map email field for compatibility
+        email: result.email || result.login,
+        // Ensure other expected fields exist
+        verified: result.isVerified || false,
+        breachDate: result.dateCompromised || result.timestamp
+      }))
+      
       // Transform backend response to frontend format
       return {
-        results: data.results || [],
+        results: transformedResults,
         metadata: {
           query: data.query || searchRequest.query,
           totalResults: data.totalResults || 0,

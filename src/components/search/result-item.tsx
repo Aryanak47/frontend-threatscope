@@ -47,6 +47,9 @@ export function ResultItem({
   console.log('📋 ResultItem rendered with result:', {
     id: result.id,
     source: result.source,
+    hasDataQuality: 'dataQuality' in result,
+    dataQualityValue: result.dataQuality,
+    dataQualityType: typeof result.dataQuality,
     hasSource: !!result.source,
     sourceType: typeof result.source,
     isDemo,
@@ -243,7 +246,7 @@ export function ResultItem({
         )}
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
           <div className="flex items-center space-x-2">
             <Shield className="h-4 w-4 text-muted-foreground" />
             <span>Severity: {result.severity}</span>
@@ -257,6 +260,17 @@ export function ResultItem({
           <div className="flex items-center space-x-2">
             <Eye className="h-4 w-4 text-muted-foreground" />
             <span>{getDataTypes().length} data types</span>
+          </div>
+          {/* NEW: Data Quality */}
+          <div className="flex items-center space-x-2">
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            <span className={`font-medium ${
+              (result.dataQuality ?? 0) >= 80 ? 'text-green-600' :
+              (result.dataQuality ?? 0) >= 60 ? 'text-yellow-600' :
+              'text-red-600'
+            }`}>
+              Quality: {result.dataQuality ?? 'N/A'}%
+            </span>
           </div>
         </div>
 
