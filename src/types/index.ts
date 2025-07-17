@@ -32,6 +32,11 @@ export interface RegisterRequest {
   password: string
   firstName: string
   lastName: string
+  phoneNumber: string
+  acceptTerms: boolean
+  subscribeToNewsletter?: boolean
+  company?: string
+  jobTitle?: string
 }
 
 export interface AuthResponse {

@@ -16,6 +16,9 @@ interface AuthState {
     lastName: string
     email: string
     password: string
+    phoneNumber: string
+    acceptTerms: boolean
+    subscribeToNewsletter?: boolean
     company?: string
     jobTitle?: string
   }) => Promise<void>
@@ -63,9 +66,15 @@ export const useAuthStore = create<AuthState>()(
 
       register: async (userData) => {
         try {
+          console.log('🏪 Auth store: register function called')
+          console.log('📥 Auth store: received userData:', userData)
+          
           set({ isLoading: true, error: null })
           
+          console.log('📡 Auth store: calling apiClient.register...')
           const authData = await apiClient.register(userData)
+          
+          console.log('✅ Auth store: registration successful:', authData)
           
           set({
             user: authData.user,
@@ -78,6 +87,8 @@ export const useAuthStore = create<AuthState>()(
           
         } catch (error: any) {
           const errorMessage = error.response?.data?.message || 'Registration failed'
+          console.error('❌ Auth store: registration error:', errorMessage, error)
+          
           set({
             error: errorMessage,
             isLoading: false,

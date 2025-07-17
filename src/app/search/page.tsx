@@ -8,6 +8,7 @@ import { useSearchStore } from '@/stores/search'
 import { SearchType } from '@/types'
 import { SearchInterface } from '@/components/search/search-interface'
 import ResultsDisplay from '@/components/ui/results-display'
+import { DebugInfo } from '@/components/debug-info'
 import toast from 'react-hot-toast'
 import { 
   Shield, 
@@ -67,6 +68,9 @@ export default function SearchPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Debug Info */}
+      <DebugInfo />
+      
       {/* Header */}
       <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container flex h-16 items-center max-w-7xl mx-auto px-6">
@@ -79,7 +83,7 @@ export default function SearchPage() {
             </Button>
             <div className="h-6 w-px bg-border" />
             <div className="flex items-center space-x-2">
-              <Shield className="h-6 w-6 text-security-600" />
+              <Shield className="h-6 w-6 text-red-600" />
               <span className="text-lg font-semibold">ThreatScope Search</span>
             </div>
           </div>
@@ -88,7 +92,7 @@ export default function SearchPage() {
             <Button variant="outline" size="sm" onClick={clearResults}>
               Clear Results
             </Button>
-            <Button variant="security" asChild>
+            <Button className="bg-red-600 hover:bg-red-700 text-white" asChild>
               <Link href="/demo">Try Demo</Link>
             </Button>
           </div>
@@ -101,7 +105,7 @@ export default function SearchPage() {
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             Advanced Threat Intelligence Search
           </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
             Search through billions of breach records and threat intelligence data. 
             Discover compromised credentials, exposed data, and security threats.
           </p>
@@ -138,8 +142,8 @@ export default function SearchPage() {
         {results && !hasResults && !isSearching && (
           <div className="max-w-4xl mx-auto">
             <Card className="p-12 text-center">
-              <div className="text-muted-foreground">
-                <Database className="h-16 w-16 mx-auto mb-6 text-muted-foreground/50" />
+              <div className="text-gray-500">
+                <Database className="h-16 w-16 mx-auto mb-6 text-gray-400" />
                 <h3 className="text-xl font-semibold mb-2">No Results Found</h3>
                 <p className="text-lg mb-4">
                   No breaches or threat intelligence found for your search query.
@@ -154,7 +158,7 @@ export default function SearchPage() {
                   <Button variant="outline" onClick={() => window.location.reload()}>
                     Try Another Search
                   </Button>
-                  <Button variant="security" asChild>
+                  <Button className="bg-red-600 hover:bg-red-700 text-white" asChild>
                     <Link href="/demo">Try Demo</Link>
                   </Button>
                 </div>
@@ -166,27 +170,27 @@ export default function SearchPage() {
         {/* Platform Stats */}
         <div className="mt-20 grid grid-cols-1 md:grid-cols-4 gap-8">
           <Card className="p-6 text-center">
-            <Database className="h-12 w-12 text-security-600 mx-auto mb-4" />
+            <Database className="h-12 w-12 text-red-600 mx-auto mb-4" />
             <h3 className="text-2xl font-bold mb-1">14B+</h3>
-            <p className="text-muted-foreground text-sm">Breach Records</p>
+            <p className="text-gray-500 text-sm">Breach Records</p>
           </Card>
           
           <Card className="p-6 text-center">
-            <Shield className="h-12 w-12 text-intelligence-600 mx-auto mb-4" />
+            <Shield className="h-12 w-12 text-blue-600 mx-auto mb-4" />
             <h3 className="text-2xl font-bold mb-1">500+</h3>
-            <p className="text-muted-foreground text-sm">Data Sources</p>
+            <p className="text-gray-500 text-sm">Data Sources</p>
           </Card>
           
           <Card className="p-6 text-center">
             <Clock className="h-12 w-12 text-green-600 mx-auto mb-4" />
             <h3 className="text-2xl font-bold mb-1">&lt;200ms</h3>
-            <p className="text-muted-foreground text-sm">Average Response</p>
+            <p className="text-gray-500 text-sm">Average Response</p>
           </Card>
 
           <Card className="p-6 text-center">
             <Users className="h-12 w-12 text-purple-600 mx-auto mb-4" />
             <h3 className="text-2xl font-bold mb-1">24/7</h3>
-            <p className="text-muted-foreground text-sm">Monitoring</p>
+            <p className="text-gray-500 text-sm">Monitoring</p>
           </Card>
         </div>
 
@@ -197,7 +201,7 @@ export default function SearchPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
                 <h3 className="text-lg font-semibold mb-3">Search Types</h3>
-                <ul className="space-y-2 text-sm text-muted-foreground">
+                <ul className="space-y-2 text-sm text-gray-600">
                   <li><strong>Email:</strong> Find breaches containing specific email addresses</li>
                   <li><strong>Username:</strong> Search for compromised usernames across platforms</li>
                   <li><strong>Domain:</strong> Discover breaches affecting entire domains</li>
@@ -208,7 +212,7 @@ export default function SearchPage() {
               </div>
               <div>
                 <h3 className="text-lg font-semibold mb-3">Best Practices</h3>
-                <ul className="space-y-2 text-sm text-muted-foreground">
+                <ul className="space-y-2 text-sm text-gray-600">
                   <li>• Use exact matches for precise results</li>
                   <li>• Try multiple search types for comprehensive coverage</li>
                   <li>• Check spelling and format of your search terms</li>

@@ -81,7 +81,8 @@ export default function RegisterPage() {
     password: '',
     confirmPassword: '',
     company: '',
-    jobTitle: ''
+    jobTitle: '',
+    phoneNumber: ''
   })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -98,26 +99,119 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    console.log('🚀 Form submission started')
+    console.log('📋 Form data:', formData)
+    console.log('✅ Accept terms:', acceptTerms)
+    console.log('🔍 Form valid:', isFormValid())
+    
     if (formData.password !== formData.confirmPassword) {
+      console.log('❌ Password mismatch')
       toast.error('Passwords do not match')
       return
     }
     
+    if (!isFormValid()) {
+      console.log('❌ Form validation failed')
+      
+      // Provide specific validation messages
+      if (!formData.firstName || !formData.lastName) {
+        toast.error('📄 Please enter your first and last name')
+      } else if (!formData.email) {
+        toast.error('📬 Please enter a valid email address')
+      } else if (!formData.phoneNumber) {
+        toast.error('📱 Please enter your phone number')
+      } else if (!formData.password) {
+        toast.error('🔒 Please create a password')
+      } else if (!isValidPassword(formData.password)) {
+        toast.error('🔒 Password doesn\'t meet security requirements. Please check the requirements below.')
+      } else if (formData.password !== formData.confirmPassword) {
+        toast.error('🔒 Passwords don\'t match. Please confirm your password.')
+      } else if (!acceptTerms) {
+        toast.error('📜 Please accept the Terms of Service to continue')
+      } else {
+        toast.error('📄 Please fill in all required fields')
+      }
+      return
+    }
+    
+    console.log('🔄 Calling register function...')
+    
     try {
-      await register({
+      const registrationData = {
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
         password: formData.password,
+        phoneNumber: formData.phoneNumber,
+        acceptTerms: acceptTerms,
+        subscribeToNewsletter: false,
         company: formData.company,
         jobTitle: formData.jobTitle
-      })
+      }
       
+      console.log('📤 Sending registration data:', registrationData)
+      
+      await register(registrationData)
+      
+      console.log('✅ Registration successful!')
       toast.success('Welcome to ThreatScope! Your account has been created.')
       router.push('/dashboard')
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Registration failed')
+      console.error('❌ Registration error:', error)
+      
+      // Handle different types of errors with user-friendly messages
+      let errorMessage = 'Registration failed. Please try again.'
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message
+      } else if (error.response?.status === 400) {
+        errorMessage = '🔒 Please check your password requirements and try again'
+      } else if (error.response?.status === 409) {
+        errorMessage = '📬 This email address is already registered. Please try logging in instead.'
+      } else if (error.response?.status === 500) {
+        errorMessage = '🚔 Server error. Please try again in a few moments.'
+      } else if (error.message.includes('Network Error') || error.code === 'ECONNREFUSED') {
+        errorMessage = '🌐 Connection error. Please check your internet connection and try again.'
+      }
+      
+      toast.error(errorMessage)
     }
+  }
+
+  const isValidPassword = (password: string) => {
+    const minLength = password.length >= 8 && password.length <= 100
+    const hasUpper = /[A-Z]/.test(password)
+    const hasLower = /[a-z]/.test(password)
+    const hasDigit = /[0-9]/.test(password)
+    const hasSpecial = /[!@#&()\-\[{}\]:;',?/*~$^+=<>]/.test(password)
+    
+    return minLength && hasUpper && hasLower && hasDigit && hasSpecial
+  }
+
+  const getPasswordValidationMessage = (password: string) => {
+    if (!password) return ''
+    
+    const checks = [
+      { valid: password.length >= 8, message: 'at least 8 characters', icon: '📏' },
+      { valid: password.length <= 100, message: 'no more than 100 characters', icon: '📏' },
+      { valid: /[A-Z]/.test(password), message: 'one uppercase letter (A-Z)', icon: '🔤' },
+      { valid: /[a-z]/.test(password), message: 'one lowercase letter (a-z)', icon: '🔤' },
+      { valid: /[0-9]/.test(password), message: 'one number (0-9)', icon: '🔢' },
+      { valid: /[!@#&()\-\[{}\]:;',?/*~$^+=<>]/.test(password), message: 'one special character (!@#$%...)', icon: '✨' }
+    ]
+    
+    const failed = checks.filter(check => !check.valid)
+    const passed = checks.filter(check => check.valid)
+    
+    if (failed.length === 0) {
+      return '✅ Perfect! Your password meets all security requirements'
+    }
+    
+    if (failed.length === checks.length) {
+      return '❌ Please create a stronger password'
+    }
+    
+    return `✅ ${passed.length}/${checks.length} requirements met. Still needed: ${failed.map(f => f.message).join(', ')}`
   }
 
   const isFormValid = () => {
@@ -125,6 +219,8 @@ export default function RegisterPage() {
            formData.lastName && 
            formData.email && 
            formData.password && 
+           formData.phoneNumber &&
+           isValidPassword(formData.password) &&
            formData.password === formData.confirmPassword &&
            acceptTerms
   }
@@ -236,6 +332,25 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
+                {/* Phone Number */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Phone Number *
+                  </label>
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <input
+                      type="tel"
+                      name="phoneNumber"
+                      value={formData.phoneNumber}
+                      onChange={handleInputChange}
+                      className="w-full pl-10 pr-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-security-500 focus:border-transparent"
+                      placeholder="+1234567890"
+                      required
+                    />
+                  </div>
+                </div>
+
                 {/* Company and Job Title */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -285,7 +400,7 @@ export default function RegisterPage() {
                       value={formData.password}
                       onChange={handleInputChange}
                       className="w-full pl-10 pr-12 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-security-500 focus:border-transparent"
-                      placeholder="Create a strong password"
+                      placeholder="Min 8 chars, include A-Z, a-z, 0-9, special char"
                       required
                     />
                     <button
@@ -296,6 +411,16 @@ export default function RegisterPage() {
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    🔒 Create a strong password with: 8+ characters, uppercase & lowercase letters, numbers, and special characters
+                  </p>
+                  {formData.password && (
+                    <p className={`text-xs mt-1 ${
+                      isValidPassword(formData.password) ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {getPasswordValidationMessage(formData.password)}
+                    </p>
+                  )}
                 </div>
 
                 {/* Confirm Password */}
@@ -355,6 +480,7 @@ export default function RegisterPage() {
                   size="lg"
                   className="w-full"
                   disabled={!isFormValid() || isLoading}
+                  onClick={() => console.log('💆 Button clicked!')}
                 >
                   {isLoading ? (
                     <>

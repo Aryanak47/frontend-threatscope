@@ -14,6 +14,7 @@ import {
   SearchSuggestions,
   DashboardData
 } from '@/types'
+import { UsageStats, UsageQuota, AnonymousUsage } from '@/stores/usage'
 
 interface ApiConfig {
   baseURL: string
@@ -36,6 +37,17 @@ class ApiClient {
         if (token) {
           config.headers.Authorization = `Bearer ${token}`
         }
+        
+        // Add debugging
+        console.log('🚀 API Request:', {
+          method: config.method?.toUpperCase(),
+          url: config.url,
+          baseURL: config.baseURL,
+          fullURL: `${config.baseURL}${config.url}`,
+          headers: config.headers,
+          data: config.data
+        })
+        
         return config
       },
       (error) => Promise.reject(error)
@@ -43,8 +55,23 @@ class ApiClient {
 
     // Response interceptor for error handling
     this.client.interceptors.response.use(
-      (response) => response,
+      (response) => {
+        console.log('✅ API Response:', {
+          status: response.status,
+          url: response.config.url,
+          data: response.data
+        })
+        return response
+      },
       (error) => {
+        console.error('❌ API Error:', {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          url: error.config?.url,
+          data: error.response?.data,
+          message: error.message
+        })
+        
         if (error.response?.status === 401) {
           this.removeToken()
           // For development/demo, don't redirect to login automatically
@@ -75,24 +102,96 @@ class ApiClient {
     }
   }
 
+  // Check if backend is available
+  async checkBackendHealth(): Promise<boolean> {
+    try {
+      const response = await this.client.get('/health', { timeout: 3000 })
+      return response.status === 200
+    } catch (error) {
+      console.warn('Backend health check failed:', error)
+      return false
+    }
+  }
+
   // Authentication methods
   async login(credentials: LoginRequest): Promise<AuthResponse> {
-    const response = await this.client.post<ApiResponse<AuthResponse>>('/auth/login', credentials)
-    const authData = response.data.data!
-    this.setToken(authData.accessToken)
-    return authData
+    try {
+      // Check if backend is available
+      const isBackendAvailable = await this.checkBackendHealth()
+      if (!isBackendAvailable) {
+        throw new Error('Backend service is currently unavailable. Please try again later.')
+      }
+
+      const response = await this.client.post<ApiResponse<AuthResponse>>('/v1/auth/login', credentials)
+      const authData = response.data.data!
+      this.setToken(authData.accessToken)
+      return authData
+    } catch (error: any) {
+      console.error('Login error:', error)
+      
+      // Handle specific error cases
+      if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
+        throw new Error('Cannot connect to server. Please check if the backend is running.')
+      }
+      
+      throw error
+    }
   }
 
   async register(userData: RegisterRequest): Promise<AuthResponse> {
-    const response = await this.client.post<ApiResponse<AuthResponse>>('/auth/register', userData)
-    const authData = response.data.data!
-    this.setToken(authData.accessToken)
-    return authData
+    try {
+      console.log('🔄 Starting registration with data:', userData)
+      
+      // Check if backend is available first
+      const isBackendAvailable = await this.checkBackendHealth()
+      if (!isBackendAvailable) {
+        console.error('❌ Backend not available')
+        throw new Error('Backend service is currently unavailable. Please try again later.')
+      }
+
+      console.log('✅ Backend is available, proceeding with registration')
+      
+      const response = await this.client.post<ApiResponse<AuthResponse>>('/v1/auth/register', userData)
+      console.log('📝 Registration response received:', response.data)
+      
+      const authData = response.data.data!
+      this.setToken(authData.accessToken)
+      console.log('🎉 Registration successful, token set')
+      
+      return authData
+    } catch (error: any) {
+      console.error('💥 Registration error:', error)
+      
+      // Handle specific error cases with user-friendly messages
+      if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
+        throw new Error('Cannot connect to server. Please check if the backend is running on http://localhost:8080')
+      }
+      
+      if (error.response?.status === 400) {
+        const message = error.response.data?.message || 'Invalid registration data'
+        throw new Error(message)
+      }
+      
+      if (error.response?.status === 409) {
+        throw new Error('An account with this email already exists')
+      }
+      
+      if (error.response?.status === 500) {
+        throw new Error('Server error occurred. Please try again later.')
+      }
+      
+      // Generic error fallback
+      const message = error.response?.data?.message || error.message || 'Registration failed'
+      throw new Error(message)
+    }
   }
 
   async logout(): Promise<void> {
     try {
       await this.client.post('/auth/logout')
+    } catch (error) {
+      // Continue with logout even if API call fails
+      console.warn('Logout API call failed:', error)
     } finally {
       this.removeToken()
     }
@@ -110,7 +209,7 @@ class ApiClient {
     return response.data.data!
   }
 
-  // Search methods
+  // Search methods with fallback
   async search(searchRequest: SearchRequest): Promise<SearchResponse> {
     try {
       const response = await this.client.post('/v1/search', {
@@ -128,21 +227,6 @@ class ApiClient {
       
       // Backend returns SearchResponse directly, not wrapped in ApiResponse
       const data = response.data
-      
-      // Log the response structure for debugging
-      console.log('API Response Structure:', {
-        hasResults: 'results' in data,
-        resultsType: typeof data.results,
-        resultsLength: data.results?.length,
-        totalResults: data.totalResults,
-        keys: Object.keys(data),
-        sampleResult: data.results?.[0] ? {
-          id: data.results[0].id,
-          hasDataQuality: 'dataQuality' in data.results[0],
-          dataQualityValue: data.results[0].dataQuality,
-          allKeys: Object.keys(data.results[0])
-        } : null
-      })
       
       // Ensure results array exists and transform if needed
       if (!data.results) {
@@ -189,9 +273,14 @@ class ApiClient {
         searchType: searchRequest.type,
         aggregations: data.aggregations || {}
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Search API Error:', error)
-      console.error('Error Response:', error.response?.data)
+      
+      // If backend is down, throw a user-friendly error
+      if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
+        throw new Error('Search service is currently unavailable. Please try the demo instead.')
+      }
+      
       throw error
     }
   }
@@ -347,6 +436,42 @@ class ApiClient {
   async getAuditLogs(page = 1, limit = 20): Promise<any> {
     const response = await this.client.get(`/admin/audit-logs?page=${page}&limit=${limit}`)
     return response.data.data
+  }
+
+  // Usage tracking methods (authenticated users)
+  async getUserQuota(): Promise<UsageQuota> {
+    const response = await this.client.get<ApiResponse<UsageQuota>>('/user/usage/quota')
+    return response.data.data!
+  }
+
+  async getTodayUsage(): Promise<UsageStats> {
+    const response = await this.client.get<ApiResponse<UsageStats>>('/user/usage/today')
+    return response.data.data!
+  }
+
+  async getUserUsageStats(startDate?: string, endDate?: string): Promise<UsageStats> {
+    const params = new URLSearchParams()
+    if (startDate) params.append('startDate', startDate)
+    if (endDate) params.append('endDate', endDate)
+    
+    const response = await this.client.get<ApiResponse<UsageStats>>(`/user/usage/stats?${params.toString()}`)
+    return response.data.data!
+  }
+
+  // Anonymous usage tracking methods
+  async getAnonymousUsage(): Promise<AnonymousUsage> {
+    const response = await this.client.get<ApiResponse<AnonymousUsage>>('/anonymous/usage')
+    return response.data.data!
+  }
+
+  async incrementAnonymousUsage(): Promise<AnonymousUsage> {
+    const response = await this.client.post<ApiResponse<AnonymousUsage>>('/anonymous/usage/increment')
+    return response.data.data!
+  }
+
+  async checkAnonymousLimit(): Promise<{ canSearch: boolean; remaining: number }> {
+    const response = await this.client.get<ApiResponse<{ canSearch: boolean; remaining: number }>>('/anonymous/usage/check')
+    return response.data.data!
   }
 
   // Generic request method for custom endpoints
