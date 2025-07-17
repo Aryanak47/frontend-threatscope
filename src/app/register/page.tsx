@@ -73,6 +73,10 @@ const plans = [
 export default function RegisterPage() {
   const router = useRouter()
   const { register, isLoading, error, clearError } = useAuthStore()
+  
+  // Debug logging
+  console.log('🔍 Current error in UI:', error)
+  
   const [selectedPlan, setSelectedPlan] = useState('professional')
   const [formData, setFormData] = useState({
     firstName: '',
@@ -158,23 +162,7 @@ export default function RegisterPage() {
       router.push('/dashboard')
     } catch (error: any) {
       console.error('❌ Registration error:', error)
-      
-      // Handle different types of errors with user-friendly messages
-      let errorMessage = 'Registration failed. Please try again.'
-      
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message
-      } else if (error.response?.status === 400) {
-        errorMessage = '🔒 Please check your password requirements and try again'
-      } else if (error.response?.status === 409) {
-        errorMessage = '📬 This email address is already registered. Please try logging in instead.'
-      } else if (error.response?.status === 500) {
-        errorMessage = '🚔 Server error. Please try again in a few moments.'
-      } else if (error.message.includes('Network Error') || error.code === 'ECONNREFUSED') {
-        errorMessage = '🌐 Connection error. Please check your internet connection and try again.'
-      }
-      
-      toast.error(errorMessage)
+      // Error will be handled by auth store and displayed in the {error} section below
     }
   }
 
@@ -494,8 +482,21 @@ export default function RegisterPage() {
 
                 {/* Error Display */}
                 {error && (
-                  <div className="p-3 text-sm text-red-600 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg">
-                    {error}
+                  <div className="space-y-3">
+                    <div className="p-3 text-sm text-red-600 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg">
+                      {error}
+                    </div>
+                    
+                    {/* Show login link for duplicate email error */}
+                    {(error.includes('Email address already in use') || error.includes('already in use')) && (
+                      <div className="text-center">
+                        <Button variant="outline" asChild>
+                          <Link href="/login">
+                            🔑 Go to Login Page
+                          </Link>
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
               </form>

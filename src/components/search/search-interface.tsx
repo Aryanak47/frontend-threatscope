@@ -47,7 +47,8 @@ export function SearchInterface({
     getSearchesRemaining, 
     anonymousUsage,
     incrementAnonymousUsage,
-    refreshAllUsageData
+    refreshAllUsageData,
+    forceRefreshUsageData
   } = useUsageStore()
 
   // Initialize usage data on component mount
@@ -70,8 +71,11 @@ export function SearchInterface({
     
     if (!query.trim()) return
 
+    console.log('🔍 [Search Interface] Starting search:', { query: query.trim(), type: selectedType, isAuthenticated, isDemo })
+
     // Check usage quota
     if (!canPerformSearch()) {
+      console.warn('⚠️ [Search Interface] Search blocked - quota exceeded')
       if (isAuthenticated) {
         toast.error('Search quota exceeded. Please upgrade your plan to continue searching.', {
           duration: 5000
@@ -86,7 +90,9 @@ export function SearchInterface({
 
     // Perform the search
     try {
+      console.log('🔍 [Search Interface] Calling onSearch...')
       await onSearch(query.trim(), selectedType)
+      console.log('✅ [Search Interface] Search completed successfully')
       
       // Update usage tracking after successful search
       if (!isAuthenticated && !isDemo) {
@@ -99,8 +105,23 @@ export function SearchInterface({
         } else {
           toast.warning('This was your last free search today. Sign up for unlimited access!')
         }
+      } else if (isAuthenticated && !isDemo) {
+        // For authenticated users, force refresh usage data from backend
+        console.log('🔄 [Search Interface] Search successful, refreshing usage for authenticated user...')
+        try {
+          await forceRefreshUsageData()
+          console.log('✅ [Search Interface] Usage data force refreshed after authenticated search')
+        } catch (error) {
+          console.warn('⚠️ [Search Interface] Failed to force refresh usage data after search:', error)
+          // Fallback to regular refresh
+          try {
+            await refreshAllUsageData()
+            console.log('✅ [Search Interface] Usage data refreshed (fallback) after authenticated search')
+          } catch (fallbackError) {
+            console.warn('⚠️ [Search Interface] Fallback refresh also failed:', fallbackError)
+          }
+        }
       }
-      // For authenticated users, usage will be updated by the backend
       
     } catch (error) {
       // Don't increment usage if search failed
@@ -139,6 +160,21 @@ export function SearchInterface({
           toast.success(`Search completed! ${remaining} searches remaining today.`)
         } else {
           toast.warning('This was your last free search today. Sign up for unlimited access!')
+        }
+      } else if (isAuthenticated && !isDemo) {
+        // For authenticated users, force refresh usage data from backend
+        try {
+          await forceRefreshUsageData()
+          console.log('✅ Usage data force refreshed after authenticated quick search')
+        } catch (error) {
+          console.warn('⚠️ Failed to force refresh usage data after quick search:', error)
+          // Fallback to regular refresh
+          try {
+            await refreshAllUsageData()
+            console.log('✅ Usage data refreshed (fallback) after authenticated quick search')
+          } catch (fallbackError) {
+            console.warn('⚠️ Fallback refresh also failed:', fallbackError)
+          }
         }
       }
       

@@ -327,8 +327,8 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
           const email = result.data?.login || result.email
           const domain = result.data?.domain || result.domain || (email ? extractDomain(email) : null)
           const url = result.data?.url || result.url
-          const hasPassword = result.data?.password || result.hasPassword
-          const actualPassword = result.data?.password
+          const hasPassword = result.hasPassword || (result.data?.password != null)
+          const maskedPassword = result.maskedPassword // Masked password from backend
           
           // Debug logging for password detection
           if (result.source === 'stealer_logs_10_07_2025') {
@@ -620,53 +620,38 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                       </div>
                     )}
 
-                    {/* Password Field - Enhanced to show actual password when available */}
-                    {(actualPassword || result.hasPassword) && (
+                    {/* Password Field - Enhanced to show masked password from backend */}
+                    {(result.hasPassword) && (
                       <div className="p-3 bg-red-50 dark:bg-red-950 rounded-lg border border-red-200 dark:border-red-800">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0 flex-1">
                             <span className="text-xs font-medium text-red-800 dark:text-red-200 block mb-1">
                               Password
                             </span>
-                            {actualPassword ? (
+                            {result.maskedPassword ? (
                               <span className="text-sm font-mono break-all select-all text-red-900 dark:text-red-100">
-                                {maskSensitiveData('password', actualPassword, !maskedFields.has(`${result.id}-password`))}
+                                {result.maskedPassword}
                               </span>
                             ) : (
                               <span className="text-sm text-red-900 dark:text-red-100">
-                                Password available (hidden in demo)
+                                {result.passwordDisplayMessage || "Password compromised"}
                               </span>
                             )}
                             <div className="text-xs text-red-600 dark:text-red-300 mt-1">
-                              ⚠️ Compromised password - change immediately
+                              ⚠️ {result.passwordDisplayMessage || "Compromised password - change immediately"}
                             </div>
                           </div>
                           <div className="flex items-center gap-1 flex-shrink-0">
-                            {actualPassword && (
-                              <>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => toggleFieldMask(`${result.id}-password`)}
-                                  className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
-                                  title="Toggle password visibility"
-                                >
-                                  {!maskedFields.has(`${result.id}-password`) ? (
-                                    <EyeOff className="h-3 w-3" />
-                                  ) : (
-                                    <Eye className="h-3 w-3" />
-                                  )}
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => actualPassword && copyToClipboard(actualPassword)}
-                                  className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
-                                  title="Copy password to clipboard"
-                                >
-                                  <Copy className="h-3 w-3" />
-                                </Button>
-                              </>
+                            {result.maskedPassword && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => result.maskedPassword && copyToClipboard(result.maskedPassword)}
+                                className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                                title="Copy masked password to clipboard"
+                              >
+                                <Copy className="h-3 w-3" />
+                              </Button>
                             )}
                           </div>
                         </div>
@@ -788,6 +773,14 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                           </div>
                         )
                       })()}
+                    </div>
+                  )}
+                  
+                  {!isDemo && (
+                    <div className="mt-4 pt-3 border-t border-border">
+                      <p className="text-xs text-muted-foreground">
+                        * This data comes from real breach records in our database.
+                      </p>
                     </div>
                   )}
                   

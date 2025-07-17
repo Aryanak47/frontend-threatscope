@@ -16,6 +16,70 @@ import {
 } from '@/types'
 import { UsageStats, UsageQuota, AnonymousUsage } from '@/stores/usage'
 
+// Safe logging utility that handles object serialization
+const log = {
+  info: (message: string, data?: any) => {
+    if (process.env.NODE_ENV === 'development') {
+      try {
+        const logger = (globalThis as any).console
+        if (logger && logger.log) {
+          if (data) {
+            logger.log(message, JSON.stringify(data, null, 2))
+          } else {
+            logger.log(message)
+          }
+        }
+      } catch (error) {
+        // Fallback if JSON.stringify fails
+        const logger = (globalThis as any).console
+        if (logger && logger.log) {
+          logger.log(message, '[Object cannot be serialized]')
+        }
+      }
+    }
+  },
+  error: (message: string, data?: any) => {
+    if (process.env.NODE_ENV === 'development') {
+      try {
+        const logger = (globalThis as any).console
+        if (logger && logger.error) {
+          if (data) {
+            logger.error(message, JSON.stringify(data, null, 2))
+          } else {
+            logger.error(message)
+          }
+        }
+      } catch (error) {
+        // Fallback if JSON.stringify fails
+        const logger = (globalThis as any).console
+        if (logger && logger.error) {
+          logger.error(message, '[Object cannot be serialized]')
+        }
+      }
+    }
+  },
+  warn: (message: string, data?: any) => {
+    if (process.env.NODE_ENV === 'development') {
+      try {
+        const logger = (globalThis as any).console
+        if (logger && logger.warn) {
+          if (data) {
+            logger.warn(message, JSON.stringify(data, null, 2))
+          } else {
+            logger.warn(message)
+          }
+        }
+      } catch (error) {
+        // Fallback if JSON.stringify fails
+        const logger = (globalThis as any).console
+        if (logger && logger.warn) {
+          logger.warn(message, '[Object cannot be serialized]')
+        }
+      }
+    }
+  }
+}
+
 interface ApiConfig {
   baseURL: string
   timeout: number
@@ -38,8 +102,8 @@ class ApiClient {
           config.headers.Authorization = `Bearer ${token}`
         }
         
-        // Add debugging
-        console.log('🚀 API Request:', {
+        // Add debugging in development only
+        log.info('🚀 API Request:', {
           method: config.method?.toUpperCase(),
           url: config.url,
           baseURL: config.baseURL,
@@ -56,15 +120,15 @@ class ApiClient {
     // Response interceptor for error handling
     this.client.interceptors.response.use(
       (response) => {
-        console.log('✅ API Response:', {
+        log.info('✅ API Response:', {
           status: response.status,
           url: response.config.url,
           data: response.data
         })
         return response
       },
-      (error) => {
-        console.error('❌ API Error:', {
+      (error: any) => {
+        log.error('❌ API Error:', {
           status: error.response?.status,
           statusText: error.response?.statusText,
           url: error.config?.url,
@@ -107,8 +171,8 @@ class ApiClient {
     try {
       const response = await this.client.get('/health', { timeout: 3000 })
       return response.status === 200
-    } catch (error) {
-      console.warn('Backend health check failed:', error)
+    } catch (error: any) {
+      log.warn('Backend health check failed:', error)
       return false
     }
   }
@@ -122,8 +186,30 @@ class ApiClient {
         throw new Error('Backend service is currently unavailable. Please try again later.')
       }
 
-      const response = await this.client.post<ApiResponse<AuthResponse>>('/v1/auth/login', credentials)
-      const authData = response.data.data!
+      const response = await this.client.post<ApiResponse<any>>('/v1/auth/login', credentials)
+      const backendAuthData = response.data.data!
+      
+      console.log('🔍 Backend auth response:', backendAuthData)
+      
+      // Transform backend response to frontend expected format
+      const authData: AuthResponse = {
+        user: {
+          id: backendAuthData.id?.toString() || '',
+          email: backendAuthData.email || '',
+          firstName: backendAuthData.name?.split(' ')[0] || '',
+          lastName: backendAuthData.name?.split(' ').slice(1).join(' ') || '',
+          role: backendAuthData.roles?.[0] || 'ROLE_USER',
+          isEmailVerified: backendAuthData.isEmailVerified || false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        accessToken: backendAuthData.accessToken,
+        refreshToken: backendAuthData.refreshToken,
+        expiresIn: 3600 // 1 hour default
+      }
+      
+      console.log('🔍 Transformed auth data:', authData)
+      
       this.setToken(authData.accessToken)
       return authData
     } catch (error: any) {
@@ -140,27 +226,55 @@ class ApiClient {
 
   async register(userData: RegisterRequest): Promise<AuthResponse> {
     try {
-      console.log('🔄 Starting registration with data:', userData)
+      log.info('🔄 Starting registration with data:', userData)
       
       // Check if backend is available first
       const isBackendAvailable = await this.checkBackendHealth()
       if (!isBackendAvailable) {
-        console.error('❌ Backend not available')
+        log.error('❌ Backend not available')
         throw new Error('Backend service is currently unavailable. Please try again later.')
       }
 
-      console.log('✅ Backend is available, proceeding with registration')
+      log.info('✅ Backend is available, proceeding with registration')
       
-      const response = await this.client.post<ApiResponse<AuthResponse>>('/v1/auth/register', userData)
-      console.log('📝 Registration response received:', response.data)
+      // ✅ Send all fields including company and jobTitle (now supported by backend)
+      const response = await this.client.post<ApiResponse<any>>('/v1/auth/register', userData)
+      const backendAuthData = response.data.data!
       
-      const authData = response.data.data!
+      log.info('📝 Registration response received:', backendAuthData)
+      
+      // Transform backend response to frontend expected format
+      const authData: AuthResponse = {
+        user: {
+          id: backendAuthData.id?.toString() || '',
+          email: backendAuthData.email || '',
+          firstName: backendAuthData.name?.split(' ')[0] || '',
+          lastName: backendAuthData.name?.split(' ').slice(1).join(' ') || '',
+          role: backendAuthData.roles?.[0] || 'ROLE_USER',
+          isEmailVerified: backendAuthData.isEmailVerified || false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        accessToken: backendAuthData.accessToken,
+        refreshToken: backendAuthData.refreshToken,
+        expiresIn: 3600 // 1 hour default
+      }
+      
+      log.info('🔍 Transformed registration auth data:', authData)
       this.setToken(authData.accessToken)
-      console.log('🎉 Registration successful, token set')
+      
+      log.info('🎉 Registration successful, token set')
       
       return authData
     } catch (error: any) {
-      console.error('💥 Registration error:', error)
+      log.error('💥 Registration error:', error)
+      
+      // DETAILED DEBUGGING
+      console.log('🔍 Full error object:', error)
+      console.log('🔍 error.response:', error.response)
+      console.log('🔍 error.response?.data:', error.response?.data)
+      console.log('🔍 error.response?.data?.message:', error.response?.data?.message)
+      console.log('🔍 error.response?.status:', error.response?.status)
       
       // Handle specific error cases with user-friendly messages
       if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
@@ -168,8 +282,9 @@ class ApiClient {
       }
       
       if (error.response?.status === 400) {
-        const message = error.response.data?.message || 'Invalid registration data'
-        throw new Error(message)
+        // Don't create a new Error - just throw the original error
+        // The message will be extracted properly in the auth store
+        throw error
       }
       
       if (error.response?.status === 409) {
@@ -180,9 +295,8 @@ class ApiClient {
         throw new Error('Server error occurred. Please try again later.')
       }
       
-      // Generic error fallback
-      const message = error.response?.data?.message || error.message || 'Registration failed'
-      throw new Error(message)
+      // For other errors, throw the original error to preserve response data
+      throw error
     }
   }
 
@@ -191,7 +305,7 @@ class ApiClient {
       await this.client.post('/auth/logout')
     } catch (error) {
       // Continue with logout even if API call fails
-      console.warn('Logout API call failed:', error)
+      log.warn('Logout API call failed:', error)
     } finally {
       this.removeToken()
     }
@@ -205,8 +319,59 @@ class ApiClient {
   }
 
   async getCurrentUser(): Promise<User> {
-    const response = await this.client.get<ApiResponse<User>>('/auth/me')
-    return response.data.data!
+    try {
+      const response = await this.client.get<ApiResponse<any>>('/v1/auth/me')
+      
+      console.log('🔍 Full /auth/me response:', response)
+      console.log('🔍 Response.data:', response.data)
+      console.log('🔍 Response.data.data:', response.data?.data)
+      
+      // Check if response structure is valid
+      if (!response.data) {
+        throw new Error('No data in response')
+      }
+      
+      const backendUser = response.data.data
+      
+      console.log('🔍 Backend user response:', backendUser)
+      console.log('🔍 Backend user type:', typeof backendUser)
+      
+      // Validate that we have user data
+      if (!backendUser) {
+        console.error('❌ backendUser is null/undefined')
+        throw new Error('No user data returned from backend')
+      }
+      
+      // Transform backend User entity to frontend User interface
+      const user: User = {
+        id: (backendUser.id?.toString() || backendUser.id || '').toString(),
+        email: backendUser.email || '',
+        firstName: backendUser.firstName || '',
+        lastName: backendUser.lastName || '',
+        role: 'ROLE_USER', // Default role
+        isEmailVerified: backendUser.emailVerified || backendUser.isEmailVerified || false,
+        createdAt: backendUser.createdAt || new Date().toISOString(),
+        updatedAt: backendUser.updatedAt || new Date().toISOString()
+      }
+      
+      console.log('🔍 Transformed user data:', user)
+      
+      // Validate transformed user
+      if (!user.id || !user.email) {
+        console.error('❌ Invalid transformed user:', user)
+        throw new Error('Invalid user data after transformation')
+      }
+      
+      return user
+    } catch (error: any) {
+      console.error('❌ getCurrentUser error:', error)
+      console.error('❌ Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      })
+      throw error
+    }
   }
 
   // Search methods with fallback
@@ -274,7 +439,7 @@ class ApiClient {
         aggregations: data.aggregations || {}
       }
     } catch (error: any) {
-      console.error('Search API Error:', error)
+      log.error('Search API Error:', error)
       
       // If backend is down, throw a user-friendly error
       if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
@@ -290,8 +455,8 @@ class ApiClient {
     try {
       const response = await this.client.get(`/v1/search/metrics/${encodeURIComponent(source)}`)
       return response.data
-    } catch (error) {
-      console.error('Metrics API Error:', error)
+    } catch (error: any) {
+      log.error('Metrics API Error:', error)
       throw error
     }
   }
@@ -440,12 +605,16 @@ class ApiClient {
 
   // Usage tracking methods (authenticated users)
   async getUserQuota(): Promise<UsageQuota> {
+    console.log('📊 [API Client] Fetching user quota...')
     const response = await this.client.get<ApiResponse<UsageQuota>>('/user/usage/quota')
+    console.log('✅ [API Client] User quota response:', response.data)
     return response.data.data!
   }
 
   async getTodayUsage(): Promise<UsageStats> {
+    console.log('📊 [API Client] Fetching today\'s usage...')
     const response = await this.client.get<ApiResponse<UsageStats>>('/user/usage/today')
+    console.log('✅ [API Client] Today usage response:', response.data)
     return response.data.data!
   }
 
@@ -483,7 +652,7 @@ class ApiClient {
 
 // Create and export API client instance
 const apiConfig: ApiConfig = {
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080',
   timeout: parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || '10000')
 }
 

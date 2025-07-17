@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card'
 import { useAuthStore } from '@/stores/auth'
 import { useUsageStore } from '@/stores/usage'
 import UsageQuotaDisplay from '@/components/ui/usage-quota-display'
+import AuthGuard from '@/components/auth-guard'
 import { 
   Shield, 
   ArrowLeft,
@@ -23,7 +24,7 @@ import {
   Loader2
 } from 'lucide-react'
 
-export default function DashboardPage() {
+function DashboardContent() {
   const router = useRouter()
   const { user, isAuthenticated, logout } = useAuthStore()
   const { 
@@ -37,11 +38,15 @@ export default function DashboardPage() {
   } = useUsageStore()
 
   useEffect(() => {
+    console.log('🔍 Dashboard: Component mounted, isAuthenticated:', isAuthenticated)
+    
     if (!isAuthenticated) {
+      console.log('🔍 Dashboard: Not authenticated, redirecting to login')
       router.push('/login')
       return
     }
     
+    console.log('🔍 Dashboard: Authenticated, fetching usage data')
     // Fetch usage data when component mounts
     refreshAllUsageData()
   }, [isAuthenticated, router, refreshAllUsageData])
@@ -92,7 +97,7 @@ export default function DashboardPage() {
         <div className="container flex h-16 items-center max-w-7xl mx-auto px-6">
           <div className="flex items-center space-x-4">
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/">
+              <Link href={isAuthenticated ? "/" : "/"}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Home
               </Link>
@@ -112,6 +117,12 @@ export default function DashboardPage() {
                 {getPlanType()}
               </span>
             </div>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/search">
+                <Search className="h-4 w-4 mr-2" />
+                Search
+              </Link>
+            </Button>
             <Button variant="outline" size="sm">
               <Settings className="h-4 w-4 mr-2" />
               Settings
@@ -293,5 +304,13 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function DashboardPage() {
+  return (
+    <AuthGuard>
+      <DashboardContent />
+    </AuthGuard>
   )
 }

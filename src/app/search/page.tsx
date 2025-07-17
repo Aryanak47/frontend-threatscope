@@ -35,16 +35,24 @@ export default function SearchPage() {
     }
 
     try {
-      await performSearch({
+      console.log('🔍 [Search Page] Starting search for:', query)
+      
+      const searchResults = await performSearch({
         query: query.trim(),
         type,
         mode: 'exact'
       })
       
-      const resultCount = results?.results?.length || 0
+      console.log('✅ [Search Page] Search completed, results:', searchResults)
+      
+      // Use the returned results directly
+      const resultCount = searchResults?.results?.length || 0
+      console.log('📊 [Search Page] Result count:', resultCount)
+      
       toast.success(`Search completed! Found ${resultCount} result${resultCount !== 1 ? 's' : ''}`)
+      
     } catch (error: any) {
-      console.error('Search failed:', error)
+      console.error('❌ [Search Page] Search failed:', error)
       const errorMessage = error?.response?.data?.message || error?.message || 'Search failed. Please try again.'
       toast.error(errorMessage)
     }
@@ -91,9 +99,6 @@ export default function SearchPage() {
           <div className="ml-auto flex items-center space-x-4">
             <Button variant="outline" size="sm" onClick={clearResults}>
               Clear Results
-            </Button>
-            <Button className="bg-red-600 hover:bg-red-700 text-white" asChild>
-              <Link href="/demo">Try Demo</Link>
             </Button>
           </div>
         </div>
@@ -157,9 +162,6 @@ export default function SearchPage() {
                 <div className="mt-8 space-x-4">
                   <Button variant="outline" onClick={() => window.location.reload()}>
                     Try Another Search
-                  </Button>
-                  <Button className="bg-red-600 hover:bg-red-700 text-white" asChild>
-                    <Link href="/demo">Try Demo</Link>
                   </Button>
                 </div>
               </div>

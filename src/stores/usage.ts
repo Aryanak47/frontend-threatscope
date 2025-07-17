@@ -19,10 +19,10 @@ export interface UsageQuota {
 }
 
 export interface AnonymousUsage {
-  searchesToday: number
-  maxSearchesPerDay: number
-  remainingSearches: number
-  resetTime: string // ISO string for when quota resets
+  canSearch: boolean
+  remaining: number
+  dailyLimit: number
+  todayUsage: number
 }
 
 interface UsageState {
@@ -50,6 +50,7 @@ interface UsageState {
   fetchUsageStats: (startDate?: string, endDate?: string) => Promise<void>
   fetchAnonymousUsage: () => Promise<void>
   refreshAllUsageData: () => Promise<void>
+  forceRefreshUsageData: () => Promise<void>
   clearErrors: () => void
   incrementAnonymousUsage: () => void
   
@@ -101,11 +102,17 @@ export const useUsageStore = create<UsageState>((set, get) => ({
     if (!isAuthenticated) return
     
     try {
+      console.log('🔄 [Usage Store] Starting today usage fetch...')
       set({ isLoadingToday: true, todayError: null })
+      
       const todayUsage = await apiClient.getTodayUsage()
+      console.log('✅ [Usage Store] Today usage fetched successfully:', todayUsage)
+      
       set({ todayUsage, isLoadingToday: false })
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Failed to fetch today\'s usage'
+      console.error('❌ [Usage Store] Today usage fetch failed:', errorMessage, error)
+      
       set({ 
         todayError: errorMessage, 
         isLoadingToday: false,
@@ -166,6 +173,53 @@ export const useUsageStore = create<UsageState>((set, get) => ({
     }
   },
 
+  forceRefreshUsageData: async () => {
+    console.log('🔄 [Usage Store] FORCE REFRESH: Starting comprehensive usage refresh...')
+    const { isAuthenticated } = useAuthStore.getState()
+    const { fetchQuota, fetchTodayUsage, fetchUsageStats, fetchAnonymousUsage } = get()
+    
+    if (isAuthenticated) {
+      console.log('🔄 [Usage Store] FORCE REFRESH: User is authenticated, clearing data first...')
+      
+      // Clear current data first to ensure fresh fetch
+      set({ 
+        quota: null, 
+        todayUsage: null, 
+        usageStats: null,
+        quotaError: null,
+        todayError: null,
+        statsError: null
+      })
+      
+      console.log('🔄 [Usage Store] FORCE REFRESH: Data cleared, fetching fresh data...')
+      
+      // Fetch fresh data with forced refresh
+      const results = await Promise.allSettled([
+        fetchQuota(),
+        fetchTodayUsage(),
+        fetchUsageStats()
+      ])
+      
+      console.log('✅ [Usage Store] FORCE REFRESH: Completed with results:', {
+        quota: results[0].status === 'fulfilled' ? 'SUCCESS' : `FAILED: ${results[0].reason}`,
+        todayUsage: results[1].status === 'fulfilled' ? 'SUCCESS' : `FAILED: ${results[1].reason}`,
+        usageStats: results[2].status === 'fulfilled' ? 'SUCCESS' : `FAILED: ${results[2].reason}`
+      })
+      
+      // Log final state
+      const finalState = get()
+      console.log('📊 [Usage Store] FORCE REFRESH: Final state after refresh:', {
+        hasQuota: !!finalState.quota,
+        quotaSearches: finalState.quota?.remainingSearches,
+        todaySearches: finalState.todayUsage?.totalSearches,
+        isLoading: finalState.isLoadingQuota || finalState.isLoadingToday || finalState.isLoadingStats
+      })
+    } else {
+      console.log('🔄 [Usage Store] FORCE REFRESH: User is anonymous, fetching anonymous usage...')
+      await fetchAnonymousUsage()
+    }
+  },
+
   clearErrors: () => set({ 
     quotaError: null, 
     statsError: null, 
@@ -179,8 +233,9 @@ export const useUsageStore = create<UsageState>((set, get) => ({
     
     const updated = {
       ...anonymousUsage,
-      searchesToday: anonymousUsage.searchesToday + 1,
-      remainingSearches: Math.max(0, anonymousUsage.remainingSearches - 1)
+      todayUsage: anonymousUsage.todayUsage + 1,
+      remaining: Math.max(0, anonymousUsage.remaining - 1),
+      canSearch: anonymousUsage.remaining > 1 // Will be false after this increment
     }
     
     set({ anonymousUsage: updated })
@@ -197,7 +252,7 @@ export const useUsageStore = create<UsageState>((set, get) => ({
     if (isAuthenticated) {
       return quota ? quota.remainingSearches > 0 : false
     } else {
-      return anonymousUsage ? anonymousUsage.remainingSearches > 0 : false
+      return anonymousUsage ? anonymousUsage.canSearch && anonymousUsage.remaining > 0 : false
     }
   },
 
@@ -228,7 +283,7 @@ export const useUsageStore = create<UsageState>((set, get) => ({
     if (isAuthenticated) {
       return quota ? quota.remainingSearches : 0
     } else {
-      return anonymousUsage ? anonymousUsage.remainingSearches : 0
+      return anonymousUsage ? anonymousUsage.remaining : 0
     }
   },
 
@@ -261,14 +316,19 @@ function getLocalAnonymousUsage(): AnonymousUsage {
     
     const parsed = JSON.parse(stored)
     const today = new Date().toDateString()
-    const storedDate = new Date(parsed.resetTime).toDateString()
+    const storedDate = new Date(parsed.date || Date.now()).toDateString()
     
     // Reset if it's a new day
     if (today !== storedDate) {
       return createDefaultAnonymousUsage()
     }
     
-    return parsed
+    return {
+      canSearch: parsed.remaining > 0,
+      remaining: parsed.remaining || 0,
+      dailyLimit: parsed.dailyLimit || 5,
+      todayUsage: parsed.todayUsage || 0
+    }
   } catch {
     return createDefaultAnonymousUsage()
   }
@@ -278,22 +338,22 @@ function saveLocalAnonymousUsage(usage: AnonymousUsage): void {
   if (typeof window === 'undefined') return
   
   try {
-    localStorage.setItem('threatscope_anonymous_usage', JSON.stringify(usage))
+    const toSave = {
+      ...usage,
+      date: new Date().toISOString()
+    }
+    localStorage.setItem('threatscope_anonymous_usage', JSON.stringify(toSave))
   } catch (error) {
     console.warn('Failed to save anonymous usage:', error)
   }
 }
 
 function createDefaultAnonymousUsage(): AnonymousUsage {
-  const tomorrow = new Date()
-  tomorrow.setDate(tomorrow.getDate() + 1)
-  tomorrow.setHours(0, 0, 0, 0)
-  
   return {
-    searchesToday: 0,
-    maxSearchesPerDay: 5,
-    remainingSearches: 5,
-    resetTime: tomorrow.toISOString()
+    canSearch: true,
+    remaining: 5,
+    dailyLimit: 5,
+    todayUsage: 0
   }
 }
 

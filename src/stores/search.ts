@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { SearchRequest, SearchResponse, SearchType, SearchMode } from '@/types'
 import { apiClient } from '@/lib/api'
+import { useUsageStore } from './usage'
 
 interface SearchState {
   // Current search
@@ -23,7 +24,7 @@ interface SearchState {
   searchMode: SearchMode
   
   // Actions
-  performSearch: (request: SearchRequest) => Promise<void>
+  performSearch: (request: SearchRequest) => Promise<SearchResponse | null>
   performAdvancedSearch: (criteria: any) => Promise<void>
   performBulkSearch: (queries: string[], type: SearchType) => Promise<void>
   setSearchType: (type: SearchType) => void
@@ -67,6 +68,26 @@ export const useSearchStore = create<SearchState>((set, get) => ({
         timestamp: new Date().toISOString(),
         resultsCount: results?.results?.length || 0
       })
+      
+      // Force refresh usage data after successful search
+      const forceRefreshUsage = useUsageStore.getState().forceRefreshUsageData
+      try {
+        await forceRefreshUsage()
+        console.log('✅ Usage data force refreshed after search in store')
+      } catch (error) {
+        console.warn('⚠️ Failed to force refresh usage data after search in store:', error)
+        // Fallback to regular refresh
+        try {
+          const refreshUsage = useUsageStore.getState().refreshAllUsageData
+          await refreshUsage()
+          console.log('✅ Usage data refreshed (fallback) after search in store')
+        } catch (fallbackError) {
+          console.warn('⚠️ Fallback refresh also failed in store:', fallbackError)
+        }
+      }
+      
+      // Return the results so the calling component can access them immediately
+      return results
       
     } catch (error: any) {
       let errorMessage = 'Search failed'

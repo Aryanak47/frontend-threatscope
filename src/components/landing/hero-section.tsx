@@ -3,10 +3,20 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Shield, Search, Database, Users, ChevronRight, Menu, X } from 'lucide-react'
+import { useAuthStore } from '@/stores/auth'
+import { Shield, Search, Database, Users, ChevronRight, Menu, X, User, Settings, LogOut } from 'lucide-react'
 
 export function HeroSection() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const { isAuthenticated, user, logout } = useAuthStore()
+
+  const handleLogout = async () => {
+    try {
+      await logout()
+    } catch (error) {
+      console.error('Logout failed:', error)
+    }
+  }
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-background via-muted/20 to-background overflow-hidden">
@@ -40,12 +50,32 @@ export function HeroSection() {
 
           {/* Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost" asChild>
-              <Link href="/login">Sign In</Link>
-            </Button>
-            <Button variant="security" asChild>
-              <Link href="/register">Get Started</Link>
-            </Button>
+            {isAuthenticated ? (
+              <>
+                <div className="flex items-center space-x-2 text-sm">
+                  <User className="h-4 w-4" />
+                  <span>Welcome, {user?.firstName}</span>
+                </div>
+                <Button variant="outline" asChild>
+                  <Link href="/dashboard">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Dashboard
+                  </Link>
+                </Button>
+                <Button variant="ghost" size="sm" onClick={handleLogout}>
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" asChild>
+                  <Link href="/login">Sign In</Link>
+                </Button>
+                <Button variant="security" asChild>
+                  <Link href="/register">Get Started</Link>
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -76,12 +106,33 @@ export function HeroSection() {
                 About
               </Link>
               <div className="pt-4 border-t border-border space-y-2">
-                <Button variant="ghost" className="w-full justify-start" asChild>
-                  <Link href="/login">Sign In</Link>
-                </Button>
-                <Button variant="security" className="w-full" asChild>
-                  <Link href="/register">Get Started</Link>
-                </Button>
+                {isAuthenticated ? (
+                  <>
+                    <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                      <User className="h-4 w-4" />
+                      <span>Welcome, {user?.firstName}</span>
+                    </div>
+                    <Button variant="outline" className="w-full justify-start" asChild>
+                      <Link href="/dashboard">
+                        <Settings className="mr-2 h-4 w-4" />
+                        Dashboard
+                      </Link>
+                    </Button>
+                    <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Sign Out
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button variant="ghost" className="w-full justify-start" asChild>
+                      <Link href="/login">Sign In</Link>
+                    </Button>
+                    <Button variant="security" className="w-full" asChild>
+                      <Link href="/register">Get Started</Link>
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -114,18 +165,37 @@ export function HeroSection() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
-              <Button size="xl" variant="security" className="min-w-[200px]" asChild>
-                <Link href="/register">
-                  Start Free Trial
-                  <ChevronRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-              <Button size="xl" variant="outline" className="min-w-[200px]" asChild>
-                <Link href="/demo">
-                  <Search className="mr-2 h-5 w-5" />
-                  View Demo
-                </Link>
-              </Button>
+              {isAuthenticated ? (
+                <>
+                  <Button size="xl" variant="security" className="min-w-[200px]" asChild>
+                    <Link href="/search">
+                      <Search className="mr-2 h-5 w-5" />
+                      Start Searching
+                    </Link>
+                  </Button>
+                  <Button size="xl" variant="outline" className="min-w-[200px]" asChild>
+                    <Link href="/dashboard">
+                      <Settings className="mr-2 h-5 w-5" />
+                      View Dashboard
+                    </Link>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button size="xl" variant="security" className="min-w-[200px]" asChild>
+                    <Link href="/register">
+                      Start Free Trial
+                      <ChevronRight className="ml-2 h-5 w-5" />
+                    </Link>
+                  </Button>
+                  <Button size="xl" variant="outline" className="min-w-[200px]" asChild>
+                    <Link href="/demo">
+                      <Search className="mr-2 h-5 w-5" />
+                      View Demo
+                    </Link>
+                  </Button>
+                </>
+              )}
             </div>
 
             {/* Trust Indicators */}
