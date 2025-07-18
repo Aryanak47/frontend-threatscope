@@ -52,7 +52,6 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
   searchTime
 }) => {
   const [expandedResults, setExpandedResults] = React.useState<Set<string>>(new Set())
-  const [maskedFields, setMaskedFields] = React.useState<Set<string>>(new Set())
   const [loadingMetrics, setLoadingMetrics] = React.useState<Set<string>>(new Set())
   const [metricsCache, setMetricsCache] = React.useState<Map<string, SourceDetailedMetrics>>(new Map())
 
@@ -154,29 +153,6 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
       }
     }
     setExpandedResults(newExpanded)
-  }
-
-  const toggleFieldMask = (fieldKey: string) => {
-    const newMasked = new Set(maskedFields)
-    if (newMasked.has(fieldKey)) {
-      newMasked.delete(fieldKey)
-    } else {
-      newMasked.add(fieldKey)
-    }
-    setMaskedFields(newMasked)
-  }
-
-  const maskSensitiveData = (key: string, value: string, isVisible: boolean = false) => {
-    if (isVisible) return value
-    
-    const sensitiveFields = ['password']
-    const isSensitive = sensitiveFields.some(field => key.toLowerCase().includes(field))
-    
-    if (isSensitive && typeof value === 'string' && value.length > 6) {
-      return value.substring(0, 3) + '*'.repeat(Math.min(value.length - 6, 10)) + value.substring(value.length - 3)
-    }
-    
-    return value
   }
 
   const copyToClipboard = async (text: string) => {
@@ -333,11 +309,9 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
           // Debug logging for password detection
           if (result.source === 'stealer_logs_10_07_2025') {
             console.log('Password debug for stealer_logs:', {
-              'result.data': result.data,
-              'result.data?.password': result.data?.password,
-              'actualPassword': actualPassword,
               'hasPassword': hasPassword,
               'result.hasPassword': result.hasPassword,
+              'maskedPassword': maskedPassword,
               'isExpanded': isExpanded
             })
           }

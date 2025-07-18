@@ -125,6 +125,10 @@ export interface SearchResult {
   highlights?: Record<string, string[]>
   additionalData?: Record<string, any>
   
+  // 🔐 SECURITY: New masked password fields
+  maskedPassword?: string // Masked password from backend (e.g., "ab****xy")
+  passwordDisplayMessage?: string // User-friendly message about password
+  
   // NEW: Enhanced metrics from backend
   sourceRecordsAffected?: number // Total records in this breach
   sourceQualityScore?: number     // Data quality score for source
@@ -138,10 +142,10 @@ export interface SearchResult {
     daysBetweenBreachAndDiscovery?: number
   }
   
-  // Raw data from backend
+  // Raw data from backend (DEPRECATED: passwords no longer sent here)
   data: {
     login?: string
-    password?: string
+    // password field removed for security
     url?: string
     domain?: string
     metadata?: string
