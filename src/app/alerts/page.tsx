@@ -43,8 +43,8 @@ export default function AlertsPage() {
   }
 
   const handleUpgradeClick = () => {
-    // TODO: Redirect to pricing page
-    toast.info('Redirecting to pricing page...')
+    // Redirect to pricing page
+    window.location.href = '/pricing'
   }
 
   // Redirect to login if not authenticated

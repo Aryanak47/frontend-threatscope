@@ -44,8 +44,8 @@ export default function MonitoringPage() {
   }
 
   const handleUpgradeClick = () => {
-    // TODO: Redirect to pricing page
-    toast.info('Redirecting to pricing page...')
+    // Redirect to pricing page
+    window.location.href = '/pricing'
   }
   const dashboard = {
     totalItems: 0,
