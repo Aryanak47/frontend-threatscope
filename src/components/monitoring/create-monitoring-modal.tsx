@@ -1,0 +1,334 @@
+import React, { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { 
+  Mail, 
+  Globe, 
+  User, 
+  Shield, 
+  Hash, 
+  X,
+  Bell,
+  Webhook,
+  Clock
+} from 'lucide-react'
+
+interface CreateMonitoringModalProps {
+  isOpen: boolean
+  onClose: () => void
+  onSubmit: (data: MonitoringFormData) => void
+}
+
+interface MonitoringFormData {
+  monitorName: string
+  monitorType: 'EMAIL' | 'DOMAIN' | 'USERNAME' | 'IP_ADDRESS' | 'KEYWORD'
+  targetValue: string
+  description?: string
+  frequency: 'REAL_TIME' | 'HOURLY' | 'DAILY' | 'WEEKLY'
+  emailAlerts: boolean
+  inAppAlerts: boolean
+  webhookAlerts: boolean
+}
+
+const monitorTypes = [
+  {
+    value: 'EMAIL',
+    label: 'Email Address',
+    icon: Mail,
+    description: 'Monitor for breaches containing specific email addresses',
+    placeholder: 'john@example.com'
+  },
+  {
+    value: 'DOMAIN',
+    label: 'Domain',
+    icon: Globe,
+    description: 'Monitor for breaches affecting entire domains',
+    placeholder: 'company.com'
+  },
+  {
+    value: 'USERNAME',
+    label: 'Username',
+    icon: User,
+    description: 'Monitor for compromised usernames across platforms',
+    placeholder: 'johndoe123'
+  },
+  {
+    value: 'IP_ADDRESS',
+    label: 'IP Address',
+    icon: Shield,
+    description: 'Monitor for exposed IP addresses',
+    placeholder: '192.168.1.1'
+  },
+  {
+    value: 'KEYWORD',
+    label: 'Keyword',
+    icon: Hash,
+    description: 'Monitor for specific terms or passwords',
+    placeholder: 'company-internal'
+  }
+]
+
+const frequencies = [
+  { value: 'REAL_TIME', label: 'Real-time', description: 'Immediate alerts' },
+  { value: 'HOURLY', label: 'Hourly', description: 'Check every hour' },
+  { value: 'DAILY', label: 'Daily', description: 'Check once per day' },
+  { value: 'WEEKLY', label: 'Weekly', description: 'Check once per week' }
+]
+
+export function CreateMonitoringModal({ isOpen, onClose, onSubmit }: CreateMonitoringModalProps) {
+  const [formData, setFormData] = useState<MonitoringFormData>({
+    monitorName: '',
+    monitorType: 'EMAIL',
+    targetValue: '',
+    description: '',
+    frequency: 'DAILY',
+    emailAlerts: true,
+    inAppAlerts: true,
+    webhookAlerts: false
+  })
+
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const selectedMonitorType = monitorTypes.find(t => t.value === formData.monitorType)
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {}
+
+    if (!formData.monitorName.trim()) {
+      newErrors.monitorName = 'Monitor name is required'
+    }
+
+    if (!formData.targetValue.trim()) {
+      newErrors.targetValue = 'Target value is required'
+    } else {
+      // Basic validation based on monitor type
+      switch (formData.monitorType) {
+        case 'EMAIL':
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.targetValue)) {
+            newErrors.targetValue = 'Please enter a valid email address'
+          }
+          break
+        case 'DOMAIN':
+          if (!/^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$/.test(formData.targetValue)) {
+            newErrors.targetValue = 'Please enter a valid domain name'
+          }
+          break
+        case 'IP_ADDRESS':
+          if (!/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(formData.targetValue)) {
+            newErrors.targetValue = 'Please enter a valid IP address'
+          }
+          break
+      }
+    }
+
+    if (!formData.emailAlerts && !formData.inAppAlerts && !formData.webhookAlerts) {
+      newErrors.alerts = 'Please select at least one notification method'
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (validateForm()) {
+      onSubmit(formData)
+      onClose()
+      // Reset form
+      setFormData({
+        monitorName: '',
+        monitorType: 'EMAIL',
+        targetValue: '',
+        description: '',
+        frequency: 'DAILY',
+        emailAlerts: true,
+        inAppAlerts: true,
+        webhookAlerts: false
+      })
+      setErrors({})
+    }
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-semibold">Add New Monitor</h3>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Monitor Name */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Monitor Name *
+            </label>
+            <input
+              type="text"
+              value={formData.monitorName}
+              onChange={(e) => setFormData(prev => ({ ...prev, monitorName: e.target.value }))}
+              placeholder="e.g., CEO Email Monitor"
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                errors.monitorName ? 'border-red-500' : 'border-gray-300'
+              }`}
+            />
+            {errors.monitorName && (
+              <p className="text-red-500 text-xs mt-1">{errors.monitorName}</p>
+            )}
+          </div>
+
+          {/* Monitor Type */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Monitor Type *
+            </label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {monitorTypes.map((type) => {
+                const Icon = type.icon
+                return (
+                  <button
+                    key={type.value}
+                    type="button"
+                    onClick={() => setFormData(prev => ({ 
+                      ...prev, 
+                      monitorType: type.value as any,
+                      targetValue: '' // Reset target value when type changes
+                    }))}
+                    className={`p-4 border rounded-lg text-left transition-colors ${
+                      formData.monitorType === type.value
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <Icon className="h-5 w-5 text-blue-600" />
+                      <div>
+                        <div className="font-medium">{type.label}</div>
+                        <div className="text-xs text-gray-500">{type.description}</div>
+                      </div>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Target Value */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {selectedMonitorType?.label} to Monitor *
+            </label>
+            <input
+              type="text"
+              value={formData.targetValue}
+              onChange={(e) => setFormData(prev => ({ ...prev, targetValue: e.target.value }))}
+              placeholder={selectedMonitorType?.placeholder}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                errors.targetValue ? 'border-red-500' : 'border-gray-300'
+              }`}
+            />
+            {errors.targetValue && (
+              <p className="text-red-500 text-xs mt-1">{errors.targetValue}</p>
+            )}
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Description (Optional)
+            </label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              placeholder="Additional notes about this monitor..."
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          {/* Frequency */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Check Frequency *
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              {frequencies.map((freq) => (
+                <button
+                  key={freq.value}
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, frequency: freq.value as any }))}
+                  className={`p-3 border rounded-lg text-left transition-colors ${
+                    formData.frequency === freq.value
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="font-medium">{freq.label}</div>
+                  <div className="text-xs text-gray-500">{freq.description}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Notification Settings */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Notification Methods *
+            </label>
+            <div className="space-y-3">
+              <label className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  checked={formData.emailAlerts}
+                  onChange={(e) => setFormData(prev => ({ ...prev, emailAlerts: e.target.checked }))}
+                  className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                />
+                <Mail className="h-4 w-4 text-gray-500" />
+                <span className="text-sm">Email Notifications</span>
+              </label>
+
+              <label className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  checked={formData.inAppAlerts}
+                  onChange={(e) => setFormData(prev => ({ ...prev, inAppAlerts: e.target.checked }))}
+                  className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                />
+                <Bell className="h-4 w-4 text-gray-500" />
+                <span className="text-sm">In-App Alerts</span>
+              </label>
+
+              <label className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  checked={formData.webhookAlerts}
+                  onChange={(e) => setFormData(prev => ({ ...prev, webhookAlerts: e.target.checked }))}
+                  className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                />
+                <Webhook className="h-4 w-4 text-gray-500" />
+                <span className="text-sm">Webhook Notifications</span>
+              </label>
+            </div>
+            {errors.alerts && (
+              <p className="text-red-500 text-xs mt-1">{errors.alerts}</p>
+            )}
+          </div>
+
+          {/* Submit Buttons */}
+          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+              Create Monitor
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}

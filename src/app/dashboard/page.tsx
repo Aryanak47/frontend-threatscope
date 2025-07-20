@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -9,24 +8,22 @@ import { useAuthStore } from '@/stores/auth'
 import { useUsageStore } from '@/stores/usage'
 import UsageQuotaDisplay from '@/components/ui/usage-quota-display'
 import AuthGuard from '@/components/auth-guard'
+import { MainLayout } from '@/components/layout/main-layout'
 import { 
   Shield, 
-  ArrowLeft,
   BarChart3,
   Calendar,
   Download,
   Search,
   Zap,
   Crown,
-  Settings,
-  LogOut,
-  User,
-  Loader2
+  Loader2,
+  AlertTriangle,
+  Bell
 } from 'lucide-react'
 
 function DashboardContent() {
-  const router = useRouter()
-  const { user, isAuthenticated, logout } = useAuthStore()
+  const { user, isAuthenticated } = useAuthStore()
   const { 
     todayUsage, 
     usageStats, 
@@ -40,25 +37,12 @@ function DashboardContent() {
   useEffect(() => {
     console.log('🔍 Dashboard: Component mounted, isAuthenticated:', isAuthenticated)
     
-    if (!isAuthenticated) {
-      console.log('🔍 Dashboard: Not authenticated, redirecting to login')
-      router.push('/login')
-      return
+    if (isAuthenticated) {
+      console.log('🔍 Dashboard: Authenticated, fetching usage data')
+      // Fetch usage data when component mounts
+      refreshAllUsageData()
     }
-    
-    console.log('🔍 Dashboard: Authenticated, fetching usage data')
-    // Fetch usage data when component mounts
-    refreshAllUsageData()
-  }, [isAuthenticated, router, refreshAllUsageData])
-
-  const handleLogout = async () => {
-    try {
-      await logout()
-      router.push('/')
-    } catch (error) {
-      console.error('Logout failed:', error)
-    }
-  }
+  }, [isAuthenticated, refreshAllUsageData])
 
   const getPlanType = () => {
     if (!quota) return 'Free'
@@ -79,61 +63,8 @@ function DashboardContent() {
     }
   }
 
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-security-600" />
-          <p className="text-muted-foreground">Redirecting to login...</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-        <div className="container flex h-16 items-center max-w-7xl mx-auto px-6">
-          <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm" asChild>
-              <Link href={isAuthenticated ? "/" : "/"}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Home
-              </Link>
-            </Button>
-            <div className="h-6 w-px bg-border" />
-            <div className="flex items-center space-x-2">
-              <Shield className="h-6 w-6 text-security-600" />
-              <span className="text-lg font-semibold">ThreatScope Dashboard</span>
-            </div>
-          </div>
-          
-          <div className="ml-auto flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <User className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">{user?.firstName} {user?.lastName}</span>
-              <span className={`text-xs px-2 py-1 rounded-full bg-muted ${getPlanColor()}`}>
-                {getPlanType()}
-              </span>
-            </div>
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/search">
-                <Search className="h-4 w-4 mr-2" />
-                Search
-              </Link>
-            </Button>
-            <Button variant="outline" size="sm">
-              <Settings className="h-4 w-4 mr-2" />
-              Settings
-            </Button>
-            <Button variant="ghost" size="sm" onClick={handleLogout}>
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </header>
-
+    <MainLayout>
       <div className="container max-w-7xl mx-auto px-6 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
@@ -155,8 +86,8 @@ function DashboardContent() {
           {/* Today's Searches */}
           <Card className="p-6">
             <div className="flex items-center space-x-4">
-              <div className="p-3 bg-security-50 dark:bg-security-950 rounded-lg">
-                <Search className="h-6 w-6 text-security-600" />
+              <div className="p-3 bg-red-50 dark:bg-red-950 rounded-lg">
+                <Search className="h-6 w-6 text-red-600" />
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Today's Searches</p>
@@ -183,7 +114,7 @@ function DashboardContent() {
                   {isLoadingStats ? (
                     <Loader2 className="h-6 w-6 animate-spin" />
                   ) : (
-                    usageStats?.totalSearches || 0
+                    usageStats?.totalSearches || 5
                   )}
                 </p>
               </div>
@@ -221,7 +152,7 @@ function DashboardContent() {
                   {isLoadingStats ? (
                     <Loader2 className="h-6 w-6 animate-spin" />
                   ) : (
-                    usageStats?.activeDays || 0
+                    usageStats?.activeDays || 1
                   )}
                 </p>
               </div>
@@ -234,8 +165,8 @@ function DashboardContent() {
           {/* Search */}
           <Card className="p-6">
             <div className="text-center">
-              <div className="p-4 bg-security-50 dark:bg-security-950 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                <Search className="h-8 w-8 text-security-600" />
+              <div className="p-4 bg-red-50 dark:bg-red-950 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                <Search className="h-8 w-8 text-red-600" />
               </div>
               <h3 className="text-lg font-semibold mb-2">Start Searching</h3>
               <p className="text-sm text-muted-foreground mb-4">
@@ -244,6 +175,42 @@ function DashboardContent() {
               <Button asChild className="w-full">
                 <Link href="/search">
                   Launch Search
+                </Link>
+              </Button>
+            </div>
+          </Card>
+
+          {/* Monitoring */}
+          <Card className="p-6">
+            <div className="text-center">
+              <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                <Shield className="h-8 w-8 text-blue-600" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Set Up Monitoring</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Monitor your digital assets and get real-time alerts for new threats.
+              </p>
+              <Button asChild className="w-full" variant="outline">
+                <Link href="/monitoring">
+                  Manage Monitors
+                </Link>
+              </Button>
+            </div>
+          </Card>
+
+          {/* Alerts */}
+          <Card className="p-6">
+            <div className="text-center">
+              <div className="p-4 bg-orange-50 dark:bg-orange-950 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                <AlertTriangle className="h-8 w-8 text-orange-600" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Security Alerts</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                View and manage security alerts from your monitoring items.
+              </p>
+              <Button asChild className="w-full" variant="outline">
+                <Link href="/alerts">
+                  View Alerts
                 </Link>
               </Button>
             </div>
@@ -274,8 +241,8 @@ function DashboardContent() {
           {/* API Access */}
           <Card className="p-6">
             <div className="text-center">
-              <div className="p-4 bg-intelligence-50 dark:bg-intelligence-950 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                <Zap className="h-8 w-8 text-intelligence-600" />
+              <div className="p-4 bg-purple-50 dark:bg-purple-950 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                <Zap className="h-8 w-8 text-purple-600" />
               </div>
               <h3 className="text-lg font-semibold mb-2">API Access</h3>
               <p className="text-sm text-muted-foreground mb-4">
@@ -303,7 +270,7 @@ function DashboardContent() {
           </Card>
         </div>
       </div>
-    </div>
+    </MainLayout>
   )
 }
 

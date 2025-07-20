@@ -517,36 +517,123 @@ class ApiClient {
   }
 
   // Monitoring and Alerts
-  async getMonitoringItems(): Promise<any[]> {
-    const response = await this.client.get('/monitoring')
+  async getMonitoringItems(page = 0, size = 10, sortBy = 'createdAt', sortDir = 'desc'): Promise<any> {
+    const response = await this.client.get(`/api/monitoring/items?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`)
     return response.data.data
   }
 
   async createMonitoringItem(item: any): Promise<any> {
-    const response = await this.client.post('/monitoring', item)
+    const response = await this.client.post('/api/monitoring/items', item)
     return response.data.data
   }
 
-  async updateMonitoringItem(id: string, item: any): Promise<any> {
-    const response = await this.client.put(`/monitoring/${id}`, item)
+  async getMonitoringItem(itemId: string): Promise<any> {
+    const response = await this.client.get(`/api/monitoring/items/${itemId}`)
     return response.data.data
   }
 
-  async deleteMonitoringItem(id: string): Promise<void> {
-    await this.client.delete(`/monitoring/${id}`)
-  }
-
-  async getAlerts(page = 1, limit = 20): Promise<any> {
-    const response = await this.client.get(`/alerts?page=${page}&limit=${limit}`)
+  async updateMonitoringItem(itemId: string, item: any): Promise<any> {
+    const response = await this.client.put(`/api/monitoring/items/${itemId}`, item)
     return response.data.data
   }
 
-  async markAlertAsRead(alertId: string): Promise<void> {
-    await this.client.patch(`/alerts/${alertId}/read`)
+  async deleteMonitoringItem(itemId: string): Promise<void> {
+    await this.client.delete(`/api/monitoring/items/${itemId}`)
   }
 
-  async dismissAlert(alertId: string): Promise<void> {
-    await this.client.patch(`/alerts/${alertId}/dismiss`)
+  async searchMonitoringItems(query: string, page = 0, size = 10): Promise<any> {
+    const response = await this.client.get(`/api/monitoring/items/search?query=${encodeURIComponent(query)}&page=${page}&size=${size}`)
+    return response.data.data
+  }
+
+  async getMonitoringDashboard(): Promise<any> {
+    const response = await this.client.get('/api/monitoring/dashboard')
+    return response.data.data
+  }
+
+  async getMonitoringStatistics(): Promise<any> {
+    const response = await this.client.get('/api/monitoring/statistics')
+    return response.data.data
+  }
+
+  // Alert methods
+  async getAlerts(page = 0, size = 10, sortBy = 'createdAt', sortDir = 'desc', status?: string, severity?: string): Promise<any> {
+    const params = new URLSearchParams()
+    params.append('page', page.toString())
+    params.append('size', size.toString())
+    params.append('sortBy', sortBy)
+    params.append('sortDir', sortDir)
+    if (status) params.append('status', status)
+    if (severity) params.append('severity', severity)
+    
+    const response = await this.client.get(`/api/alerts?${params.toString()}`)
+    return response.data.data
+  }
+
+  async getAlert(alertId: string): Promise<any> {
+    const response = await this.client.get(`/api/alerts/${alertId}`)
+    return response.data.data
+  }
+
+  async markAlertAsRead(alertId: string): Promise<any> {
+    const response = await this.client.put(`/api/alerts/${alertId}/read`)
+    return response.data.data
+  }
+
+  async markAlertAsArchived(alertId: string): Promise<any> {
+    const response = await this.client.put(`/api/alerts/${alertId}/archive`)
+    return response.data.data
+  }
+
+  async markAlertAsFalsePositive(alertId: string): Promise<any> {
+    const response = await this.client.put(`/api/alerts/${alertId}/false-positive`)
+    return response.data.data
+  }
+
+  async markAlertAsRemediated(alertId: string, notes?: string): Promise<any> {
+    const params = notes ? `?notes=${encodeURIComponent(notes)}` : ''
+    const response = await this.client.put(`/api/alerts/${alertId}/remediate${params}`)
+    return response.data.data
+  }
+
+  async escalateAlert(alertId: string, notes: string): Promise<any> {
+    const response = await this.client.put(`/api/alerts/${alertId}/escalate?notes=${encodeURIComponent(notes)}`)
+    return response.data.data
+  }
+
+  async bulkMarkAlertsAsRead(alertIds: string[]): Promise<number> {
+    const response = await this.client.put('/api/alerts/bulk/read', alertIds)
+    return response.data.data
+  }
+
+  async markAllAlertsAsRead(): Promise<number> {
+    const response = await this.client.put('/api/alerts/read-all')
+    return response.data.data
+  }
+
+  async getUnreadAlertCount(): Promise<number> {
+    const response = await this.client.get('/api/alerts/unread/count')
+    return response.data.data
+  }
+
+  async getRecentAlerts(days = 7): Promise<any[]> {
+    const response = await this.client.get(`/api/alerts/recent?days=${days}`)
+    return response.data.data
+  }
+
+  async getHighPriorityAlerts(): Promise<any[]> {
+    const response = await this.client.get('/api/alerts/high-priority')
+    return response.data.data
+  }
+
+  async searchAlerts(query: string, page = 0, size = 10): Promise<any> {
+    const response = await this.client.get(`/api/alerts/search?query=${encodeURIComponent(query)}&page=${page}&size=${size}`)
+    return response.data.data
+  }
+
+  async getAlertStatistics(): Promise<any> {
+    const response = await this.client.get('/api/alerts/statistics')
+    return response.data.data
   }
 
   // Export functionality
@@ -606,14 +693,14 @@ class ApiClient {
   // Usage tracking methods (authenticated users)
   async getUserQuota(): Promise<UsageQuota> {
     console.log('📊 [API Client] Fetching user quota...')
-    const response = await this.client.get<ApiResponse<UsageQuota>>('/user/usage/quota')
+    const response = await this.client.get<ApiResponse<UsageQuota>>('/api/user/usage/quota')
     console.log('✅ [API Client] User quota response:', response.data)
     return response.data.data!
   }
 
   async getTodayUsage(): Promise<UsageStats> {
     console.log('📊 [API Client] Fetching today\'s usage...')
-    const response = await this.client.get<ApiResponse<UsageStats>>('/user/usage/today')
+    const response = await this.client.get<ApiResponse<UsageStats>>('/api/user/usage/today')
     console.log('✅ [API Client] Today usage response:', response.data)
     return response.data.data!
   }
@@ -623,7 +710,7 @@ class ApiClient {
     if (startDate) params.append('startDate', startDate)
     if (endDate) params.append('endDate', endDate)
     
-    const response = await this.client.get<ApiResponse<UsageStats>>(`/user/usage/stats?${params.toString()}`)
+    const response = await this.client.get<ApiResponse<UsageStats>>(`/api/user/usage/stats?${params.toString()}`)
     return response.data.data!
   }
 
