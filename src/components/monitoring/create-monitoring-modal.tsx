@@ -17,6 +17,7 @@ interface CreateMonitoringModalProps {
   isOpen: boolean
   onClose: () => void
   onSubmit: (data: MonitoringFormData) => void
+  userPlan?: string // Add user plan to filter frequencies
 }
 
 interface MonitoringFormData {
@@ -69,19 +70,30 @@ const monitorTypes = [
 ]
 
 const frequencies = [
-  { value: 'REAL_TIME', label: 'Real-time', description: 'Immediate alerts' },
-  { value: 'HOURLY', label: 'Hourly', description: 'Check every hour' },
-  { value: 'DAILY', label: 'Daily', description: 'Check once per day' },
-  { value: 'WEEKLY', label: 'Weekly', description: 'Check once per week' }
+  { value: 'DAILY', label: 'Daily', description: 'Check once per day', requiresPremium: false },
+  { value: 'WEEKLY', label: 'Weekly', description: 'Check once per week', requiresPremium: false },
+  { value: 'HOURLY', label: 'Hourly', description: 'Check every hour', requiresPremium: true },
+  { value: 'REAL_TIME', label: 'Real-time', description: 'Immediate alerts', requiresPremium: true }
 ]
 
-export function CreateMonitoringModal({ isOpen, onClose, onSubmit }: CreateMonitoringModalProps) {
+export function CreateMonitoringModal({ isOpen, onClose, onSubmit, userPlan = 'FREE' }: CreateMonitoringModalProps) {
+  // Filter frequencies based on user plan
+  const availableFrequencies = frequencies.filter(freq => {
+    if (userPlan === 'FREE') {
+      return !freq.requiresPremium
+    }
+    if (userPlan === 'BASIC') {
+      return !freq.requiresPremium // BASIC plan only gets DAILY and WEEKLY
+    }
+    return true // PROFESSIONAL and ENTERPRISE get all frequencies
+  })
+
   const [formData, setFormData] = useState<MonitoringFormData>({
     monitorName: '',
     monitorType: 'EMAIL',
     targetValue: '',
     description: '',
-    frequency: 'DAILY',
+    frequency: 'DAILY', // Default to DAILY instead of REAL_TIME
     emailAlerts: true,
     inAppAlerts: true,
     webhookAlerts: false
@@ -256,7 +268,7 @@ export function CreateMonitoringModal({ isOpen, onClose, onSubmit }: CreateMonit
               Check Frequency *
             </label>
             <div className="grid grid-cols-2 gap-3">
-              {frequencies.map((freq) => (
+              {availableFrequencies.map((freq) => (
                 <button
                   key={freq.value}
                   type="button"
@@ -269,9 +281,19 @@ export function CreateMonitoringModal({ isOpen, onClose, onSubmit }: CreateMonit
                 >
                   <div className="font-medium">{freq.label}</div>
                   <div className="text-xs text-gray-500">{freq.description}</div>
+                  {freq.requiresPremium && (
+                    <div className="text-xs text-amber-600 mt-1">Premium feature</div>
+                  )}
                 </button>
               ))}
             </div>
+            
+            {/* Show upgrade notice if user has limited access */}
+            {userPlan === 'BASIC' && (
+              <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700">
+                💡 Upgrade to Professional for Real-time and Hourly monitoring
+              </div>
+            )}
           </div>
 
           {/* Notification Settings */}

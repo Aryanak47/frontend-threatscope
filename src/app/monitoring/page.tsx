@@ -1,10 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { MainLayout } from '@/components/layout/main-layout'
 import { useAuthStore } from '@/stores/auth'
+import { useUsageStore } from '@/stores/usage'
+import { apiClient } from '@/lib/api'
 import { CreateMonitoringModal } from '@/components/monitoring/create-monitoring-modal'
 import { 
   Shield,
@@ -29,18 +31,122 @@ import { toast } from 'react-hot-toast'
 
 export default function MonitoringPage() {
   const { isAuthenticated, user } = useAuthStore()
+  const { quota, fetchQuota } = useUsageStore()
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [userPlan, setUserPlan] = useState<string>('FREE')
+  const [isLoadingPlan, setIsLoadingPlan] = useState(true)
 
-  // Check user's plan - for now assume Free plan
-  const userPlan = 'FREE' // TODO: Get from user data/quota
+  // Determine user's actual plan from multiple sources
+  useEffect(() => {
+    if (!isAuthenticated || !user) {
+      setUserPlan('FREE')
+      setIsLoadingPlan(false)
+      return
+    }
+
+    const detectUserPlan = async () => {
+      try {
+        setIsLoadingPlan(true)
+        console.log('🔍 Detecting user plan for:', user.email)
+
+        // Method 1: Check user.subscription field
+        if (user.subscription?.planType) {
+          console.log('📊 Plan detected from user.subscription:', user.subscription.planType)
+          setUserPlan(user.subscription.planType)
+          setIsLoadingPlan(false)
+          return
+        }
+
+        // Method 2: Fetch quota data to determine plan
+        if (!quota) {
+          console.log('🔄 No quota data, fetching...')
+          await fetchQuota()
+        }
+
+        // Use quota data to infer plan
+        const currentQuota = quota || useUsageStore.getState().quota
+        if (currentQuota) {
+          const totalSearches = currentQuota.totalSearches
+          
+          let detectedPlan = 'FREE'
+          if (totalSearches >= 1200) {
+            detectedPlan = 'PROFESSIONAL'
+          } else if (totalSearches >= 100) {
+            detectedPlan = 'BASIC'
+          } else if (totalSearches >= 25) {
+            detectedPlan = 'FREE' // Upgraded free user
+          }
+          
+          console.log('📊 Plan inferred from quota:', {
+            totalSearches,
+            detectedPlan,
+            quotaData: currentQuota
+          })
+          
+          setUserPlan(detectedPlan)
+        } else {
+          console.warn('⚠️ No quota data available, defaulting to FREE plan')
+          setUserPlan('FREE')
+        }
+      } catch (error) {
+        console.error('❌ Error detecting user plan:', error)
+        setUserPlan('FREE')
+      } finally {
+        setIsLoadingPlan(false)
+      }
+    }
+
+    detectUserPlan()
+  }, [isAuthenticated, user, quota, fetchQuota])
+
   const isFreePlan = userPlan === 'FREE'
 
-  const handleCreateMonitor = (formData: any) => {
-    console.log('Creating monitor:', formData)
-    // TODO: Call API to create monitoring item
-    // await apiClient.createMonitoringItem(formData)
-    toast.success(`Monitor "${formData.monitorName}" created successfully!`)
+  const handleCreateMonitor = async (formData: any) => {
+    try {
+      console.log('🔄 Creating monitor:', formData)
+      
+      // Call the API to create the monitoring item
+      const createdMonitor = await apiClient.createMonitoringItem({
+        monitorType: formData.monitorType,
+        targetValue: formData.targetValue,
+        monitorName: formData.monitorName,
+        description: formData.description || null,
+        frequency: formData.frequency,
+        isActive: true,
+        emailAlerts: formData.emailAlerts,
+        inAppAlerts: formData.inAppAlerts,
+        webhookAlerts: formData.webhookAlerts
+      })
+      
+      console.log('✅ Monitor created successfully:', createdMonitor)
+      toast.success(`Monitor "${formData.monitorName}" created successfully!`)
+      
+      // Refresh the monitoring items list
+      // TODO: Add state management for monitoring items list
+      
+    } catch (error: any) {
+      console.error('❌ Failed to create monitor:', error)
+      
+      // Better error handling
+      let errorMessage = 'Failed to create monitor'
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message
+      } else if (error.response?.data?.errors && Array.isArray(error.response.data.errors)) {
+        errorMessage = error.response.data.errors.join(', ')
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      
+      console.error('❌ Error details:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message
+      })
+      
+      toast.error(errorMessage)
+    }
   }
 
   const handleUpgradeClick = () => {
@@ -183,8 +289,14 @@ export default function MonitoringPage() {
             </div>
           </div>
 
-          {/* Empty state */}
-          {isFreePlan ? (
+          {/* Plan-based Content */}
+          {isLoadingPlan ? (
+            /* Loading State */
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading your plan details...</p>
+            </div>
+          ) : isFreePlan ? (
             /* Free Plan Upgrade Prompt */
             <div className="text-center py-12">
               <div className="bg-amber-100 rounded-full p-4 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
@@ -197,9 +309,9 @@ export default function MonitoringPage() {
               </p>
               
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 max-w-md mx-auto">
-                <h5 className="font-semibold text-amber-800 mb-2">Free Plan Includes:</h5>
+                <h5 className="font-semibold text-amber-800 mb-2">Current Plan ({userPlan}):</h5>
                 <ul className="text-sm text-amber-700 space-y-1">
-                  <li>✅ 20 searches per day</li>
+                  <li>✅ {quota?.totalSearches || 25} searches per day</li>
                   <li>✅ Basic threat intelligence access</li>
                   <li>❌ No monitoring items</li>
                   <li>❌ No real-time alerts</li>
@@ -215,24 +327,40 @@ export default function MonitoringPage() {
                   Upgrade to Basic Plan
                 </Button>
                 <div className="text-sm text-gray-500">
-                  Starting at $9.99/month • 5 monitors • Email alerts
+                  Starting at $9.99/month • 25 monitors • Email alerts
                 </div>
               </div>
             </div>
           ) : (
-            /* Paid Plan Empty State */
+            /* Paid Plan Content */
             <div className="text-center py-12">
-              <Shield className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-              <h4 className="text-lg font-semibold mb-2">No Monitors Yet</h4>
-              <p className="text-gray-600 mb-6">
-                Create your first monitoring item to start tracking threats.
+              <div className="bg-green-100 rounded-full p-4 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+                <Shield className="h-10 w-10 text-green-600" />
+              </div>
+              <h4 className="text-xl font-semibold mb-3 text-green-800">
+                Welcome to {userPlan} Plan Monitoring!
+              </h4>
+              <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                You have access to monitoring features. Create your first monitor to start tracking threats.
               </p>
+              
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 max-w-md mx-auto">
+                <h5 className="font-semibold text-green-800 mb-2">Your {userPlan} Plan Includes:</h5>
+                <ul className="text-sm text-green-700 space-y-1">
+                  <li>✅ {quota?.totalSearches || 'Unlimited'} searches per day</li>
+                  <li>✅ Advanced threat intelligence</li>
+                  <li>✅ Real-time monitoring</li>
+                  <li>✅ Email & in-app alerts</li>
+                  <li>✅ Export capabilities</li>
+                </ul>
+              </div>
+              
               <Button 
                 onClick={() => setShowCreateModal(true)}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-green-600 hover:bg-green-700 text-white px-8"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Create First Monitor
+                Create Your First Monitor
               </Button>
             </div>
           )}
@@ -281,6 +409,7 @@ export default function MonitoringPage() {
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
           onSubmit={handleCreateMonitor}
+          userPlan={userPlan}
         />
       )}
     </MainLayout>

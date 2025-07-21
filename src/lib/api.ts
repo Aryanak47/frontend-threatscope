@@ -740,6 +740,22 @@ class ApiClient {
     const response = await this.client.get<ApiResponse<any>>('/plans/comparison')
     return response.data.data!
   }
+
+  // Mock Payment methods
+  async processMockPayment(paymentData: any): Promise<any> {
+    const response = await this.client.post<ApiResponse<any>>('/mock-payment/process', paymentData)
+    return response.data.data!
+  }
+
+  async getTestPaymentMethods(): Promise<any> {
+    const response = await this.client.get<ApiResponse<any>>('/mock-payment/test-methods')
+    return response.data.data!
+  }
+
+  async cancelMockSubscription(): Promise<any> {
+    const response = await this.client.post<ApiResponse<any>>('/mock-payment/cancel')
+    return response.data.data!
+  }
   async request<T = any>(config: AxiosRequestConfig): Promise<T> {
     const response = await this.client.request<ApiResponse<T>>(config)
     return response.data.data!

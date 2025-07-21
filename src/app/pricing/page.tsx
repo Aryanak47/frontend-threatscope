@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { MainLayout } from '@/components/layout/main-layout'
 import { useAuthStore } from '@/stores/auth'
 import { apiClient } from '@/lib/api'
+import { MockPaymentModal } from '@/components/mock-payment-modal'
 import { 
   Check, 
   Shield, 
@@ -139,6 +140,10 @@ export default function PricingPage() {
   const [plans, setPlans] = useState<PlanData[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isUsingFallback, setIsUsingFallback] = useState(false)
+  const [paymentModal, setPaymentModal] = useState<{
+    isOpen: boolean
+    selectedPlan: { name: string; price: number; type: string } | null
+  }>({ isOpen: false, selectedPlan: null })
 
   useEffect(() => {
     const fetchPlans = async () => {
@@ -161,18 +166,33 @@ export default function PricingPage() {
     fetchPlans()
   }, [])
 
-  const handleUpgrade = (planName: string) => {
-    if (planName === 'Enterprise') {
-      // Contact sales
+  const handleUpgrade = (planName: string, planType: string, price: number) => {
+    if (!isAuthenticated) {
+      // Redirect to login for non-authenticated users
+      window.location.href = '/login?redirect=/pricing'
+      return
+    }
+    
+    if (planType === 'ENTERPRISE') {
+      // Contact sales for enterprise
       window.open('mailto:sales@threatscope.com?subject=Enterprise Plan Inquiry', '_blank')
       return
     }
-
-    // TODO: Integrate with payment processor (Stripe, etc.)
-    console.log(`Upgrading to ${planName} plan with ${billingCycle} billing`)
     
-    // For now, show coming soon message
-    alert(`Payment integration coming soon!\n\nYou selected: ${planName} Plan (${billingCycle})\n\nWe'll email you when billing is ready.`)
+    if (planType === 'FREE') {
+      // Already on free plan
+      return
+    }
+    
+    // Open mock payment modal
+    setPaymentModal({
+      isOpen: true,
+      selectedPlan: {
+        name: planName,
+        price: price,
+        type: planType
+      }
+    })
   }
 
   const formatFeatures = (plan: PlanData) => {
@@ -401,7 +421,7 @@ export default function PricingPage() {
                 {/* Button - always at bottom */}
                 <div className="mt-auto">
                   <Button
-                    onClick={() => handleUpgrade(displayName)}
+                    onClick={() => handleUpgrade(displayName, planType, monthlyAmount)}
                     disabled={planType === 'FREE'}
                     className={`w-full h-12 ${
                       isPopular
@@ -436,6 +456,16 @@ export default function PricingPage() {
             '🔗 Pricing data: Live from backend • Last updated: Just now'
           )}
         </div>
+        
+        {/* Mock Payment Modal */}
+        {paymentModal.selectedPlan && (
+          <MockPaymentModal
+            isOpen={paymentModal.isOpen}
+            onClose={() => setPaymentModal({ isOpen: false, selectedPlan: null })}
+            selectedPlan={paymentModal.selectedPlan}
+            billingCycle={billingCycle}
+          />
+        )}
       </div>
     </MainLayout>
   )
