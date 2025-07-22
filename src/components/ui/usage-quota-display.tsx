@@ -115,7 +115,19 @@ export function UsageQuotaDisplay({ className = '', compact = false }: UsageQuot
   }
 
   const getPlanType = () => {
-    // Infer plan type from quota limits
+    // Use real subscription data if available
+    if (user?.subscription) {
+      const planType = user.subscription.planType
+      switch (planType) {
+        case 'FREE': return 'Free'
+        case 'BASIC': return 'Basic'
+        case 'PROFESSIONAL': return 'Professional'
+        case 'ENTERPRISE': return 'Enterprise'
+        default: return 'Free'
+      }
+    }
+    
+    // Fallback to quota-based inference
     if (quota.totalSearches <= 25) return 'Free'
     if (quota.totalSearches <= 100) return 'Basic'
     if (quota.totalSearches <= 1200) return 'Professional'

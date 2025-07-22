@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useAuthStore } from '@/stores/auth'
-import { useAlertStore } from '@/stores/alerts'
+import useAlertStore from '@/stores/alerts'
 import { Button } from '@/components/ui/button'
 import { 
   Shield, 

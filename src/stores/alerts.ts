@@ -1,422 +1,493 @@
-import { create } from 'zustand'
-import { apiClient } from '@/lib/api'
-
-export interface Alert {
-  id: string
-  title: string
-  description: string
-  status: 'UNREAD' | 'READ' | 'ARCHIVED' | 'DISMISSED'
-  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
-  breachSource: string
-  breachDate?: string
-  breachData?: string
-  affectedEmail?: string
-  affectedDomain?: string
-  affectedUsername?: string
-  dataTypes?: string
-  recordCount?: number
-  isVerified: boolean
-  isFalsePositive: boolean
-  isRemediated: boolean
-  isAcknowledged: boolean
-  isEscalated: boolean
-  escalationNotes?: string
-  remediationNotes?: string
-  acknowledgmentNotes?: string
-  riskScore?: number
-  confidenceLevel?: number
-  createdAt: string
-  updatedAt: string
-  viewedAt?: string
-  acknowledgedAt?: string
-  resolvedAt?: string
-  dismissedAt?: string
-  escalatedAt?: string
-  notificationSent: boolean
-  notificationSentAt?: string
-  emailNotificationSent: boolean
-  webhookNotificationSent: boolean
-  monitoringItemId?: string
-  monitoringItemName?: string
-  monitorType?: string
-  statusDisplayName: string
-  severityDisplayName: string
-  monitorTypeDisplayName?: string
-  ageInHours: number
-  ageInDays: number
-  priorityLevel: string
-  isRecent: boolean
-  isHighPriority: boolean
-  isStale: boolean
-  lastActionTime?: string
-}
-
-export interface AlertStatistics {
-  total: number
-  unread: number
-  critical: number
-  high: number
-  medium: number
-  low: number
-  recent: number
-  stale: number
-  byType: { [key: string]: number }
-  bySeverity: { [key: string]: number }
-  byStatus: { [key: string]: number }
-}
+import { create } from 'zustand';
+import { AlertAction, BreachAlert, CreateAlertActionRequest, ActionTypeInfo, AlertActionStatistics } from '@/types/alerts';
+import { ApiResponse, PaginatedResponse } from '@/types/api';
 
 interface AlertState {
-  // Data
-  alerts: Alert[]
-  recentAlerts: Alert[]
-  highPriorityAlerts: Alert[]
-  statistics: AlertStatistics | null
-  unreadCount: number
+  // Alerts
+  alerts: BreachAlert[];
+  currentAlert: BreachAlert | null;
+  alertsLoading: boolean;
+  alertsError: string | null;
+  unreadCount: number;
   
-  // Loading states
-  isLoadingAlerts: boolean
-  isLoadingRecent: boolean
-  isLoadingHighPriority: boolean
-  isLoadingStatistics: boolean
-  isLoadingUnreadCount: boolean
-  isUpdating: boolean
+  // Alert Actions
+  alertActions: AlertAction[];
+  currentAlertActions: AlertAction[];
+  serviceRequests: AlertAction[];
+  actionTypes: ActionTypeInfo[];
+  actionStatistics: AlertActionStatistics | null;
+  actionsLoading: boolean;
+  actionsError: string | null;
   
-  // Error states
-  alertsError: string | null
-  recentError: string | null
-  highPriorityError: string | null
-  statisticsError: string | null
-  unreadCountError: string | null
-  updateError: string | null
-  
-  // Pagination and filters
-  currentPage: number
-  totalPages: number
-  pageSize: number
-  totalAlerts: number
-  statusFilter?: string
-  severityFilter?: string
+  // UI State
+  selectedAlerts: number[];
+  showActionModal: boolean;
+  actionModalAlertId: number | null;
   
   // Actions
-  fetchAlerts: (page?: number, size?: number, status?: string, severity?: string) => Promise<void>
-  fetchRecentAlerts: (days?: number) => Promise<void>
-  fetchHighPriorityAlerts: () => Promise<void>
-  fetchStatistics: () => Promise<void>
-  fetchUnreadCount: () => Promise<void>
-  markAsRead: (alertId: string) => Promise<boolean>
-  markAsArchived: (alertId: string) => Promise<boolean>
-  markAsFalsePositive: (alertId: string) => Promise<boolean>
-  markAsRemediated: (alertId: string, notes?: string) => Promise<boolean>
-  escalateAlert: (alertId: string, notes: string) => Promise<boolean>
-  bulkMarkAsRead: (alertIds: string[]) => Promise<boolean>
-  markAllAsRead: () => Promise<boolean>
-  searchAlerts: (query: string, page?: number, size?: number) => Promise<void>
-  refreshAll: () => Promise<void>
-  clearErrors: () => void
-  setFilters: (status?: string, severity?: string) => void
+  fetchAlerts: (page?: number, size?: number) => Promise<void>;
+  fetchAlertActions: (alertId: number) => Promise<void>;
+  fetchUserActions: (page?: number, size?: number) => Promise<void>;
+  fetchServiceRequests: () => Promise<void>;
+  fetchActionTypes: () => Promise<void>;
+  fetchActionStatistics: () => Promise<void>;
+  fetchUnreadCount: () => Promise<void>;
+  
+  createAlertAction: (alertId: number, request: CreateAlertActionRequest) => Promise<AlertAction>;
+  cancelAlertAction: (actionId: number) => Promise<void>;
+  
+  // Quick actions
+  acknowledgeAlert: (alertId: number) => Promise<void>;
+  markAsResolved: (alertId: number, message?: string) => Promise<void>;
+  markAsFalsePositive: (alertId: number, message?: string) => Promise<void>;
+  escalateAlert: (alertId: number, message?: string, urgencyLevel?: string) => Promise<void>;
+  
+  // UI Actions
+  selectAlert: (alertId: number) => void;
+  deselectAlert: (alertId: number) => void;
+  clearSelectedAlerts: () => void;
+  openActionModal: (alertId: number) => void;
+  closeActionModal: () => void;
+  
+  // Utility
+  clearError: () => void;
+  reset: () => void;
 }
 
-export const useAlertStore = create<AlertState>((set, get) => ({
+const useAlertStore = create<AlertState>((set, get) => ({
   // Initial state
   alerts: [],
-  recentAlerts: [],
-  highPriorityAlerts: [],
-  statistics: null,
-  unreadCount: 0,
-  isLoadingAlerts: false,
-  isLoadingRecent: false,
-  isLoadingHighPriority: false,
-  isLoadingStatistics: false,
-  isLoadingUnreadCount: false,
-  isUpdating: false,
+  currentAlert: null,
+  alertsLoading: false,
   alertsError: null,
-  recentError: null,
-  highPriorityError: null,
-  statisticsError: null,
-  unreadCountError: null,
-  updateError: null,
-  currentPage: 0,
-  totalPages: 0,
-  pageSize: 10,
-  totalAlerts: 0,
-  statusFilter: undefined,
-  severityFilter: undefined,
-
-  // Actions
-  fetchAlerts: async (page = 0, size = 10, status?: string, severity?: string) => {
+  unreadCount: 0,
+  
+  alertActions: [],
+  currentAlertActions: [],
+  serviceRequests: [],
+  actionTypes: [],
+  actionStatistics: null,
+  actionsLoading: false,
+  actionsError: null,
+  
+  selectedAlerts: [],
+  showActionModal: false,
+  actionModalAlertId: null,
+  
+  // Fetch alerts
+  fetchAlerts: async (page = 0, size = 20) => {
+    set({ alertsLoading: true, alertsError: null });
+    
     try {
-      set({ isLoadingAlerts: true, alertsError: null })
-      const response = await apiClient.getAlerts(page, size, 'createdAt', 'desc', status, severity)
+      const response = await fetch(`/api/monitoring/alerts?page=${page}&size=${size}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('threatscope_token')}`,
+        },
+      });
       
-      set({
-        alerts: response.content || [],
-        currentPage: response.number || 0,
-        totalPages: response.totalPages || 0,
-        pageSize: response.size || 10,
-        totalAlerts: response.totalElements || 0,
-        statusFilter: status,
-        severityFilter: severity,
-        isLoadingAlerts: false
-      })
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Failed to fetch alerts'
-      set({
-        alertsError: errorMessage,
-        isLoadingAlerts: false,
-        alerts: []
-      })
+      if (!response.ok) {
+        throw new Error(`Failed to fetch alerts: ${response.status}`);
+      }
+      
+      const data: ApiResponse<PaginatedResponse<BreachAlert>> = await response.json();
+      
+      if (data.success) {
+        set({ alerts: data.data.content, alertsLoading: false });
+      } else {
+        throw new Error(data.message || 'Failed to fetch alerts');
+      }
+    } catch (error) {
+      console.error('Error fetching alerts:', error);
+      set({ 
+        alertsError: error instanceof Error ? error.message : 'Failed to fetch alerts',
+        alertsLoading: false 
+      });
     }
   },
-
-  fetchRecentAlerts: async (days = 7) => {
+  
+  // Fetch actions for specific alert
+  fetchAlertActions: async (alertId: number) => {
+    set({ actionsLoading: true, actionsError: null });
+    
     try {
-      set({ isLoadingRecent: true, recentError: null })
-      const recentAlerts = await apiClient.getRecentAlerts(days)
-      set({ recentAlerts, isLoadingRecent: false })
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Failed to fetch recent alerts'
-      set({
-        recentError: errorMessage,
-        isLoadingRecent: false,
-        recentAlerts: []
-      })
+      const response = await fetch(`/api/alerts/${alertId}/actions`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('threatscope_token')}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch alert actions: ${response.status}`);
+      }
+      
+      const data: ApiResponse<AlertAction[]> = await response.json();
+      
+      if (data.success) {
+        set({ currentAlertActions: data.data, actionsLoading: false });
+      } else {
+        throw new Error(data.message || 'Failed to fetch alert actions');
+      }
+    } catch (error) {
+      console.error('Error fetching alert actions:', error);
+      set({ 
+        actionsError: error instanceof Error ? error.message : 'Failed to fetch alert actions',
+        actionsLoading: false 
+      });
     }
   },
-
-  fetchHighPriorityAlerts: async () => {
+  
+  // Fetch user's all actions
+  fetchUserActions: async (page = 0, size = 20) => {
+    set({ actionsLoading: true, actionsError: null });
+    
     try {
-      set({ isLoadingHighPriority: true, highPriorityError: null })
-      const highPriorityAlerts = await apiClient.getHighPriorityAlerts()
-      set({ highPriorityAlerts, isLoadingHighPriority: false })
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Failed to fetch high priority alerts'
-      set({
-        highPriorityError: errorMessage,
-        isLoadingHighPriority: false,
-        highPriorityAlerts: []
-      })
+      const response = await fetch(`/api/alerts/actions?page=${page}&size=${size}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('threatscope_token')}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user actions: ${response.status}`);
+      }
+      
+      const data: ApiResponse<PaginatedResponse<AlertAction>> = await response.json();
+      
+      if (data.success) {
+        set({ alertActions: data.data.content, actionsLoading: false });
+      } else {
+        throw new Error(data.message || 'Failed to fetch user actions');
+      }
+    } catch (error) {
+      console.error('Error fetching user actions:', error);
+      set({ 
+        actionsError: error instanceof Error ? error.message : 'Failed to fetch user actions',
+        actionsLoading: false 
+      });
     }
   },
-
-  fetchStatistics: async () => {
+  
+  // Fetch service requests
+  fetchServiceRequests: async () => {
     try {
-      set({ isLoadingStatistics: true, statisticsError: null })
-      const statistics = await apiClient.getAlertStatistics()
-      set({ statistics, isLoadingStatistics: false })
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Failed to fetch alert statistics'
-      set({
-        statisticsError: errorMessage,
-        isLoadingStatistics: false,
-        statistics: null
-      })
+      const response = await fetch('/api/alerts/actions/service-requests', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('threatscope_token')}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch service requests: ${response.status}`);
+      }
+      
+      const data: ApiResponse<AlertAction[]> = await response.json();
+      
+      if (data.success) {
+        set({ serviceRequests: data.data });
+      }
+    } catch (error) {
+      console.error('Error fetching service requests:', error);
+    }
+  },
+  
+  // Fetch action types
+  fetchActionTypes: async () => {
+    try {
+      const response = await fetch('/api/alerts/action-types', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('threatscope_token')}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch action types: ${response.status}`);
+      }
+      
+      const data: ApiResponse<ActionTypeInfo[]> = await response.json();
+      
+      if (data.success) {
+        set({ actionTypes: data.data });
+      }
+    } catch (error) {
+      console.error('Error fetching action types:', error);
+    }
+  },
+  
+  // Fetch action statistics
+  fetchActionStatistics: async () => {
+    try {
+      const response = await fetch('/api/alerts/actions/statistics', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('threatscope_token')}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch action statistics: ${response.status}`);
+      }
+      
+      const data: ApiResponse<AlertActionStatistics> = await response.json();
+      
+      if (data.success) {
+        set({ actionStatistics: data.data });
+      }
+    } catch (error) {
+      console.error('Error fetching action statistics:', error);
     }
   },
 
+  // Fetch unread count
   fetchUnreadCount: async () => {
     try {
-      set({ isLoadingUnreadCount: true, unreadCountError: null })
-      const unreadCount = await apiClient.getUnreadAlertCount()
-      set({ unreadCount, isLoadingUnreadCount: false })
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Failed to fetch unread count'
-      set({
-        unreadCountError: errorMessage,
-        isLoadingUnreadCount: false,
-        unreadCount: 0
-      })
+      // Try the new breach alerts endpoint first
+      let response = await fetch('/api/monitoring/alerts/unread-count', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('threatscope_token')}`,
+        },
+      });
+      
+      if (response.ok) {
+        const data: ApiResponse<number> = await response.json();
+        if (data.success) {
+          set({ unreadCount: data.data || 0 });
+          return;
+        }
+      }
+      
+      // Fallback to alert actions statistics if breach alerts endpoint doesn't exist yet
+      response = await fetch('/api/alerts/actions/statistics', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('threatscope_token')}`,
+        },
+      });
+      
+      if (response.ok) {
+        const data: ApiResponse<AlertActionStatistics> = await response.json();
+        if (data.success) {
+          set({ unreadCount: data.data.pendingActions || 0 });
+          return;
+        }
+      }
+      
+      // Final fallback
+      set({ unreadCount: 0 });
+    } catch (error) {
+      console.error('Error fetching unread count:', error);
+      // Fallback to 0 if there's an error
+      set({ unreadCount: 0 });
     }
   },
-
-  markAsRead: async (alertId: string) => {
+  
+  // Create alert action
+  createAlertAction: async (alertId: number, request: CreateAlertActionRequest) => {
+    set({ actionsLoading: true, actionsError: null });
+    
     try {
-      set({ isUpdating: true, updateError: null })
-      const updatedAlert = await apiClient.markAlertAsRead(alertId)
+      const response = await fetch(`/api/alerts/${alertId}/actions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('threatscope_token')}`,
+        },
+        body: JSON.stringify(request),
+      });
       
-      // Update in current alerts
-      const { alerts } = get()
-      const updatedAlerts = alerts.map(alert => 
-        alert.id === alertId ? { ...alert, ...updatedAlert, status: 'READ' as const } : alert
-      )
-      set({ alerts: updatedAlerts, isUpdating: false })
+      if (!response.ok) {
+        throw new Error(`Failed to create alert action: ${response.status}`);
+      }
       
-      // Refresh unread count
-      get().fetchUnreadCount()
+      const data: ApiResponse<AlertAction> = await response.json();
       
-      return true
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Failed to mark alert as read'
-      set({ updateError: errorMessage, isUpdating: false })
-      return false
+      if (data.success) {
+        set({ actionsLoading: false });
+        // Refresh current alert actions and statistics
+        get().fetchAlertActions(alertId);
+        get().fetchActionStatistics();
+        return data.data;
+      } else {
+        throw new Error(data.message || 'Failed to create alert action');
+      }
+    } catch (error) {
+      console.error('Error creating alert action:', error);
+      set({ 
+        actionsError: error instanceof Error ? error.message : 'Failed to create alert action',
+        actionsLoading: false 
+      });
+      throw error;
     }
   },
-
-  markAsArchived: async (alertId: string) => {
+  
+  // Cancel alert action
+  cancelAlertAction: async (actionId: number) => {
     try {
-      set({ isUpdating: true, updateError: null })
-      const updatedAlert = await apiClient.markAlertAsArchived(alertId)
+      const response = await fetch(`/api/alerts/actions/${actionId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('threatscope_token')}`,
+        },
+      });
       
-      // Update in current alerts
-      const { alerts } = get()
-      const updatedAlerts = alerts.map(alert => 
-        alert.id === alertId ? { ...alert, ...updatedAlert, status: 'ARCHIVED' as const } : alert
-      )
-      set({ alerts: updatedAlerts, isUpdating: false })
+      if (!response.ok) {
+        throw new Error(`Failed to cancel alert action: ${response.status}`);
+      }
       
-      return true
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Failed to archive alert'
-      set({ updateError: errorMessage, isUpdating: false })
-      return false
+      // Refresh actions and statistics
+      get().fetchUserActions();
+      get().fetchServiceRequests();
+      get().fetchActionStatistics();
+    } catch (error) {
+      console.error('Error cancelling alert action:', error);
+      throw error;
     }
   },
-
-  markAsFalsePositive: async (alertId: string) => {
+  
+  // Quick action: Acknowledge alert
+  acknowledgeAlert: async (alertId: number) => {
     try {
-      set({ isUpdating: true, updateError: null })
-      const updatedAlert = await apiClient.markAlertAsFalsePositive(alertId)
+      const response = await fetch(`/api/alerts/${alertId}/acknowledge`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('threatscope_token')}`,
+        },
+      });
       
-      // Update in current alerts
-      const { alerts } = get()
-      const updatedAlerts = alerts.map(alert => 
-        alert.id === alertId ? { ...alert, ...updatedAlert, isFalsePositive: true } : alert
-      )
-      set({ alerts: updatedAlerts, isUpdating: false })
+      if (!response.ok) {
+        throw new Error(`Failed to acknowledge alert: ${response.status}`);
+      }
       
-      return true
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Failed to mark alert as false positive'
-      set({ updateError: errorMessage, isUpdating: false })
-      return false
+      // Refresh alerts and actions
+      get().fetchAlerts();
+      get().fetchAlertActions(alertId);
+    } catch (error) {
+      console.error('Error acknowledging alert:', error);
+      throw error;
     }
   },
-
-  markAsRemediated: async (alertId: string, notes?: string) => {
+  
+  // Quick action: Mark as resolved
+  markAsResolved: async (alertId: number, message?: string) => {
     try {
-      set({ isUpdating: true, updateError: null })
-      const updatedAlert = await apiClient.markAlertAsRemediated(alertId, notes)
+      const response = await fetch(`/api/alerts/${alertId}/resolve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('threatscope_token')}`,
+        },
+        body: JSON.stringify({ message }),
+      });
       
-      // Update in current alerts
-      const { alerts } = get()
-      const updatedAlerts = alerts.map(alert => 
-        alert.id === alertId ? { ...alert, ...updatedAlert, isRemediated: true } : alert
-      )
-      set({ alerts: updatedAlerts, isUpdating: false })
+      if (!response.ok) {
+        throw new Error(`Failed to mark alert as resolved: ${response.status}`);
+      }
       
-      return true
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Failed to mark alert as remediated'
-      set({ updateError: errorMessage, isUpdating: false })
-      return false
+      // Refresh alerts and actions
+      get().fetchAlerts();
+      get().fetchAlertActions(alertId);
+    } catch (error) {
+      console.error('Error marking alert as resolved:', error);
+      throw error;
     }
   },
-
-  escalateAlert: async (alertId: string, notes: string) => {
+  
+  // Quick action: Mark as false positive
+  markAsFalsePositive: async (alertId: number, message?: string) => {
     try {
-      set({ isUpdating: true, updateError: null })
-      const updatedAlert = await apiClient.escalateAlert(alertId, notes)
+      const response = await fetch(`/api/alerts/${alertId}/false-positive`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('threatscope_token')}`,
+        },
+        body: JSON.stringify({ message }),
+      });
       
-      // Update in current alerts
-      const { alerts } = get()
-      const updatedAlerts = alerts.map(alert => 
-        alert.id === alertId ? { ...alert, ...updatedAlert, isEscalated: true } : alert
-      )
-      set({ alerts: updatedAlerts, isUpdating: false })
+      if (!response.ok) {
+        throw new Error(`Failed to mark alert as false positive: ${response.status}`);
+      }
       
-      return true
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Failed to escalate alert'
-      set({ updateError: errorMessage, isUpdating: false })
-      return false
+      // Refresh alerts and actions
+      get().fetchAlerts();
+      get().fetchAlertActions(alertId);
+    } catch (error) {
+      console.error('Error marking alert as false positive:', error);
+      throw error;
     }
   },
-
-  bulkMarkAsRead: async (alertIds: string[]) => {
+  
+  // Quick action: Escalate alert
+  escalateAlert: async (alertId: number, message?: string, urgencyLevel?: string) => {
     try {
-      set({ isUpdating: true, updateError: null })
-      await apiClient.bulkMarkAlertsAsRead(alertIds)
+      const response = await fetch(`/api/alerts/${alertId}/escalate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('threatscope_token')}`,
+        },
+        body: JSON.stringify({ message, urgencyLevel }),
+      });
       
-      // Update alerts in state
-      const { alerts } = get()
-      const updatedAlerts = alerts.map(alert => 
-        alertIds.includes(alert.id) ? { ...alert, status: 'read' as const } : alert
-      )
-      set({ alerts: updatedAlerts, isUpdating: false })
+      if (!response.ok) {
+        throw new Error(`Failed to escalate alert: ${response.status}`);
+      }
       
-      // Refresh unread count
-      get().fetchUnreadCount()
-      
-      return true
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Failed to bulk mark alerts as read'
-      set({ updateError: errorMessage, isUpdating: false })
-      return false
+      // Refresh alerts and actions
+      get().fetchAlerts();
+      get().fetchAlertActions(alertId);
+    } catch (error) {
+      console.error('Error escalating alert:', error);
+      throw error;
     }
   },
-
-  markAllAsRead: async () => {
-    try {
-      set({ isUpdating: true, updateError: null })
-      await apiClient.markAllAlertsAsRead()
-      
-      // Update all alerts to read status
-      const { alerts } = get()
-      const updatedAlerts = alerts.map(alert => ({ ...alert, status: 'READ' as const }))
-      set({ alerts: updatedAlerts, unreadCount: 0, isUpdating: false })
-      
-      return true
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Failed to mark all alerts as read'
-      set({ updateError: errorMessage, isUpdating: false })
-      return false
+  
+  // UI Actions
+  selectAlert: (alertId: number) => {
+    const { selectedAlerts } = get();
+    if (!selectedAlerts.includes(alertId)) {
+      set({ selectedAlerts: [...selectedAlerts, alertId] });
     }
   },
-
-  searchAlerts: async (query: string, page = 0, size = 10) => {
-    try {
-      set({ isLoadingAlerts: true, alertsError: null })
-      const response = await apiClient.searchAlerts(query, page, size)
-      
-      set({
-        alerts: response.content || [],
-        currentPage: response.number || 0,
-        totalPages: response.totalPages || 0,
-        pageSize: response.size || 10,
-        totalAlerts: response.totalElements || 0,
-        isLoadingAlerts: false
-      })
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Failed to search alerts'
-      set({
-        alertsError: errorMessage,
-        isLoadingAlerts: false,
-        alerts: []
-      })
-    }
+  
+  deselectAlert: (alertId: number) => {
+    const { selectedAlerts } = get();
+    set({ selectedAlerts: selectedAlerts.filter(id => id !== alertId) });
   },
-
-  refreshAll: async () => {
-    const { fetchAlerts, fetchRecentAlerts, fetchHighPriorityAlerts, fetchStatistics, fetchUnreadCount } = get()
-    await Promise.allSettled([
-      fetchAlerts(),
-      fetchRecentAlerts(),
-      fetchHighPriorityAlerts(),
-      fetchStatistics(),
-      fetchUnreadCount()
-    ])
+  
+  clearSelectedAlerts: () => {
+    set({ selectedAlerts: [] });
   },
+  
+  openActionModal: (alertId: number) => {
+    set({ showActionModal: true, actionModalAlertId: alertId });
+  },
+  
+  closeActionModal: () => {
+    set({ showActionModal: false, actionModalAlertId: null });
+  },
+  
+  // Utility
+  clearError: () => {
+    set({ alertsError: null, actionsError: null });
+  },
+  
+  reset: () => {
+    set({
+      alerts: [],
+      currentAlert: null,
+      alertsLoading: false,
+      alertsError: null,
+      unreadCount: 0,
+      alertActions: [],
+      currentAlertActions: [],
+      serviceRequests: [],
+      actionTypes: [],
+      actionStatistics: null,
+      actionsLoading: false,
+      actionsError: null,
+      selectedAlerts: [],
+      showActionModal: false,
+      actionModalAlertId: null,
+    });
+  },
+}));
 
-  clearErrors: () => set({
-    alertsError: null,
-    recentError: null,
-    highPriorityError: null,
-    statisticsError: null,
-    unreadCountError: null,
-    updateError: null
-  }),
-
-  setFilters: (status?: string, severity?: string) => {
-    set({ statusFilter: status, severityFilter: severity })
-    get().fetchAlerts(0, get().pageSize, status, severity)
-  }
-}))
+export default useAlertStore;

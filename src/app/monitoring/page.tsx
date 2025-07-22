@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button'
 import { MainLayout } from '@/components/layout/main-layout'
 import { useAuthStore } from '@/stores/auth'
 import { useUsageStore } from '@/stores/usage'
+import { useMonitoringStore } from '@/stores/monitoring'
+import { useSubscriptionStore } from '@/stores/subscription'
 import { apiClient } from '@/lib/api'
 import { CreateMonitoringModal } from '@/components/monitoring/create-monitoring-modal'
 import { 
@@ -25,89 +27,77 @@ import {
   Edit,
   Bell,
   TrendingUp,
-  Activity
+  Activity,
+  Loader2
 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 
 export default function MonitoringPage() {
-  const { isAuthenticated, user } = useAuthStore()
+  const { isAuthenticated, user, refreshUser } = useAuthStore()
   const { quota, fetchQuota } = useUsageStore()
+  const { 
+    items, 
+    dashboard, 
+    isLoadingItems, 
+    isLoadingDashboard,
+    fetchItems, 
+    fetchDashboard, 
+    createItem 
+  } = useMonitoringStore()
+  const {
+    details: subscriptionDetails,
+    isLoading: isLoadingSubscription,
+    error: subscriptionError,
+    fetchDetails: fetchSubscriptionDetails,
+    canCreateMonitor,
+    isFreePlan,
+    getPlanDisplayName,
+    getRemainingMonitors
+  } = useSubscriptionStore()
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [userPlan, setUserPlan] = useState<string>('FREE')
-  const [isLoadingPlan, setIsLoadingPlan] = useState(true)
 
-  // Determine user's actual plan from multiple sources
+  // Refresh user data to get latest subscription info
   useEffect(() => {
-    if (!isAuthenticated || !user) {
-      setUserPlan('FREE')
-      setIsLoadingPlan(false)
-      return
+    if (isAuthenticated) {
+      refreshUser()
     }
+  }, [isAuthenticated, refreshUser])
 
-    const detectUserPlan = async () => {
-      try {
-        setIsLoadingPlan(true)
-        console.log('🔍 Detecting user plan for:', user.email)
-
-        // Method 1: Check user.subscription field
-        if (user.subscription?.planType) {
-          console.log('📊 Plan detected from user.subscription:', user.subscription.planType)
-          setUserPlan(user.subscription.planType)
-          setIsLoadingPlan(false)
-          return
-        }
-
-        // Method 2: Fetch quota data to determine plan
-        if (!quota) {
-          console.log('🔄 No quota data, fetching...')
-          await fetchQuota()
-        }
-
-        // Use quota data to infer plan
-        const currentQuota = quota || useUsageStore.getState().quota
-        if (currentQuota) {
-          const totalSearches = currentQuota.totalSearches
-          
-          let detectedPlan = 'FREE'
-          if (totalSearches >= 1200) {
-            detectedPlan = 'PROFESSIONAL'
-          } else if (totalSearches >= 100) {
-            detectedPlan = 'BASIC'
-          } else if (totalSearches >= 25) {
-            detectedPlan = 'FREE' // Upgraded free user
-          }
-          
-          console.log('📊 Plan inferred from quota:', {
-            totalSearches,
-            detectedPlan,
-            quotaData: currentQuota
-          })
-          
-          setUserPlan(detectedPlan)
-        } else {
-          console.warn('⚠️ No quota data available, defaulting to FREE plan')
-          setUserPlan('FREE')
-        }
-      } catch (error) {
-        console.error('❌ Error detecting user plan:', error)
-        setUserPlan('FREE')
-      } finally {
-        setIsLoadingPlan(false)
+  // Fetch subscription details and monitoring data when user is authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      console.log('🔄 Fetching subscription details and monitoring data...')
+      // Get current monitoring items count for accurate permissions
+      const currentMonitoringItems = items.length
+      // Note: We'd need to get today's searches from usage store
+      const todaySearches = 0 // Could be fetched from usage store
+      
+      fetchSubscriptionDetails(currentMonitoringItems, todaySearches)
+      
+      // Only fetch monitoring data if user has permission (not free plan)
+      if (subscriptionDetails && !subscriptionDetails.subscription.planType.includes('FREE')) {
+        fetchItems()
+        fetchDashboard()
       }
     }
+  }, [isAuthenticated, fetchSubscriptionDetails, items.length])
 
-    detectUserPlan()
-  }, [isAuthenticated, user, quota, fetchQuota])
-
-  const isFreePlan = userPlan === 'FREE'
+  // Fetch monitoring data when subscription details are loaded and user has access
+  useEffect(() => {
+    if (isAuthenticated && subscriptionDetails && !isFreePlan()) {
+      console.log('🔄 User has access, fetching monitoring data...')
+      fetchItems()
+      fetchDashboard()
+    }
+  }, [isAuthenticated, subscriptionDetails, fetchItems, fetchDashboard])
 
   const handleCreateMonitor = async (formData: any) => {
     try {
       console.log('🔄 Creating monitor:', formData)
       
-      // Call the API to create the monitoring item
-      const createdMonitor = await apiClient.createMonitoringItem({
+      // Use the monitoring store to create the item
+      const createdMonitor = await createItem({
         monitorType: formData.monitorType,
         targetValue: formData.targetValue,
         monitorName: formData.monitorName,
@@ -119,11 +109,13 @@ export default function MonitoringPage() {
         webhookAlerts: formData.webhookAlerts
       })
       
-      console.log('✅ Monitor created successfully:', createdMonitor)
-      toast.success(`Monitor "${formData.monitorName}" created successfully!`)
-      
-      // Refresh the monitoring items list
-      // TODO: Add state management for monitoring items list
+      if (createdMonitor) {
+        console.log('✅ Monitor created successfully:', createdMonitor)
+        toast.success(`Monitor "${formData.monitorName}" created successfully!`)
+        setShowCreateModal(false)
+      } else {
+        throw new Error('Failed to create monitor')
+      }
       
     } catch (error: any) {
       console.error('❌ Failed to create monitor:', error)
@@ -153,14 +145,14 @@ export default function MonitoringPage() {
     // Redirect to pricing page
     window.location.href = '/pricing'
   }
-  const dashboard = {
+
+  // Use dashboard data from store or fallback to defaults
+  const dashboardData = dashboard || {
     totalItems: 0,
     activeItems: 0,
     totalAlerts: 0,
     unreadAlerts: 0
   }
-
-  const items = [] // Empty for now
 
   // Redirect to login if not authenticated
   if (!isAuthenticated) {
@@ -197,11 +189,12 @@ export default function MonitoringPage() {
             </p>
           </div>
           <Button 
-            onClick={() => isFreePlan ? handleUpgradeClick() : setShowCreateModal(true)}
-            className={isFreePlan ? "bg-amber-600 hover:bg-amber-700" : "bg-blue-600 hover:bg-blue-700"}
+            onClick={() => !canCreateMonitor() ? handleUpgradeClick() : setShowCreateModal(true)}
+            className={!canCreateMonitor() ? "bg-amber-600 hover:bg-amber-700" : "bg-blue-600 hover:bg-blue-700"}
+            disabled={isLoadingSubscription}
           >
             <Plus className="h-4 w-4 mr-2" />
-            {isFreePlan ? 'Upgrade to Add Monitors' : 'Add Monitor'}
+            {!canCreateMonitor() ? 'Upgrade to Add Monitors' : `Add Monitor (${getRemainingMonitors()} remaining)`}
           </Button>
         </div>
 
@@ -211,12 +204,12 @@ export default function MonitoringPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Active Monitors</p>
-                <p className="text-2xl font-bold text-blue-600">{dashboard.activeItems}</p>
+                <p className="text-2xl font-bold text-blue-600">{dashboardData.activeItems}</p>
               </div>
               <Activity className="h-8 w-8 text-blue-600" />
             </div>
             <p className="text-xs text-gray-500 mt-2">
-              {dashboard.totalItems} total monitors
+              {dashboardData.totalItems} total monitors
             </p>
           </Card>
 
@@ -224,12 +217,12 @@ export default function MonitoringPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Unread Alerts</p>
-                <p className="text-2xl font-bold text-red-600">{dashboard.unreadAlerts}</p>
+                <p className="text-2xl font-bold text-red-600">{dashboardData.unreadAlerts}</p>
               </div>
               <AlertTriangle className="h-8 w-8 text-red-600" />
             </div>
             <p className="text-xs text-gray-500 mt-2">
-              {dashboard.totalAlerts} total alerts
+              {dashboardData.totalAlerts} total alerts
             </p>
           </Card>
 
@@ -237,7 +230,7 @@ export default function MonitoringPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">This Week</p>
-                <p className="text-2xl font-bold text-green-600">0</p>
+                <p className="text-2xl font-bold text-green-600">{isLoadingDashboard ? '-' : '0'}</p>
               </div>
               <TrendingUp className="h-8 w-8 text-green-600" />
             </div>
@@ -290,14 +283,37 @@ export default function MonitoringPage() {
           </div>
 
           {/* Plan-based Content */}
-          {isLoadingPlan ? (
-            /* Loading State */
+          {subscriptionError ? (
+            /* Subscription error - show fallback */
             <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading your plan details...</p>
+              <div className="bg-red-100 rounded-full p-4 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+                <AlertTriangle className="h-10 w-10 text-red-600" />
+              </div>
+              <h4 className="text-xl font-semibold mb-3 text-red-800">Connection Error</h4>
+              <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                {subscriptionError}
+              </p>
+              
+              <div className="space-y-3">
+                <Button 
+                  onClick={() => fetchSubscriptionDetails(items.length, 0)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-8"
+                >
+                  Retry Connection
+                </Button>
+                <div className="text-sm text-gray-500">
+                  Make sure your backend is running on http://localhost:8080
+                </div>
+              </div>
             </div>
-          ) : isFreePlan ? (
-            /* Free Plan Upgrade Prompt */
+          ) : isLoadingSubscription ? (
+            /* Loading subscription details */
+            <div className="text-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
+              <p className="text-gray-600">Loading subscription details...</p>
+            </div>
+          ) : !canCreateMonitor() ? (
+            /* Free Plan or No Monitors Allowed */
             <div className="text-center py-12">
               <div className="bg-amber-100 rounded-full p-4 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
                 <Shield className="h-10 w-10 text-amber-600" />
@@ -309,13 +325,13 @@ export default function MonitoringPage() {
               </p>
               
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 max-w-md mx-auto">
-                <h5 className="font-semibold text-amber-800 mb-2">Current Plan ({userPlan}):</h5>
+                <h5 className="font-semibold text-amber-800 mb-2">Current Plan ({getPlanDisplayName()}):</h5>
                 <ul className="text-sm text-amber-700 space-y-1">
-                  <li>✅ {quota?.totalSearches || 25} searches per day</li>
+                  <li>✅ {subscriptionDetails?.planLimits?.dailySearches || 25} searches per day</li>
                   <li>✅ Basic threat intelligence access</li>
-                  <li>❌ No monitoring items</li>
-                  <li>❌ No real-time alerts</li>
-                  <li>❌ No email notifications</li>
+                  <li>❌ {subscriptionDetails?.planLimits?.maxMonitoringItems || 0} monitoring items</li>
+                  <li>{subscriptionDetails?.planLimits?.hasEmailAlerts ? '✅' : '❌'} Email alerts</li>
+                  <li>{subscriptionDetails?.planLimits?.hasRealTimeMonitoring ? '✅' : '❌'} Real-time monitoring</li>
                 </ul>
               </div>
               
@@ -331,27 +347,34 @@ export default function MonitoringPage() {
                 </div>
               </div>
             </div>
-          ) : (
-            /* Paid Plan Content */
+          ) : isLoadingItems ? (
+            /* Loading monitoring items */
+            <div className="text-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
+              <p className="text-gray-600">Loading your monitors...</p>
+            </div>
+          ) : items.length === 0 ? (
+            /* No monitoring items yet */
             <div className="text-center py-12">
               <div className="bg-green-100 rounded-full p-4 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
                 <Shield className="h-10 w-10 text-green-600" />
               </div>
               <h4 className="text-xl font-semibold mb-3 text-green-800">
-                Welcome to {userPlan} Plan Monitoring!
+                Welcome to {getPlanDisplayName()} Monitoring!
               </h4>
               <p className="text-gray-600 mb-6 max-w-md mx-auto">
                 You have access to monitoring features. Create your first monitor to start tracking threats.
               </p>
               
               <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 max-w-md mx-auto">
-                <h5 className="font-semibold text-green-800 mb-2">Your {userPlan} Plan Includes:</h5>
+                <h5 className="font-semibold text-green-800 mb-2">Your {getPlanDisplayName()} Includes:</h5>
                 <ul className="text-sm text-green-700 space-y-1">
-                  <li>✅ {quota?.totalSearches || 'Unlimited'} searches per day</li>
-                  <li>✅ Advanced threat intelligence</li>
-                  <li>✅ Real-time monitoring</li>
-                  <li>✅ Email & in-app alerts</li>
-                  <li>✅ Export capabilities</li>
+                  <li>✅ {subscriptionDetails?.planLimits?.dailySearches || 'Unlimited'} searches per day</li>
+                  <li>✅ {subscriptionDetails?.planLimits?.maxMonitoringItems || 0} monitoring items</li>
+                  <li>{subscriptionDetails?.planLimits?.hasRealTimeMonitoring ? '✅' : '❌'} Real-time monitoring</li>
+                  <li>{subscriptionDetails?.planLimits?.hasEmailAlerts ? '✅' : '❌'} Email alerts</li>
+                  <li>{subscriptionDetails?.planLimits?.hasInAppAlerts ? '✅' : '❌'} In-app alerts</li>
+                  <li>{subscriptionDetails?.planLimits?.hasApiAccess ? '✅' : '❌'} API access</li>
                 </ul>
               </div>
               
@@ -362,6 +385,76 @@ export default function MonitoringPage() {
                 <Plus className="h-4 w-4 mr-2" />
                 Create Your First Monitor
               </Button>
+            </div>
+          ) : (
+            /* Show monitoring items list */
+            <div className="space-y-4">
+              {items.map((item) => (
+                <div key={item.id} className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3">
+                        <div className="flex-shrink-0">
+                          {item.monitorType === 'EMAIL' && <Mail className="h-5 w-5 text-blue-600" />}
+                          {item.monitorType === 'DOMAIN' && <Globe className="h-5 w-5 text-green-600" />}
+                          {item.monitorType === 'USERNAME' && <User className="h-5 w-5 text-purple-600" />}
+                          {item.monitorType === 'KEYWORD' && <Hash className="h-5 w-5 text-orange-600" />}
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-gray-900">{item.monitorName}</h4>
+                          <p className="text-sm text-gray-600">{item.targetValue}</p>
+                          {item.description && (
+                            <p className="text-sm text-gray-500 mt-1">{item.description}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <div className="text-right">
+                        <p className="text-sm font-medium text-gray-900">
+                          {item.frequency}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {item.alertCount} alerts
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        {item.isActive ? (
+                          <div className="flex items-center text-green-600">
+                            <div className="h-2 w-2 bg-green-600 rounded-full mr-1"></div>
+                            <span className="text-xs">Active</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center text-gray-400">
+                            <div className="h-2 w-2 bg-gray-400 rounded-full mr-1"></div>
+                            <span className="text-xs">Inactive</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-3 flex items-center justify-between">
+                    <div className="flex items-center space-x-4 text-sm text-gray-500">
+                      <span>Created: {new Date(item.createdAt).toLocaleDateString()}</span>
+                      {item.lastChecked && (
+                        <span>Last checked: {new Date(item.lastChecked).toLocaleDateString()}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button variant="outline" size="sm">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        {item.isActive ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                      <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </Card>
@@ -403,13 +496,13 @@ export default function MonitoringPage() {
         </Card>
       </div>
 
-      {/* Create/Edit Modal - Only show for paid plans */}
-      {!isFreePlan && (
+      {/* Create/Edit Modal - Only show for users who can create monitors */}
+      {canCreateMonitor() && (
         <CreateMonitoringModal
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
           onSubmit={handleCreateMonitor}
-          userPlan={userPlan}
+          userPlan={getPlanDisplayName()}
         />
       )}
     </MainLayout>

@@ -11,12 +11,33 @@ export function SubscriptionCard() {
   const { quota } = useUsageStore()
   
   const getPlanInfo = () => {
-    if (!quota) return { name: 'Free', color: 'gray', searches: 25 }
+    // Use real subscription data if available
+    if (user?.subscription) {
+      const planType = user.subscription.planType
+      const status = user.subscription.status
+      
+      // Return plan info based on actual subscription
+      switch (planType) {
+        case 'FREE':
+          return { name: 'Free', color: 'gray', searches: 25, status }
+        case 'BASIC':
+          return { name: 'Basic', color: 'blue', searches: 100, status }
+        case 'PROFESSIONAL':
+          return { name: 'Professional', color: 'purple', searches: 1200, status }
+        case 'ENTERPRISE':
+          return { name: 'Enterprise', color: 'amber', searches: 'unlimited', status }
+        default:
+          return { name: 'Free', color: 'gray', searches: 25, status: 'ACTIVE' }
+      }
+    }
     
-    if (quota.totalSearches <= 25) return { name: 'Free', color: 'gray', searches: 25 }
-    if (quota.totalSearches <= 100) return { name: 'Basic', color: 'blue', searches: 100 }
-    if (quota.totalSearches <= 1200) return { name: 'Professional', color: 'purple', searches: 1200 }
-    return { name: 'Enterprise', color: 'amber', searches: 'unlimited' }
+    // Fallback to quota-based inference if no subscription data
+    if (!quota) return { name: 'Free', color: 'gray', searches: 25, status: 'ACTIVE' }
+    
+    if (quota.totalSearches <= 25) return { name: 'Free', color: 'gray', searches: 25, status: 'ACTIVE' }
+    if (quota.totalSearches <= 100) return { name: 'Basic', color: 'blue', searches: 100, status: 'ACTIVE' }
+    if (quota.totalSearches <= 1200) return { name: 'Professional', color: 'purple', searches: 1200, status: 'ACTIVE' }
+    return { name: 'Enterprise', color: 'amber', searches: 'unlimited', status: 'ACTIVE' }
   }
   
   const planInfo = getPlanInfo()

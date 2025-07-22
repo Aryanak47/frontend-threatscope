@@ -342,6 +342,22 @@ class ApiClient {
         throw new Error('No user data returned from backend')
       }
       
+      // Transform backend subscription data if present
+      let subscription = undefined
+      if (backendUser.subscription) {
+        const backendSub = backendUser.subscription
+        subscription = {
+          id: backendSub.id?.toString() || '',
+          planType: backendSub.planType || 'FREE',
+          status: backendSub.status || 'ACTIVE',
+          billingCycle: backendSub.billingCycle || 'MONTHLY',
+          currentPeriodStart: backendSub.currentPeriodStart || new Date().toISOString(),
+          currentPeriodEnd: backendSub.currentPeriodEnd || new Date().toISOString(),
+          features: [], // Will be populated by subscription details endpoint
+          usage: { searches: 0, monitors: 0 } // Will be populated by subscription details endpoint
+        }
+      }
+      
       // Transform backend User entity to frontend User interface
       const user: User = {
         id: (backendUser.id?.toString() || backendUser.id || '').toString(),
@@ -351,7 +367,8 @@ class ApiClient {
         role: 'ROLE_USER', // Default role
         isEmailVerified: backendUser.emailVerified || backendUser.isEmailVerified || false,
         createdAt: backendUser.createdAt || new Date().toISOString(),
-        updatedAt: backendUser.updatedAt || new Date().toISOString()
+        updatedAt: backendUser.updatedAt || new Date().toISOString(),
+        subscription: subscription
       }
       
       console.log('🔍 Transformed user data:', user)
@@ -646,6 +663,11 @@ class ApiClient {
   }
 
   // Subscription management
+  async getSubscriptionDetails(currentMonitoringItems = 0, todaySearches = 0): Promise<any> {
+    const response = await this.client.get(`/subscription/details?currentMonitoringItems=${currentMonitoringItems}&todaySearches=${todaySearches}`)
+    return response.data.data
+  }
+
   async getSubscription(): Promise<any> {
     const response = await this.client.get('/subscription')
     return response.data.data
@@ -763,9 +785,28 @@ class ApiClient {
 }
 
 // Create and export API client instance
+const getApiBaseUrl = () => {
+  // Try environment variable first
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL
+  }
+  
+  // Fallback to localhost with /api context path
+  return 'http://localhost:8080/api'
+}
+
 const apiConfig: ApiConfig = {
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080',
+  baseURL: getApiBaseUrl(),
   timeout: parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || '10000')
+}
+
+// Debug logging in development
+if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+  console.log('🔧 API Configuration:', {
+    baseURL: apiConfig.baseURL,
+    envVariable: process.env.NEXT_PUBLIC_API_URL,
+    usingFallback: !process.env.NEXT_PUBLIC_API_URL
+  })
 }
 
 export const apiClient = new ApiClient(apiConfig)
