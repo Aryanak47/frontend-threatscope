@@ -540,8 +540,18 @@ class ApiClient {
   }
 
   async createMonitoringItem(item: any): Promise<any> {
-    const response = await this.client.post('/monitoring/items', item)
-    return response.data.data
+    try {
+      const response = await this.client.post('/monitoring/items', item)
+      return response.data.data
+    } catch (error: any) {
+      // Handle duplicate monitoring error (409 status)
+      if (error.response?.status === 409 && error.response?.data?.data) {
+        const duplicateData = error.response.data.data
+        const { DuplicateError } = await import('@/types')
+        throw new DuplicateError(duplicateData)
+      }
+      throw error
+    }
   }
 
   async getMonitoringItem(itemId: string): Promise<any> {

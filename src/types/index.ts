@@ -249,6 +249,74 @@ export interface MonitoringItem {
   createdAt: string
 }
 
+// Enhanced Monitoring Types for Backend Integration
+export interface CreateMonitoringItemRequest {
+  monitorType: 'EMAIL' | 'DOMAIN' | 'USERNAME' | 'IP_ADDRESS' | 'KEYWORD' | 'PHONE' | 'ORGANIZATION'
+  targetValue: string
+  monitorName: string
+  description?: string
+  frequency: 'REAL_TIME' | 'HOURLY' | 'DAILY' | 'WEEKLY'
+  isActive?: boolean
+  emailAlerts?: boolean
+  inAppAlerts?: boolean
+}
+
+export interface UpdateMonitoringItemRequest {
+  monitorName?: string
+  description?: string
+  frequency?: 'REAL_TIME' | 'HOURLY' | 'DAILY' | 'WEEKLY'
+  isActive?: boolean
+  emailAlerts?: boolean
+  inAppAlerts?: boolean
+}
+
+export interface MonitoringItemResponse {
+  id: string
+  monitorType: string
+  targetValue: string
+  monitorName: string
+  description?: string
+  frequency: string
+  isActive: boolean
+  emailAlerts: boolean
+  inAppAlerts: boolean
+  webhookAlerts: boolean
+  lastChecked?: string
+  lastAlertSent?: string
+  alertCount: number
+  createdAt: string
+  updatedAt: string
+  status: string
+  monitorTypeDisplayName: string
+  frequencyDisplayName: string
+  monitorTypeDescription: string
+}
+
+// Duplicate Prevention Types
+export interface DuplicateMonitoringError {
+  message: string
+  targetValue: string
+  monitorType: string
+  existingItemId: string
+  suggestion: string
+}
+
+export class DuplicateError extends Error {
+  public targetValue: string
+  public monitorType: string
+  public existingItemId: string
+  public suggestion: string
+
+  constructor(errorData: DuplicateMonitoringError) {
+    super(errorData.message)
+    this.name = 'DuplicateError'
+    this.targetValue = errorData.targetValue
+    this.monitorType = errorData.monitorType
+    this.existingItemId = errorData.existingItemId
+    this.suggestion = errorData.suggestion
+  }
+}
+
 // Dashboard Types
 export interface DashboardData {
   overview: DashboardOverview

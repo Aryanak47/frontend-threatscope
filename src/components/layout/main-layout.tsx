@@ -13,7 +13,8 @@ import {
   LogOut,
   Bell,
   Menu,
-  X
+  X,
+  Crown
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -33,6 +34,13 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   const handleLogout = async () => {
     await logout()
     router.push('/')
+  }
+
+  const getPlanType = () => {
+    if (user?.subscription?.planType) {
+      return user.subscription.planType
+    }
+    return 'FREE'
   }
 
   const navigation = [
@@ -83,6 +91,20 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             <div className="hidden md:flex items-center space-x-4">
               {isAuthenticated ? (
                 <div className="flex items-center space-x-4">
+                  {/* Upgrade Button (only show if not Enterprise) */}
+                  {getPlanType() !== 'ENTERPRISE' && (
+                    <Link href="/pricing">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="border-blue-300 text-blue-600 hover:bg-blue-50"
+                      >
+                        <Crown className="h-4 w-4 mr-1" />
+                        Upgrade
+                      </Button>
+                    </Link>
+                  )}
+                  
                   {/* Notifications */}
                   {unreadCount > 0 && (
                     <Link href="/alerts" className="relative">
@@ -164,6 +186,18 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
               <div className="pt-4 border-t border-gray-200">
                 {isAuthenticated ? (
                   <div className="space-y-2">
+                    {/* Mobile Upgrade Button */}
+                    {getPlanType() !== 'ENTERPRISE' && (
+                      <Link
+                        href="/pricing"
+                        className="flex items-center space-x-2 text-blue-600 hover:text-blue-800 px-3 py-2 rounded-md text-base font-medium"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <Crown className="h-4 w-4" />
+                        <span>Upgrade Plan</span>
+                      </Link>
+                    )}
+                    
                     <div className="px-3 py-2 text-sm text-gray-700">
                       {user?.firstName || user?.email}
                     </div>

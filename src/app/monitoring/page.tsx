@@ -31,6 +31,7 @@ import {
   Loader2
 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
+import { CreateMonitoringItemRequest, DuplicateError } from '@/types'
 
 export default function MonitoringPage() {
   const { isAuthenticated, user, refreshUser } = useAuthStore()
@@ -92,22 +93,12 @@ export default function MonitoringPage() {
     }
   }, [isAuthenticated, subscriptionDetails, fetchItems, fetchDashboard])
 
-  const handleCreateMonitor = async (formData: any) => {
+  const handleCreateMonitor = async (formData: CreateMonitoringItemRequest) => {
     try {
       console.log('🔄 Creating monitor:', formData)
       
       // Use the monitoring store to create the item
-      const createdMonitor = await createItem({
-        monitorType: formData.monitorType,
-        targetValue: formData.targetValue,
-        monitorName: formData.monitorName,
-        description: formData.description || null,
-        frequency: formData.frequency,
-        isActive: true,
-        emailAlerts: formData.emailAlerts,
-        inAppAlerts: formData.inAppAlerts,
-        webhookAlerts: formData.webhookAlerts
-      })
+      const createdMonitor = await createItem(formData)
       
       if (createdMonitor) {
         console.log('✅ Monitor created successfully:', createdMonitor)
@@ -120,10 +111,19 @@ export default function MonitoringPage() {
     } catch (error: any) {
       console.error('❌ Failed to create monitor:', error)
       
-      // Better error handling
+      // Handle duplicate error specifically
+      if (error instanceof DuplicateError) {
+        // The duplicate dialog will be shown automatically by the modal
+        console.log('🔄 Duplicate monitor detected, showing conflict dialog')
+        return // Don't show toast for duplicates, let the dialog handle it
+      }
+      
+      // Handle other errors with better error messages
       let errorMessage = 'Failed to create monitor'
       
-      if (error.response?.data?.message) {
+      if (error.response?.status === 403) {
+        errorMessage = 'You have reached your monitoring limit. Please upgrade your plan.'
+      } else if (error.response?.data?.message) {
         errorMessage = error.response.data.message
       } else if (error.response?.data?.errors && Array.isArray(error.response.data.errors)) {
         errorMessage = error.response.data.errors.join(', ')

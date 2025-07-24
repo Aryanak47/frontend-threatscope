@@ -163,11 +163,6 @@ export const useAuthStore = create<AuthState>()(
         try {
           console.log('🔍 Starting user refresh')
           const token = localStorage.getItem('threatscope_token')
-          const storedUser = localStorage.getItem('threatscope_user')
-          
-          console.log('🔍 Debug: token exists:', !!token)
-          console.log('🔍 Debug: storedUser exists:', !!storedUser)
-          console.log('🔍 Debug: storedUser raw:', storedUser)
           
           if (!token) {
             console.log('🔍 No token found, clearing auth state')
@@ -175,60 +170,17 @@ export const useAuthStore = create<AuthState>()(
             return
           }
 
-          console.log('🔍 Token found, attempting to refresh user data')
+          console.log('🔍 Token found, fetching fresh user data from backend')
           
-          let userFromStorage = null
-          
-          // Try to restore from localStorage first for faster UX
-          if (storedUser) {
-            try {
-              userFromStorage = JSON.parse(storedUser)
-              
-              // Validate that user object has required properties
-              if (userFromStorage && userFromStorage.email && userFromStorage.id) {
-                console.log('🔍 Restored user from localStorage:', userFromStorage.email)
-                set({
-                  user: userFromStorage,
-                  isAuthenticated: true,
-                  isLoading: false,
-                  error: null
-                })
-              } else {
-                console.warn('⚠️ Invalid user object structure:', userFromStorage)
-                localStorage.removeItem('threatscope_user')
-                userFromStorage = null
-              }
-            } catch (e) {
-              console.warn('⚠️ Failed to parse stored user data:', e)
-              console.log('🔍 Corrupted user data, clearing localStorage')
-              localStorage.removeItem('threatscope_user')
-              userFromStorage = null
-            }
-          }
-          
-          // For now, skip backend verification since it's causing issues
-          // Just use the stored user data if available
-          if (userFromStorage && userFromStorage.email) {
-            console.log('✅ Using stored user data, skipping backend verification for now')
-            set({
-              user: userFromStorage,
-              isAuthenticated: true,
-              isLoading: false,
-              error: null
-            })
-            return
-          }
-          
-          // Only try backend if we don't have stored user data
-          console.log('🔍 No stored user data, attempting backend verification')
           try {
             set({ isLoading: true })
-            console.log('🔍 Calling getCurrentUser...')
+            console.log('🔍 Calling getCurrentUser for fresh data...')
             const user = await apiClient.getCurrentUser()
             
             // Validate backend response
             if (user && user.email && user.id) {
               console.log('✅ User data refreshed from backend:', user.email)
+              console.log('💳 User subscription:', user.subscription?.planType || 'No subscription')
               
               // Update both manual localStorage and Zustand state
               localStorage.setItem('threatscope_user', JSON.stringify(user))
@@ -240,7 +192,7 @@ export const useAuthStore = create<AuthState>()(
                 error: null
               })
               
-              console.log('🔍 Updated localStorage and Zustand state')
+              console.log('🔍 Updated localStorage and Zustand state with fresh data')
             } else {
               console.error('❌ Invalid user data from backend:', user)
               throw new Error('Invalid user data received from backend')
@@ -249,8 +201,8 @@ export const useAuthStore = create<AuthState>()(
             console.warn('⚠️ Backend verification failed:', backendError.message)
             console.error('❌ Backend error details:', backendError)
             
-            // Since backend is failing, just clear the session
-            console.log('🔍 Backend verification failed and no stored user, clearing session')
+            // If backend fails, clear the session to force re-login
+            console.log('🔍 Backend verification failed, clearing session')
             throw backendError
           }
           

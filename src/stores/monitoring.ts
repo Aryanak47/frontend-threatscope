@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { apiClient } from '@/lib/api'
+import { DuplicateError, CreateMonitoringItemRequest, UpdateMonitoringItemRequest, MonitoringItemResponse } from '@/types'
 
 export interface MonitoringItem {
   id: string
@@ -57,6 +58,7 @@ interface MonitoringState {
   createError: string | null
   updateError: string | null
   deleteError: string | null
+  duplicateError: DuplicateError | null
   
   // Pagination
   currentPage: number
@@ -68,12 +70,14 @@ interface MonitoringState {
   fetchItems: (page?: number, size?: number) => Promise<void>
   fetchDashboard: () => Promise<void>
   fetchStatistics: () => Promise<void>
-  createItem: (item: Partial<MonitoringItem>) => Promise<MonitoringItem | null>
-  updateItem: (itemId: string, item: Partial<MonitoringItem>) => Promise<MonitoringItem | null>
+  createItem: (item: CreateMonitoringItemRequest) => Promise<MonitoringItemResponse | null>
+  updateItem: (itemId: string, item: UpdateMonitoringItemRequest) => Promise<MonitoringItemResponse | null>
   deleteItem: (itemId: string) => Promise<boolean>
   searchItems: (query: string, page?: number, size?: number) => Promise<void>
   refreshAll: () => Promise<void>
   clearErrors: () => void
+  clearDuplicateError: () => void
+  handleDuplicateConflict: (existingItemId: string) => void
 }
 
 export const useMonitoringStore = create<MonitoringState>((set, get) => ({
@@ -93,6 +97,7 @@ export const useMonitoringStore = create<MonitoringState>((set, get) => ({
   createError: null,
   updateError: null,
   deleteError: null,
+  duplicateError: null,
   currentPage: 0,
   totalPages: 0,
   pageSize: 10,
@@ -152,9 +157,9 @@ export const useMonitoringStore = create<MonitoringState>((set, get) => ({
     }
   },
 
-  createItem: async (item: Partial<MonitoringItem>) => {
+  createItem: async (item: CreateMonitoringItemRequest) => {
     try {
-      set({ isCreating: true, createError: null })
+      set({ isCreating: true, createError: null, duplicateError: null })
       const newItem = await apiClient.createMonitoringItem(item)
       
       // Add to current items
@@ -169,16 +174,30 @@ export const useMonitoringStore = create<MonitoringState>((set, get) => ({
       
       return newItem
     } catch (error: any) {
+      // Check if it's a duplicate monitoring error (409 status)
+      if (error.response?.status === 409 && error.response?.data?.data) {
+        const duplicateData = error.response.data.data
+        const duplicateError = new DuplicateError(duplicateData)
+        set({
+          duplicateError,
+          isCreating: false,
+          createError: null
+        })
+        throw duplicateError
+      }
+      
+      // Handle other errors
       const errorMessage = error.response?.data?.message || 'Failed to create monitoring item'
       set({
         createError: errorMessage,
-        isCreating: false
+        isCreating: false,
+        duplicateError: null
       })
-      return null
+      throw error
     }
   },
 
-  updateItem: async (itemId: string, item: Partial<MonitoringItem>) => {
+  updateItem: async (itemId: string, item: UpdateMonitoringItemRequest) => {
     try {
       set({ isUpdating: true, updateError: null })
       const updatedItem = await apiClient.updateMonitoringItem(itemId, item)
@@ -267,6 +286,15 @@ export const useMonitoringStore = create<MonitoringState>((set, get) => ({
     statisticsError: null,
     createError: null,
     updateError: null,
-    deleteError: null
-  })
+    deleteError: null,
+    duplicateError: null
+  }),
+
+  clearDuplicateError: () => set({ duplicateError: null }),
+
+  handleDuplicateConflict: (existingItemId: string) => {
+    // This method can be used to navigate to the existing item
+    // The actual navigation logic will be implemented in components
+    console.log('Handling duplicate conflict for item:', existingItemId)
+  }
 }))

@@ -21,6 +21,8 @@ interface MockPaymentModalProps {
     type: string
   }
   billingCycle: 'monthly' | 'yearly'
+  currentPlan?: string
+  isUpgrade?: boolean
 }
 
 const TEST_CARDS = {
@@ -36,7 +38,7 @@ const TEST_CARDS = {
   }
 }
 
-export function MockPaymentModal({ isOpen, onClose, selectedPlan, billingCycle }: MockPaymentModalProps) {
+export function MockPaymentModal({ isOpen, onClose, selectedPlan, billingCycle, currentPlan, isUpgrade }: MockPaymentModalProps) {
   const [isProcessing, setIsProcessing] = useState(false)
   const [paymentResult, setPaymentResult] = useState<{ success: boolean; message: string; transactionId?: string } | null>(null)
   const [formData, setFormData] = useState({
@@ -48,6 +50,7 @@ export function MockPaymentModal({ isOpen, onClose, selectedPlan, billingCycle }
   })
   
   const { refreshAllUsageData } = useUsageStore()
+  const { refreshUser } = useAuthStore()
   
   const calculateAmount = () => {
     const basePrice = selectedPlan.price
@@ -100,15 +103,22 @@ export function MockPaymentModal({ isOpen, onClose, selectedPlan, billingCycle }
       
       console.log('✅ Mock payment successful:', response)
       
+      const actionText = isUpgrade === false ? 'downgraded' : 'upgraded'
       setPaymentResult({
         success: true,
-        message: 'Payment processed successfully! Your plan has been upgraded.',
+        message: `Payment processed successfully! Your plan has been ${actionText}.`,
         transactionId: response.transactionId
       })
       
-      // Refresh usage data to get new limits
-      setTimeout(() => {
-        refreshAllUsageData()
+      // Refresh both user data (for subscription) and usage data (for new limits)
+      setTimeout(async () => {
+        try {
+          await refreshUser() // Refresh user data to get updated subscription
+          await refreshAllUsageData() // Refresh usage data to get new limits
+          console.log('✅ User and usage data refreshed after payment')
+        } catch (error) {
+          console.warn('⚠️ Failed to refresh data after payment:', error)
+        }
       }, 1000)
       
     } catch (error: any) {
@@ -146,6 +156,9 @@ export function MockPaymentModal({ isOpen, onClose, selectedPlan, billingCycle }
           <DialogTitle className="flex items-center space-x-2">
             <CreditCard className="h-5 w-5" />
             <span>Mock Payment System</span>
+            {currentPlan && (
+              <span className="text-sm text-gray-500">({currentPlan} → {selectedPlan.type})</span>
+            )}
           </DialogTitle>
         </DialogHeader>
         
@@ -153,7 +166,14 @@ export function MockPaymentModal({ isOpen, onClose, selectedPlan, billingCycle }
           {/* Plan Summary */}
           <Card className="p-4 bg-blue-50 dark:bg-blue-950">
             <div className="text-center">
-              <h3 className="font-semibold text-lg">{selectedPlan.name} Plan</h3>
+              <h3 className="font-semibold text-lg">
+                {isUpgrade === false ? 'Downgrade to' : 'Upgrade to'} {selectedPlan.name} Plan
+              </h3>
+              {currentPlan && (
+                <p className="text-sm text-gray-600 mb-2">
+                  From {currentPlan} plan
+                </p>
+              )}
               <p className="text-2xl font-bold text-blue-600">
                 ${calculateAmount()} {billingCycle === 'yearly' ? '/year' : '/month'}
               </p>
@@ -290,10 +310,16 @@ export function MockPaymentModal({ isOpen, onClose, selectedPlan, billingCycle }
             
             {paymentResult?.success ? (
               <Button
-                onClick={resetAndClose}
+                onClick={() => {
+                  resetAndClose()
+                  // Redirect to dashboard to show new features
+                  setTimeout(() => {
+                    window.location.href = '/dashboard'
+                  }, 100)
+                }}
                 className="flex-1 bg-green-600 hover:bg-green-700"
               >
-                Done
+                View Dashboard
               </Button>
             ) : (
               <Button

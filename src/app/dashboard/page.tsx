@@ -45,20 +45,25 @@ function DashboardContent() {
   }, [isAuthenticated, refreshAllUsageData])
 
   const getPlanType = () => {
-    if (!quota) return 'Free'
-    if (quota.totalSearches <= 25) return 'Free'
-    if (quota.totalSearches <= 100) return 'Basic'
-    if (quota.totalSearches <= 1200) return 'Professional'
-    return 'Enterprise'
+    // Use actual subscription data from user object
+    if (user?.subscription?.planType) {
+      return user.subscription.planType
+    }
+    // Fallback to quota-based detection if subscription data is not available
+    if (!quota) return 'FREE'
+    if (quota.totalSearches <= 25) return 'FREE'
+    if (quota.totalSearches <= 100) return 'BASIC'
+    if (quota.totalSearches <= 1200) return 'PROFESSIONAL'
+    return 'ENTERPRISE'
   }
 
   const getPlanColor = () => {
     const plan = getPlanType()
     switch (plan) {
-      case 'Free': return 'text-gray-600'
-      case 'Basic': return 'text-blue-600'
-      case 'Professional': return 'text-purple-600'
-      case 'Enterprise': return 'text-amber-600'
+      case 'FREE': return 'text-gray-600'
+      case 'BASIC': return 'text-blue-600'
+      case 'PROFESSIONAL': return 'text-purple-600'
+      case 'ENTERPRISE': return 'text-amber-600'
       default: return 'text-gray-600'
     }
   }
@@ -68,14 +73,91 @@ function DashboardContent() {
       <div className="container max-w-7xl mx-auto px-6 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">
-            Welcome back, {user?.firstName}!
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Here's an overview of your ThreatScope usage and account status.
-          </p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">
+                Welcome back, {user?.firstName}!
+              </h1>
+              <p className="text-lg text-muted-foreground">
+                Here's an overview of your ThreatScope usage and account status.
+              </p>
+            </div>
+            
+            {/* Current Plan Badge */}
+            <div className="flex items-center space-x-3">
+              <div className="text-right">
+                <p className="text-sm text-muted-foreground">Current Plan</p>
+                <p className={`text-lg font-semibold ${getPlanColor()}`}>
+                  {getPlanType()}
+                </p>
+              </div>
+              <div className={`p-3 rounded-lg ${
+                getPlanType() === 'FREE' ? 'bg-gray-100 dark:bg-gray-800' :
+                getPlanType() === 'BASIC' ? 'bg-blue-100 dark:bg-blue-900' :
+                getPlanType() === 'PROFESSIONAL' ? 'bg-purple-100 dark:bg-purple-900' :
+                'bg-amber-100 dark:bg-amber-900'
+              }`}>
+                {
+                  getPlanType() === 'FREE' ? <Shield className="h-6 w-6 text-gray-600" /> :
+                  getPlanType() === 'BASIC' ? <Zap className="h-6 w-6 text-blue-600" /> :
+                  getPlanType() === 'PROFESSIONAL' ? <BarChart3 className="h-6 w-6 text-purple-600" /> :
+                  <Crown className="h-6 w-6 text-amber-600" />
+                }
+              </div>
+              
+              {/* Upgrade Button (only show if not Enterprise) */}
+              {getPlanType() !== 'ENTERPRISE' && (
+                <Button 
+                  asChild 
+                  size="sm" 
+                  variant="outline"
+                  className="border-blue-300 text-blue-600 hover:bg-blue-50"
+                >
+                  <Link href="/pricing">
+                    <Crown className="h-4 w-4 mr-1" />
+                    Upgrade
+                  </Link>
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
 
+        {/* Plan Benefits */}
+        {getPlanType() !== 'FREE' && (
+          <div className="mb-8">
+            <Card className="p-6 border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800">
+              <div className="text-center mb-4">
+                <h3 className="text-lg font-semibold text-green-800 dark:text-green-200 mb-2">
+                  🎉 {getPlanType()} Plan Active
+                </h3>
+                <p className="text-green-700 dark:text-green-300 text-sm">
+                  You're enjoying premium features and enhanced limits!
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div className="text-green-700 dark:text-green-300">
+                  <Shield className="h-5 w-5 mx-auto mb-1" />
+                  <p className="text-xs font-medium">Enhanced Security</p>
+                </div>
+                <div className="text-green-700 dark:text-green-300">
+                  <Bell className="h-5 w-5 mx-auto mb-1" />
+                  <p className="text-xs font-medium">Email Alerts</p>
+                </div>
+                <div className="text-green-700 dark:text-green-300">
+                  <BarChart3 className="h-5 w-5 mx-auto mb-1" />
+                  <p className="text-xs font-medium">Advanced Analytics</p>
+                </div>
+                <div className="text-green-700 dark:text-green-300">
+                  <Download className="h-5 w-5 mx-auto mb-1" />
+                  <p className="text-xs font-medium">Export Features</p>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
+        
         {/* Usage Quota Card */}
         <div className="mb-8">
           <UsageQuotaDisplay />
@@ -216,22 +298,66 @@ function DashboardContent() {
             </div>
           </Card>
 
-          {/* Upgrade Plan */}
-          {getPlanType() === 'Free' && (
+          {/* Upgrade Plan for FREE users */}
+          {getPlanType() === 'FREE' && (
             <Card className="p-6 border-amber-200 bg-amber-50 dark:bg-amber-950 dark:border-amber-800">
               <div className="text-center">
                 <div className="p-4 bg-amber-100 dark:bg-amber-900 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                   <Crown className="h-8 w-8 text-amber-600" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2 text-amber-800 dark:text-amber-200">
-                  Upgrade Your Plan
+                  Upgrade to Basic
                 </h3>
                 <p className="text-sm text-amber-700 dark:text-amber-300 mb-4">
-                  Get more searches, exports, and premium features with a paid plan.
+                  Get 100 searches/day, monitoring, and email alerts for just $9.99/month.
                 </p>
                 <Button variant="outline" asChild className="w-full border-amber-300">
                   <Link href="/pricing">
                     View Plans
+                  </Link>
+                </Button>
+              </div>
+            </Card>
+          )}
+          
+          {/* Upgrade Plan for BASIC users */}
+          {getPlanType() === 'BASIC' && (
+            <Card className="p-6 border-purple-200 bg-purple-50 dark:bg-purple-950 dark:border-purple-800">
+              <div className="text-center">
+                <div className="p-4 bg-purple-100 dark:bg-purple-900 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                  <BarChart3 className="h-8 w-8 text-purple-600" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2 text-purple-800 dark:text-purple-200">
+                  Upgrade to Professional
+                </h3>
+                <p className="text-sm text-purple-700 dark:text-purple-300 mb-4">
+                  Get 1200 searches/day, API access, webhooks, and advanced analytics.
+                </p>
+                <Button variant="outline" asChild className="w-full border-purple-300">
+                  <Link href="/pricing">
+                    Upgrade Now
+                  </Link>
+                </Button>
+              </div>
+            </Card>
+          )}
+          
+          {/* Upgrade Plan for PROFESSIONAL users */}
+          {getPlanType() === 'PROFESSIONAL' && (
+            <Card className="p-6 border-amber-200 bg-amber-50 dark:bg-amber-950 dark:border-amber-800">
+              <div className="text-center">
+                <div className="p-4 bg-amber-100 dark:bg-amber-900 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                  <Crown className="h-8 w-8 text-amber-600" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2 text-amber-800 dark:text-amber-200">
+                  Upgrade to Enterprise
+                </h3>
+                <p className="text-sm text-amber-700 dark:text-amber-300 mb-4">
+                  Get unlimited searches, custom integrations, and dedicated support.
+                </p>
+                <Button variant="outline" asChild className="w-full border-amber-300">
+                  <Link href="/pricing">
+                    Contact Sales
                   </Link>
                 </Button>
               </div>

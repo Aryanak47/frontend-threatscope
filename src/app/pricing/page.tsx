@@ -21,7 +21,8 @@ import {
   Clock,
   Mail,
   Webhook,
-  Loader2
+  Loader2,
+  CheckCircle
 } from 'lucide-react'
 
 interface PlanData {
@@ -140,6 +141,7 @@ export default function PricingPage() {
   const [plans, setPlans] = useState<PlanData[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isUsingFallback, setIsUsingFallback] = useState(false)
+  const [currentUserPlan, setCurrentUserPlan] = useState<string>('FREE')
   const [paymentModal, setPaymentModal] = useState<{
     isOpen: boolean
     selectedPlan: { name: string; price: number; type: string } | null
@@ -165,6 +167,17 @@ export default function PricingPage() {
 
     fetchPlans()
   }, [])
+  
+  // Detect user's current plan
+  useEffect(() => {
+    if (isAuthenticated && user?.subscription) {
+      const currentPlan = user.subscription.planType || 'FREE'
+      console.log('💳 User current plan:', currentPlan)
+      setCurrentUserPlan(currentPlan)
+    } else {
+      setCurrentUserPlan('FREE')
+    }
+  }, [isAuthenticated, user])
 
   const handleUpgrade = (planName: string, planType: string, price: number) => {
     if (!isAuthenticated) {
@@ -179,12 +192,36 @@ export default function PricingPage() {
       return
     }
     
-    if (planType === 'FREE') {
-      // Already on free plan
+    if (planType === currentUserPlan) {
+      // Already on this plan
       return
     }
     
-    // Open mock payment modal
+    if (planType === 'FREE') {
+      // Downgrade to free plan (would need separate confirmation)
+      // For now, just show a message
+      alert('To downgrade to the free plan, please contact support.')
+      return
+    }
+    
+    // Check if this is an upgrade or downgrade
+    const planOrder = { 'FREE': 0, 'BASIC': 1, 'PROFESSIONAL': 2, 'ENTERPRISE': 3 }
+    const currentPlanOrder = planOrder[currentUserPlan as keyof typeof planOrder] || 0
+    const targetPlanOrder = planOrder[planType as keyof typeof planOrder] || 0
+    
+    const isUpgrade = targetPlanOrder > currentPlanOrder
+    const isDowngrade = targetPlanOrder < currentPlanOrder
+    
+    if (isDowngrade) {
+      // Handle downgrade confirmation
+      const confirmed = confirm(
+        `Are you sure you want to downgrade from ${currentUserPlan} to ${planType}? ` +
+        'You may lose access to some features and your monitoring items may be limited.'
+      )
+      if (!confirmed) return
+    }
+    
+    // Open mock payment modal for upgrades or confirmed downgrades
     setPaymentModal({
       isOpen: true,
       selectedPlan: {
@@ -301,6 +338,21 @@ export default function PricingPage() {
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Upgrade to unlock monitoring, alerts, and advanced threat intelligence features
           </p>
+          
+          {/* Current Plan Status */}
+          {isAuthenticated && (
+            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg max-w-md mx-auto">
+              <p className="text-sm text-blue-600 font-medium">
+                Your current plan: <span className="font-bold">{currentUserPlan}</span>
+              </p>
+              {currentUserPlan !== 'FREE' && (
+                <p className="text-xs text-blue-500 mt-1">
+                  ✅ Monitoring active • ✅ Alerts enabled • ✅ Premium features
+                </p>
+              )}
+            </div>
+          )}
+          
           {isUsingFallback && (
             <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg max-w-md mx-auto">
               <p className="text-sm text-yellow-800">
@@ -366,6 +418,13 @@ export default function PricingPage() {
               : 'per month'
 
             const isPopular = planType === 'BASIC'
+            const isCurrentPlan = planType === currentUserPlan
+            const planOrder = { 'FREE': 0, 'BASIC': 1, 'PROFESSIONAL': 2, 'ENTERPRISE': 3 }
+            const currentPlanOrder = planOrder[currentUserPlan as keyof typeof planOrder] || 0
+            const targetPlanOrder = planOrder[planType as keyof typeof planOrder] || 0
+            const isUpgrade = targetPlanOrder > currentPlanOrder
+            const isDowngrade = targetPlanOrder < currentPlanOrder
+            
             const features = formatFeatures(plan)
             const limitations = formatLimitations(plan)
 
@@ -373,10 +432,22 @@ export default function PricingPage() {
               <Card 
                 key={plan.id}
                 className={`relative p-6 flex flex-col h-full ${
-                  isPopular ? 'border-2 border-blue-500 shadow-lg' : ''
+                  isCurrentPlan 
+                    ? 'border-2 border-green-500 shadow-lg bg-green-50'
+                    : isPopular 
+                    ? 'border-2 border-blue-500 shadow-lg' 
+                    : ''
                 }`}
               >
-                {isPopular && (
+                {isCurrentPlan && (
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                    <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center">
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Current Plan
+                    </span>
+                  </div>
+                )}
+                {isPopular && !isCurrentPlan && (
                   <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                     <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center">
                       <Star className="h-3 w-3 mr-1" />
@@ -422,25 +493,42 @@ export default function PricingPage() {
                 <div className="mt-auto">
                   <Button
                     onClick={() => handleUpgrade(displayName, planType, monthlyAmount)}
-                    disabled={planType === 'FREE'}
+                    disabled={isCurrentPlan}
                     className={`w-full h-12 ${
-                      isPopular
-                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                        : planType === 'PROFESSIONAL'
-                        ? 'bg-purple-600 hover:bg-purple-700 text-white'
-                        : planType === 'ENTERPRISE'
-                        ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                      isCurrentPlan
+                        ? 'bg-green-100 text-green-800 border-green-300'
+                        : isUpgrade
+                        ? isPopular
+                          ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                          : planType === 'PROFESSIONAL'
+                          ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                          : planType === 'ENTERPRISE'
+                          ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                          : 'bg-gray-600 hover:bg-gray-700 text-white'
+                        : isDowngrade
+                        ? 'bg-orange-600 hover:bg-orange-700 text-white'
                         : 'bg-gray-600 hover:bg-gray-700 text-white'
                     }`}
-                    variant={planType === 'FREE' ? 'outline' : 'default'}
+                    variant={isCurrentPlan ? 'outline' : 'default'}
                   >
-                    {planType === 'FREE' 
-                      ? 'Current Plan'
+                    {isCurrentPlan 
+                      ? (
+                        <>
+                          <CheckCircle className="mr-2 h-4 w-4" />
+                          Current Plan
+                        </>
+                      )
                       : planType === 'ENTERPRISE'
                       ? 'Contact Sales'
-                      : `Upgrade to ${displayName}`
+                      : isUpgrade
+                      ? `Upgrade to ${displayName}`
+                      : isDowngrade
+                      ? `Downgrade to ${displayName}`
+                      : `Switch to ${displayName}`
                     }
-                    {planType !== 'FREE' && <ArrowRight className="ml-2 h-4 w-4" />}
+                    {!isCurrentPlan && planType !== 'ENTERPRISE' && (
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    )}
                   </Button>
                 </div>
               </Card>
@@ -464,6 +552,13 @@ export default function PricingPage() {
             onClose={() => setPaymentModal({ isOpen: false, selectedPlan: null })}
             selectedPlan={paymentModal.selectedPlan}
             billingCycle={billingCycle}
+            currentPlan={currentUserPlan}
+            isUpgrade={(() => {
+              const planOrder = { 'FREE': 0, 'BASIC': 1, 'PROFESSIONAL': 2, 'ENTERPRISE': 3 }
+              const currentOrder = planOrder[currentUserPlan as keyof typeof planOrder] || 0
+              const targetOrder = planOrder[paymentModal.selectedPlan.type as keyof typeof planOrder] || 0
+              return targetOrder > currentOrder
+            })()}
           />
         )}
       </div>

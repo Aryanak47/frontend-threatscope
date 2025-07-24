@@ -10,13 +10,19 @@ import {
   X,
   Bell,
   Webhook,
-  Clock
+  Clock,
+  AlertTriangle,
+  Edit,
+  Eye
 } from 'lucide-react'
+import { CreateMonitoringItemRequest, DuplicateError } from '@/types'
+import { useMonitoringStore } from '@/stores/monitoring'
+import { useRouter } from 'next/navigation'
 
 interface CreateMonitoringModalProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (data: MonitoringFormData) => void
+  onSubmit: (data: CreateMonitoringItemRequest) => Promise<void>
   userPlan?: string // Add user plan to filter frequencies
 }
 
@@ -29,6 +35,78 @@ interface MonitoringFormData {
   emailAlerts: boolean
   inAppAlerts: boolean
   webhookAlerts: boolean
+}
+
+// Duplicate Conflict Dialog Component
+function DuplicateConflictDialog({ 
+  duplicateError, 
+  onClose, 
+  onEditExisting, 
+  onViewExisting 
+}: {
+  duplicateError: DuplicateError
+  onClose: () => void
+  onEditExisting: () => void
+  onViewExisting: () => void
+}) {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <div className="flex items-center space-x-3 mb-4">
+          <AlertTriangle className="h-6 w-6 text-amber-500" />
+          <h3 className="text-lg font-semibold text-gray-900">Duplicate Monitor Detected</h3>
+        </div>
+        
+        <div className="space-y-4">
+          <p className="text-gray-600">
+            {duplicateError.message}
+          </p>
+          
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+            <div className="text-sm">
+              <div className="font-medium text-amber-800">Target:</div>
+              <div className="text-amber-700">{duplicateError.targetValue}</div>
+            </div>
+            <div className="text-sm mt-2">
+              <div className="font-medium text-amber-800">Type:</div>
+              <div className="text-amber-700">{duplicateError.monitorType}</div>
+            </div>
+          </div>
+          
+          <p className="text-sm text-gray-600">
+            {duplicateError.suggestion}
+          </p>
+        </div>
+        
+        <div className="flex flex-col gap-2 mt-6">
+          <Button 
+            onClick={onEditExisting}
+            className="w-full bg-blue-600 hover:bg-blue-700"
+          >
+            <Edit className="h-4 w-4 mr-2" />
+            Edit Existing Monitor
+          </Button>
+          
+          <Button 
+            onClick={onViewExisting}
+            variant="outline"
+            className="w-full"
+          >
+            <Eye className="h-4 w-4 mr-2" />
+            View Existing Monitor
+          </Button>
+          
+          <Button 
+            onClick={onClose}
+            variant="ghost"
+            className="w-full"
+          >
+            Cancel
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 const monitorTypes = [
@@ -77,6 +155,9 @@ const frequencies = [
 ]
 
 export function CreateMonitoringModal({ isOpen, onClose, onSubmit, userPlan = 'FREE' }: CreateMonitoringModalProps) {
+  const router = useRouter()
+  const { duplicateError, clearDuplicateError, isCreating } = useMonitoringStore()
+  
   // Filter frequencies based on user plan
   const availableFrequencies = frequencies.filter(freq => {
     if (userPlan === 'FREE') {
@@ -100,6 +181,7 @@ export function CreateMonitoringModal({ isOpen, onClose, onSubmit, userPlan = 'F
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const selectedMonitorType = monitorTypes.find(t => t.value === formData.monitorType)
 
@@ -141,37 +223,83 @@ export function CreateMonitoringModal({ isOpen, onClose, onSubmit, userPlan = 'F
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (validateForm()) {
-      onSubmit(formData)
+      try {
+        setIsSubmitting(true)
+        const submitData: CreateMonitoringItemRequest = {
+          monitorType: formData.monitorType,
+          targetValue: formData.targetValue,
+          monitorName: formData.monitorName,
+          description: formData.description,
+          frequency: formData.frequency,
+          isActive: true,
+          emailAlerts: formData.emailAlerts,
+          inAppAlerts: formData.inAppAlerts
+        }
+        
+        await onSubmit(submitData)
+        
+        // Only close and reset if successful
+        onClose()
+        resetForm()
+      } catch (error) {
+        // Error is handled by the store and will show duplicate dialog if needed
+        console.log('Error creating monitor:', error)
+      } finally {
+        setIsSubmitting(false)
+      }
+    }
+  }
+  
+  const resetForm = () => {
+    setFormData({
+      monitorName: '',
+      monitorType: 'EMAIL',
+      targetValue: '',
+      description: '',
+      frequency: 'DAILY',
+      emailAlerts: true,
+      inAppAlerts: true,
+      webhookAlerts: false
+    })
+    setErrors({})
+  }
+  
+  const handleCloseDuplicateDialog = () => {
+    clearDuplicateError()
+  }
+  
+  const handleEditExisting = () => {
+    if (duplicateError?.existingItemId) {
+      clearDuplicateError()
       onClose()
-      // Reset form
-      setFormData({
-        monitorName: '',
-        monitorType: 'EMAIL',
-        targetValue: '',
-        description: '',
-        frequency: 'DAILY',
-        emailAlerts: true,
-        inAppAlerts: true,
-        webhookAlerts: false
-      })
-      setErrors({})
+      router.push(`/monitoring/${duplicateError.existingItemId}/edit`)
+    }
+  }
+  
+  const handleViewExisting = () => {
+    if (duplicateError?.existingItemId) {
+      clearDuplicateError()
+      onClose()
+      router.push(`/monitoring/${duplicateError.existingItemId}`)
     }
   }
 
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-semibold">Add New Monitor</h3>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
+    <>
+      {/* Main Modal */}
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-semibold">Add New Monitor</h3>
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Monitor Name */}
@@ -345,12 +473,27 @@ export function CreateMonitoringModal({ isOpen, onClose, onSubmit, userPlan = 'F
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-              Create Monitor
+            <Button 
+              type="submit" 
+              className="bg-blue-600 hover:bg-blue-700"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Creating...' : 'Create Monitor'}
             </Button>
           </div>
         </form>
       </div>
     </div>
+    
+    {/* Duplicate Conflict Dialog */}
+    {duplicateError && (
+      <DuplicateConflictDialog
+        duplicateError={duplicateError}
+        onClose={handleCloseDuplicateDialog}
+        onEditExisting={handleEditExisting}
+        onViewExisting={handleViewExisting}
+      />
+    )}
+  </>
   )
 }
