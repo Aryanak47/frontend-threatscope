@@ -10,6 +10,8 @@ import { useMonitoringStore } from '@/stores/monitoring'
 import { useSubscriptionStore } from '@/stores/subscription'
 import { apiClient } from '@/lib/api'
 import { CreateMonitoringModal } from '@/components/monitoring/create-monitoring-modal'
+import { EditMonitoringModal } from '@/components/monitoring/edit-monitoring-modal'
+import { RealTimeMonitoringWidget } from '@/components/monitoring/real-time-monitoring-widget'
 import { 
   Shield,
   Plus,
@@ -32,6 +34,8 @@ import {
 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { CreateMonitoringItemRequest, DuplicateError } from '@/types'
+import { MonitoringItem } from '@/stores/monitoring'
+import toastUtils from '@/lib/toast/index'
 
 export default function MonitoringPage() {
   const { isAuthenticated, user, refreshUser } = useAuthStore()
@@ -56,6 +60,8 @@ export default function MonitoringPage() {
     getRemainingMonitors
   } = useSubscriptionStore()
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingItem, setEditingItem] = useState<MonitoringItem | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
 
   // Refresh user data to get latest subscription info
@@ -102,7 +108,11 @@ export default function MonitoringPage() {
       
       if (createdMonitor) {
         console.log('✅ Monitor created successfully:', createdMonitor)
-        toast.success(`Monitor "${formData.monitorName}" created successfully!`)
+        toastUtils.success({
+          title: 'Monitor Created Successfully!',
+          message: `Now monitoring ${formData.targetValue}`,
+          tip: "You'll receive alerts when this email appears in breaches"
+        })
         setShowCreateModal(false)
       } else {
         throw new Error('Failed to create monitor')
@@ -113,9 +123,12 @@ export default function MonitoringPage() {
       
       // Handle duplicate error specifically
       if (error instanceof DuplicateError) {
-        // The duplicate dialog will be shown automatically by the modal
-        console.log('🔄 Duplicate monitor detected, showing conflict dialog')
-        return // Don't show toast for duplicates, let the dialog handle it
+        toastUtils.error({
+          title: 'Already Monitoring This Email',
+          message: `You're already monitoring ${error.targetValue}`,
+          tip: 'Try using a different email or edit your existing monitor'
+        })
+        return
       }
       
       // Handle other errors with better error messages
@@ -144,6 +157,16 @@ export default function MonitoringPage() {
   const handleUpgradeClick = () => {
     // Redirect to pricing page
     window.location.href = '/pricing'
+  }
+
+  const handleEditMonitor = (item: MonitoringItem) => {
+    setEditingItem(item)
+    setShowEditModal(true)
+  }
+
+  const handleCloseEditModal = () => {
+    setShowEditModal(false)
+    setEditingItem(null)
   }
 
   // Use dashboard data from store or fallback to defaults
@@ -442,7 +465,7 @@ export default function MonitoringPage() {
                       )}
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => handleEditMonitor(item)}>
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button variant="outline" size="sm">
@@ -498,12 +521,21 @@ export default function MonitoringPage() {
 
       {/* Create/Edit Modal - Only show for users who can create monitors */}
       {canCreateMonitor() && (
-        <CreateMonitoringModal
-          isOpen={showCreateModal}
-          onClose={() => setShowCreateModal(false)}
-          onSubmit={handleCreateMonitor}
-          userPlan={getPlanDisplayName()}
-        />
+        <>
+          <CreateMonitoringModal
+            isOpen={showCreateModal}
+            onClose={() => setShowCreateModal(false)}
+            onSubmit={handleCreateMonitor}
+            userPlan={getPlanDisplayName()}
+          />
+          
+          <EditMonitoringModal
+            isOpen={showEditModal}
+            onClose={handleCloseEditModal}
+            monitoringItem={editingItem}
+            userPlan={getPlanDisplayName()}
+          />
+        </>
       )}
     </MainLayout>
   )

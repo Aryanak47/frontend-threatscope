@@ -2,8 +2,11 @@
 
 import Link from 'next/link'
 import { useAuthStore } from '@/stores/auth'
+import { useMonitoringStore } from '@/stores/monitoring'
 import useAlertStore from '@/stores/alerts'
 import { Button } from '@/components/ui/button'
+import { ConnectionStatus } from '@/components/ui/connection-status'
+import { useRealTimeNotifications } from '@/hooks/useRealTimeNotifications'
 import { 
   Shield, 
   Search, 
@@ -22,14 +25,20 @@ import { useRouter } from 'next/navigation'
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const { isAuthenticated, user, logout } = useAuthStore()
+  const { fetchItems: fetchMonitoringItems } = useMonitoringStore()
   const { unreadCount, fetchUnreadCount } = useAlertStore()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  
+  // Initialize real-time notifications
+  useRealTimeNotifications()
 
   useEffect(() => {
     if (isAuthenticated) {
+      // Fetch monitoring items so WebSocket knows about active monitoring
+      fetchMonitoringItems()
       fetchUnreadCount()
     }
-  }, [isAuthenticated, fetchUnreadCount])
+  }, [isAuthenticated, fetchMonitoringItems, fetchUnreadCount])
 
   const handleLogout = async () => {
     await logout()
@@ -89,6 +98,11 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
             {/* Auth Buttons */}
             <div className="hidden md:flex items-center space-x-4">
+              {/* Real-time Connection Status */}
+              {isAuthenticated && (
+                <ConnectionStatus showText className="mr-2" />
+              )}
+              
               {isAuthenticated ? (
                 <div className="flex items-center space-x-4">
                   {/* Upgrade Button (only show if not Enterprise) */}

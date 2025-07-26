@@ -49,6 +49,8 @@ function DuplicateConflictDialog({
   onEditExisting: () => void
   onViewExisting: () => void
 }) {
+  console.log('💬 Duplicate dialog rendering with error:', duplicateError)
+  
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
       <div className="bg-white rounded-lg p-6 w-full max-w-md">
@@ -148,37 +150,97 @@ const monitorTypes = [
 ]
 
 const frequencies = [
-  { value: 'DAILY', label: 'Daily', description: 'Check once per day', requiresPremium: false },
-  { value: 'WEEKLY', label: 'Weekly', description: 'Check once per week', requiresPremium: false },
-  { value: 'HOURLY', label: 'Hourly', description: 'Check every hour', requiresPremium: true },
-  { value: 'REAL_TIME', label: 'Real-time', description: 'Immediate alerts', requiresPremium: true }
+  { 
+    value: 'REAL_TIME', 
+    label: 'Real-time', 
+    description: '⚡ Immediate alerts (recommended)', 
+    requiresPremium: true,
+    priority: 1,
+    icon: '🚨',
+    benefits: ['Instant threat detection', 'Immediate response capability', 'Maximum security coverage']
+  },
+  { 
+    value: 'HOURLY', 
+    label: 'Hourly', 
+    description: '🕐 Check every hour', 
+    requiresPremium: true,
+    priority: 2,
+    icon: '⏰',
+    benefits: ['Fast threat detection', 'Good for most use cases']
+  },
+  { 
+    value: 'DAILY', 
+    label: 'Daily', 
+    description: '📅 Check once per day', 
+    requiresPremium: false,
+    priority: 3,
+    icon: '📊',
+    benefits: ['Basic monitoring', 'Suitable for non-critical assets']
+  },
+  { 
+    value: 'WEEKLY', 
+    label: 'Weekly', 
+    description: '📊 Check once per week', 
+    requiresPremium: false,
+    priority: 4,
+    icon: '📈',
+    benefits: ['Basic monitoring', 'Low frequency checks']
+  }
 ]
 
 export function CreateMonitoringModal({ isOpen, onClose, onSubmit, userPlan = 'FREE' }: CreateMonitoringModalProps) {
   const router = useRouter()
   const { duplicateError, clearDuplicateError, isCreating } = useMonitoringStore()
   
-  // Filter frequencies based on user plan
-  const availableFrequencies = frequencies.filter(freq => {
-    if (userPlan === 'FREE') {
-      return !freq.requiresPremium
-    }
-    if (userPlan === 'BASIC') {
-      return !freq.requiresPremium // BASIC plan only gets DAILY and WEEKLY
-    }
-    return true // PROFESSIONAL and ENTERPRISE get all frequencies
+  // Debug logging for duplicate error
+  console.log('🔍 Modal state:', {
+    isOpen,
+    duplicateError: !!duplicateError,
+    duplicateErrorDetails: duplicateError ? {
+      message: duplicateError.message,
+      targetValue: duplicateError.targetValue,
+      existingItemId: duplicateError.existingItemId
+    } : null
   })
+  
+  // Monitor duplicate error changes
+  React.useEffect(() => {
+    if (duplicateError) {
+      console.log('🚨 DUPLICATE ERROR STATE CHANGED:', duplicateError)
+    }
+  }, [duplicateError])
+  
+  // Filter frequencies based on user plan and sort by priority
+  const availableFrequencies = frequencies
+    .filter(freq => {
+      if (userPlan === 'FREE') {
+        return !freq.requiresPremium
+      }
+      if (userPlan === 'BASIC') {
+        return !freq.requiresPremium // BASIC plan only gets DAILY and WEEKLY
+      }
+      return true // PROFESSIONAL and ENTERPRISE get all frequencies
+    })
+    .sort((a, b) => a.priority - b.priority) // Sort by priority (Real-time first)
 
-  const [formData, setFormData] = useState<MonitoringFormData>({
+  // Set default frequency based on user plan
+  const getDefaultFrequency = () => {
+    if (userPlan === 'PROFESSIONAL' || userPlan === 'ENTERPRISE') {
+      return 'REAL_TIME' // Default to real-time for premium users
+    }
+    return 'DAILY' // Default to daily for free/basic users
+  }
+
+  const [formData, setFormData] = useState<MonitoringFormData>(() => ({
     monitorName: '',
     monitorType: 'EMAIL',
     targetValue: '',
     description: '',
-    frequency: 'DAILY', // Default to DAILY instead of REAL_TIME
+    frequency: getDefaultFrequency() as 'REAL_TIME' | 'HOURLY' | 'DAILY' | 'WEEKLY',
     emailAlerts: true,
     inAppAlerts: true,
     webhookAlerts: false
-  })
+  }))
 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -215,8 +277,8 @@ export function CreateMonitoringModal({ isOpen, onClose, onSubmit, userPlan = 'F
       }
     }
 
-    if (!formData.emailAlerts && !formData.inAppAlerts && !formData.webhookAlerts) {
-      newErrors.alerts = 'Please select at least one notification method'
+    if (!formData.emailAlerts) {
+      newErrors.alerts = 'Email notifications are required'
     }
 
     setErrors(newErrors)
@@ -236,16 +298,17 @@ export function CreateMonitoringModal({ isOpen, onClose, onSubmit, userPlan = 'F
           frequency: formData.frequency,
           isActive: true,
           emailAlerts: formData.emailAlerts,
-          inAppAlerts: formData.inAppAlerts
+          inAppAlerts: true // Always enabled - users will see alerts in the app
+          // webhookAlerts: false // Not implemented yet
         }
         
         await onSubmit(submitData)
         
-        // Only close and reset if successful
+        // Close modal on success
         onClose()
         resetForm()
       } catch (error) {
-        // Error is handled by the store and will show duplicate dialog if needed
+        // Error is handled by the parent component and will show appropriate message
         console.log('Error creating monitor:', error)
       } finally {
         setIsSubmitting(false)
@@ -259,10 +322,10 @@ export function CreateMonitoringModal({ isOpen, onClose, onSubmit, userPlan = 'F
       monitorType: 'EMAIL',
       targetValue: '',
       description: '',
-      frequency: 'DAILY',
+      frequency: getDefaultFrequency() as 'REAL_TIME' | 'HOURLY' | 'DAILY' | 'WEEKLY',
       emailAlerts: true,
       inAppAlerts: true,
-      webhookAlerts: false
+      webhookAlerts: false // Always false for now
     })
     setErrors({})
   }
@@ -289,17 +352,22 @@ export function CreateMonitoringModal({ isOpen, onClose, onSubmit, userPlan = 'F
 
   if (!isOpen) return null
 
+  // DEBUG: Show duplicate error state visually
+  if (duplicateError) {
+    console.log('🚨 DUPLICATE ERROR EXISTS - SHOULD SHOW DIALOG!')
+  }
+
   return (
     <>
-      {/* Main Modal */}
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold">Add New Monitor</h3>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+    {/* Main Modal */}
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div className="flex items-center justify-between mb-6">
+    <h3 className="text-xl font-semibold">Add New Monitor</h3>
+    <Button variant="ghost" size="sm" onClick={onClose}>
+      <X className="h-4 w-4" />
+    </Button>
+    </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Monitor Name */}
@@ -395,31 +463,99 @@ export function CreateMonitoringModal({ isOpen, onClose, onSubmit, userPlan = 'F
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Check Frequency *
             </label>
-            <div className="grid grid-cols-2 gap-3">
+            
+            {/* Real-time Promotion Banner for Premium Users */}
+            {(userPlan === 'PROFESSIONAL' || userPlan === 'ENTERPRISE') && (
+              <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center space-x-2 mb-2">
+                  <span className="text-lg">🚀</span>
+                  <span className="font-semibold text-blue-800">Real-time Monitoring Available!</span>
+                </div>
+                <p className="text-sm text-blue-700">
+                  Get instant alerts the moment threats are detected. Perfect for critical assets and maximum protection.
+                </p>
+              </div>
+            )}
+            
+            <div className="grid grid-cols-1 gap-3">
               {availableFrequencies.map((freq) => (
                 <button
                   key={freq.value}
                   type="button"
                   onClick={() => setFormData(prev => ({ ...prev, frequency: freq.value as any }))}
-                  className={`p-3 border rounded-lg text-left transition-colors ${
+                  className={`p-4 border rounded-lg text-left transition-all relative ${
                     formData.frequency === freq.value
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:bg-gray-50'
+                      ? freq.value === 'REAL_TIME' 
+                        ? 'border-blue-500 bg-gradient-to-r from-blue-50 to-indigo-50 ring-2 ring-blue-200'
+                        : 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:bg-gray-50 hover:border-gray-300'
                   }`}
                 >
-                  <div className="font-medium">{freq.label}</div>
-                  <div className="text-xs text-gray-500">{freq.description}</div>
-                  {freq.requiresPremium && (
-                    <div className="text-xs text-amber-600 mt-1">Premium feature</div>
+                  {/* Recommended Badge for Real-time */}
+                  {freq.value === 'REAL_TIME' && !freq.requiresPremium && (
+                    <div className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                      Recommended
+                    </div>
                   )}
+                  
+                  {/* Premium Badge */}
+                  {freq.requiresPremium && (userPlan === 'FREE' || userPlan === 'BASIC') && (
+                    <div className="absolute -top-2 -right-2 bg-amber-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                      Premium
+                    </div>
+                  )}
+                  
+                  <div className="flex items-start space-x-3">
+                    <span className="text-2xl">{freq.icon}</span>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span className="font-medium text-lg">{freq.label}</span>
+                        {freq.value === 'REAL_TIME' && (
+                          <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-medium">
+                            INSTANT
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-600 mb-2">{freq.description}</div>
+                      
+                      {/* Benefits */}
+                      <div className="space-y-1">
+                        {freq.benefits?.map((benefit, index) => (
+                          <div key={index} className="flex items-center space-x-2 text-xs text-gray-500">
+                            <span className="text-green-500">✓</span>
+                            <span>{benefit}</span>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {/* Premium Notice */}
+                      {freq.requiresPremium && (userPlan === 'FREE' || userPlan === 'BASIC') && (
+                        <div className="mt-2 text-xs text-amber-600 font-medium">
+                          🔒 Requires {userPlan === 'FREE' ? 'Basic' : 'Professional'} plan or higher
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </button>
               ))}
             </div>
             
-            {/* Show upgrade notice if user has limited access */}
-            {userPlan === 'BASIC' && (
-              <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700">
-                💡 Upgrade to Professional for Real-time and Hourly monitoring
+            {/* Upgrade Notice */}
+            {(userPlan === 'FREE' || userPlan === 'BASIC') && (
+              <div className="mt-4 p-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg">
+                <div className="flex items-center space-x-2 mb-2">
+                  <span className="text-lg">🎆</span>
+                  <span className="font-semibold text-amber-800">
+                    Upgrade for Real-time Protection
+                  </span>
+                </div>
+                <p className="text-sm text-amber-700 mb-2">
+                  Get instant threat alerts and maximum security coverage with real-time monitoring.
+                </p>
+                <div className="text-xs text-amber-600">
+                  • Professional Plan: Real-time + Hourly monitoring
+                  {userPlan === 'FREE' && <><br/>• Basic Plan: Daily + Weekly monitoring</>}
+                </div>
               </div>
             )}
           </div>
@@ -441,26 +577,18 @@ export function CreateMonitoringModal({ isOpen, onClose, onSubmit, userPlan = 'F
                 <span className="text-sm">Email Notifications</span>
               </label>
 
-              <label className="flex items-center space-x-3">
+              <label className="flex items-center space-x-3 opacity-50 cursor-not-allowed">
                 <input
                   type="checkbox"
-                  checked={formData.inAppAlerts}
-                  onChange={(e) => setFormData(prev => ({ ...prev, inAppAlerts: e.target.checked }))}
-                  className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                  checked={false}
+                  disabled={true}
+                  className="h-4 w-4 text-blue-600 border-gray-300 rounded cursor-not-allowed"
                 />
-                <Bell className="h-4 w-4 text-gray-500" />
-                <span className="text-sm">In-App Alerts</span>
-              </label>
-
-              <label className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  checked={formData.webhookAlerts}
-                  onChange={(e) => setFormData(prev => ({ ...prev, webhookAlerts: e.target.checked }))}
-                  className="h-4 w-4 text-blue-600 border-gray-300 rounded"
-                />
-                <Webhook className="h-4 w-4 text-gray-500" />
-                <span className="text-sm">Webhook Notifications</span>
+                <Webhook className="h-4 w-4 text-gray-400" />
+                <span className="text-sm text-gray-400">Webhook Notifications</span>
+                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full ml-2">
+                  Coming Soon
+                </span>
               </label>
             </div>
             {errors.alerts && (
@@ -484,16 +612,6 @@ export function CreateMonitoringModal({ isOpen, onClose, onSubmit, userPlan = 'F
         </form>
       </div>
     </div>
-    
-    {/* Duplicate Conflict Dialog */}
-    {duplicateError && (
-      <DuplicateConflictDialog
-        duplicateError={duplicateError}
-        onClose={handleCloseDuplicateDialog}
-        onEditExisting={handleEditExisting}
-        onViewExisting={handleViewExisting}
-      />
-    )}
   </>
   )
 }

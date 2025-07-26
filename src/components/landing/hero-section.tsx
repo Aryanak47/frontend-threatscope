@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth'
 import { Shield, Search, Database, Users, ChevronRight, Menu, X, User, Settings, LogOut } from 'lucide-react'
+import { NotificationCenter } from '@/components/ui/notification-center'
 
 export function HeroSection() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -56,6 +57,7 @@ export function HeroSection() {
                   <User className="h-4 w-4" />
                   <span>Welcome, {user?.firstName}</span>
                 </div>
+                <NotificationCenter />
                 <Button variant="outline" asChild>
                   <Link href="/dashboard">
                     <Settings className="mr-2 h-4 w-4" />

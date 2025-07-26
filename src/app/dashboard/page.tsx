@@ -7,8 +7,13 @@ import { Card } from '@/components/ui/card'
 import { useAuthStore } from '@/stores/auth'
 import { useUsageStore } from '@/stores/usage'
 import UsageQuotaDisplay from '@/components/ui/usage-quota-display'
+import { ConnectionStatus } from '@/components/ui/connection-status'
 import AuthGuard from '@/components/auth-guard'
 import { MainLayout } from '@/components/layout/main-layout'
+import { RealTimeActivityFeed } from '@/components/ui/real-time-activity-feed'
+import { RealTimeStatsWidget } from '@/components/ui/real-time-stats-widget'
+import { NotificationTestPanel } from '@/components/ui/notification-test-panel'
+import { useNotificationStore } from '@/stores/notifications'
 import { 
   Shield, 
   BarChart3,
@@ -33,6 +38,7 @@ function DashboardContent() {
     isLoadingToday,
     refreshAllUsageData 
   } = useUsageStore()
+  const { connect: connectNotifications } = useNotificationStore()
 
   useEffect(() => {
     console.log('🔍 Dashboard: Component mounted, isAuthenticated:', isAuthenticated)
@@ -41,8 +47,17 @@ function DashboardContent() {
       console.log('🔍 Dashboard: Authenticated, fetching usage data')
       // Fetch usage data when component mounts
       refreshAllUsageData()
+      
+      // Ensure WebSocket connection is established
+      console.log('🔍 Dashboard: Triggering WebSocket connection...')
+      try {
+        connectNotifications()
+        console.log('✅ Dashboard: WebSocket connection triggered')
+      } catch (error) {
+        console.error('❌ Dashboard: Error triggering WebSocket connection:', error)
+      }
     }
-  }, [isAuthenticated, refreshAllUsageData])
+  }, [isAuthenticated, refreshAllUsageData, connectNotifications])
 
   const getPlanType = () => {
     // Use actual subscription data from user object
@@ -75,9 +90,12 @@ function DashboardContent() {
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold mb-2">
-                Welcome back, {user?.firstName}!
-              </h1>
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="text-3xl font-bold">
+                  Welcome back, {user?.firstName}!
+                </h1>
+                <ConnectionStatus showText />
+              </div>
               <p className="text-lg text-muted-foreground">
                 Here's an overview of your ThreatScope usage and account status.
               </p>
@@ -383,17 +401,24 @@ function DashboardContent() {
           </Card>
         </div>
 
-        {/* Recent Activity */}
-        <div className="mt-8">
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
-            <div className="text-center py-8">
-              <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-muted-foreground">
-                Activity tracking coming soon. We'll show your recent searches, exports, and account changes here.
-              </p>
+        {/* Real-time Dashboard */}
+        <div className="mt-8 space-y-6">
+          {/* Test Panel (Demo) */}
+          <div className="flex justify-center">
+            <NotificationTestPanel />
+          </div>
+          
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            {/* Activity Feed */}
+            <div className="xl:col-span-2">
+              <RealTimeActivityFeed />
             </div>
-          </Card>
+            
+            {/* Stats Widget */}
+            <div className="xl:col-span-1">
+              <RealTimeStatsWidget />
+            </div>
+          </div>
         </div>
       </div>
     </MainLayout>

@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { apiClient } from '@/lib/api'
 import { DuplicateError, CreateMonitoringItemRequest, UpdateMonitoringItemRequest, MonitoringItemResponse } from '@/types'
+import webSocketService from '@/lib/websocket'
 
 export interface MonitoringItem {
   id: string
@@ -78,6 +79,11 @@ interface MonitoringState {
   clearErrors: () => void
   clearDuplicateError: () => void
   handleDuplicateConflict: (existingItemId: string) => void
+  
+  // Real-time actions
+  updateItemStatus: (itemId: string, status: string, lastChecked?: string) => void
+  connectWebSocket: () => void
+  disconnectWebSocket: () => void
 }
 
 export const useMonitoringStore = create<MonitoringState>((set, get) => ({
@@ -174,10 +180,30 @@ export const useMonitoringStore = create<MonitoringState>((set, get) => ({
       
       return newItem
     } catch (error: any) {
+      console.log('🔍 Full error details:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        hasData: !!error.response?.data?.data,
+        dataContent: error.response?.data?.data
+      })
+      
       // Check if it's a duplicate monitoring error (409 status)
       if (error.response?.status === 409 && error.response?.data?.data) {
         const duplicateData = error.response.data.data
-        const duplicateError = new DuplicateError(duplicateData)
+        
+        console.log('🔄 Processing duplicate error with data:', duplicateData)
+        
+        // Convert the backend response to the expected format
+        const duplicateError = new DuplicateError({
+          message: duplicateData.message || error.response.data.message,
+          targetValue: duplicateData.targetValue,
+          monitorType: duplicateData.monitorType,
+          existingItemId: duplicateData.existingItemId?.toString() || '',
+          suggestion: duplicateData.suggestion || 'You can edit the existing monitoring item or remove it to create a new one.'
+        })
+        
+        console.log('🔄 Duplicate error created:', duplicateError)
+        
         set({
           duplicateError,
           isCreating: false,
@@ -296,5 +322,40 @@ export const useMonitoringStore = create<MonitoringState>((set, get) => ({
     // This method can be used to navigate to the existing item
     // The actual navigation logic will be implemented in components
     console.log('Handling duplicate conflict for item:', existingItemId)
+  },
+
+  // Real-time WebSocket actions
+  updateItemStatus: (itemId: string, status: string, lastChecked?: string) => {
+    const { items } = get()
+    const updatedItems = items.map(item => 
+      item.id === itemId 
+        ? { 
+            ...item, 
+            status, 
+            lastChecked: lastChecked || new Date().toISOString() 
+          }
+        : item
+    )
+    
+    set({ items: updatedItems })
+    console.log(`✅ Updated item ${itemId} status to ${status}`)
+  },
+
+  connectWebSocket: () => {
+    try {
+      webSocketService.connect()
+      console.log('🔗 WebSocket connection initiated from monitoring store')
+    } catch (error) {
+      console.error('❌ Failed to connect WebSocket from monitoring store:', error)
+    }
+  },
+
+  disconnectWebSocket: () => {
+    try {
+      webSocketService.disconnect()
+      console.log('🔌 WebSocket disconnected from monitoring store')
+    } catch (error) {
+      console.error('❌ Failed to disconnect WebSocket from monitoring store:', error)
+    }
   }
 }))
