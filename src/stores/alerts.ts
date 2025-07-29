@@ -38,6 +38,7 @@ interface AlertState {
   
   // Quick actions
   acknowledgeAlert: (alertId: number) => Promise<void>;
+  markAsRead: (alertId: number) => Promise<void>;
   markAsResolved: (alertId: number, message?: string) => Promise<void>;
   markAsFalsePositive: (alertId: number, message?: string) => Promise<void>;
   escalateAlert: (alertId: number, message?: string, urgencyLevel?: string) => Promise<void>;
@@ -355,11 +356,48 @@ const useAlertStore = create<AlertState>((set, get) => ({
         throw new Error(`Failed to acknowledge alert: ${response.status}`);
       }
       
-      // Refresh alerts and actions
+      // Refresh alerts, actions, and unread count
       get().fetchAlerts();
       get().fetchAlertActions(alertId);
+      get().fetchUnreadCount();
     } catch (error) {
       console.error('Error acknowledging alert:', error);
+      throw error;
+    }
+  },
+  
+  // Quick action: Mark as read
+  markAsRead: async (alertId: number) => {
+    try {
+      const response = await fetch(`/api/monitoring/alerts/${alertId}/read`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('threatscope_token')}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to mark alert as read: ${response.status}`);
+      }
+      
+      // Update the alert in local state
+      const currentAlerts = get().alerts;
+      const updatedAlerts = currentAlerts.map(alert => 
+        alert.id === alertId ? { ...alert, isRead: true } : alert
+      );
+      
+      // Update unread count
+      const newUnreadCount = updatedAlerts.filter(alert => !alert.isRead).length;
+      
+      set({ 
+        alerts: updatedAlerts,
+        unreadCount: newUnreadCount
+      });
+      
+      // Also refresh from server to ensure sync
+      get().fetchUnreadCount();
+    } catch (error) {
+      console.error('Error marking alert as read:', error);
       throw error;
     }
   },

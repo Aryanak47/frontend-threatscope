@@ -2,7 +2,34 @@
 
 import { useEffect } from 'react'
 import { ThemeProvider } from 'next-themes'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
+
+// ✅ FIXED: Enhanced React Query configuration for better reliability
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // ✅ Better caching and retry settings
+      staleTime: 5 * 60 * 1000,    // 5 minutes
+      gcTime: 10 * 60 * 1000,      // 10 minutes (was cacheTime)
+      retry: 3,                    // ✅ Retry failed requests
+      retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
+      
+      // ✅ Background refetch settings
+      refetchOnWindowFocus: false, // Don't refetch when window gains focus
+      refetchOnReconnect: true,    // Refetch when network reconnects
+      refetchOnMount: true,        // Refetch when component mounts
+      
+      // ✅ Network mode settings
+      networkMode: 'offlineFirst', // Continue using cache when offline
+    },
+    mutations: {
+      retry: 2,
+      retryDelay: 1000,
+      networkMode: 'offlineFirst',
+    },
+  },
+})
 
 interface ProvidersProps {
   children: React.ReactNode
@@ -37,13 +64,15 @@ export function Providers({ children }: ProvidersProps) {
   }, []) // Remove refreshUser from dependencies to avoid unnecessary reruns
 
   return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="light"
-      enableSystem={false}
-      disableTransitionOnChange
-    >
-      {children}
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="light"
+        enableSystem={false}
+        disableTransitionOnChange
+      >
+        {children}
+      </ThemeProvider>
+    </QueryClientProvider>
   )
 }

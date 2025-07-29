@@ -36,7 +36,8 @@ export default function AlertsPage() {
     alertsError, 
     unreadCount, 
     fetchAlerts, 
-    fetchUnreadCount 
+    fetchUnreadCount,
+    markAsRead
   } = useAlertStore()
   const [searchQuery, setSearchQuery] = useState('')
   const [showFilters, setShowFilters] = useState(false)
@@ -82,9 +83,14 @@ export default function AlertsPage() {
     window.location.href = '/pricing'
   }
   
-  const handleMarkRead = (alertId: string) => {
-    // TODO: Implement mark as read functionality
-    toast.success('Alert marked as read')
+  const handleMarkRead = async (alertId: string) => {
+    try {
+      await markAsRead(parseInt(alertId))
+      toast.success('Alert marked as read')
+    } catch (error) {
+      toast.error('Failed to mark alert as read')
+      console.error('Error marking alert as read:', error)
+    }
   }
   
   const handleViewDetails = (alertId: string) => {

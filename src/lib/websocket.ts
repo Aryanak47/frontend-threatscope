@@ -170,10 +170,9 @@ class RealWebSocketService {
     
     this.callbacks.onConnectionStatusChange?.(true);
     
-    toast.success('🔗 Real-time notifications connected', {
-      duration: 3000,
-      position: 'bottom-right'
-    });
+    // ✅ REMOVED: Automatic toast notification on every connection
+    // Only show in console for debugging
+    console.log('✅ Real-time notifications connected');
 
     this.subscribeToChannels();
   }
@@ -299,10 +298,9 @@ class RealWebSocketService {
     this.isConnected = false;
     this.callbacks.onConnectionStatusChange?.(false);
     
-    toast.error('WebSocket connection error', {
-      duration: 5000,
-      position: 'bottom-right'
-    });
+    // ✅ REMOVED: Automatic error toast on every error
+    // Only show in console for debugging
+    console.error('❌ WebSocket connection error');
 
     this.handleReconnection();
   }
@@ -324,13 +322,17 @@ class RealWebSocketService {
     this.isConnected = false;
     this.callbacks.onConnectionStatusChange?.(false);
     
-    if (this.reconnectAttempts < this.maxReconnectAttempts) {
-      this.handleReconnection();
-    } else {
-      toast.error('WebSocket disconnected - manual reconnection required', {
+    // ✅ Only show important disconnection messages
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.error('❌ WebSocket disconnected - max reconnection attempts reached');
+      // Only show toast for persistent connection failures
+      toast.error('Connection lost - please refresh the page', {
         duration: 10000,
         position: 'bottom-right'
       });
+    } else {
+      console.log('🔌 WebSocket disconnected - attempting reconnection...');
+      this.handleReconnection();
     }
   }
 

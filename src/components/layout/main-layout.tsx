@@ -3,9 +3,10 @@
 import Link from 'next/link'
 import { useAuthStore } from '@/stores/auth'
 import { useMonitoringStore } from '@/stores/monitoring'
+import { useNotificationStore } from '@/stores/notifications'
 import useAlertStore from '@/stores/alerts'
 import { Button } from '@/components/ui/button'
-import { ConnectionStatus } from '@/components/ui/connection-status'
+import { NotificationStatusIndicator } from '@/components/ui/notification-status-indicator'
 import { useRealTimeNotifications } from '@/hooks/useRealTimeNotifications'
 import { 
   Shield, 
@@ -26,7 +27,8 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const { isAuthenticated, user, logout } = useAuthStore()
   const { fetchItems: fetchMonitoringItems } = useMonitoringStore()
-  const { unreadCount, fetchUnreadCount } = useAlertStore()
+  const { unreadCount: notificationCount } = useNotificationStore()
+  const { unreadCount: alertCount, fetchUnreadCount: fetchAlertCount } = useAlertStore()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   
   // Initialize real-time notifications
@@ -36,9 +38,9 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     if (isAuthenticated) {
       // Fetch monitoring items so WebSocket knows about active monitoring
       fetchMonitoringItems()
-      fetchUnreadCount()
+      fetchAlertCount()
     }
-  }, [isAuthenticated, fetchMonitoringItems, fetchUnreadCount])
+  }, [isAuthenticated, fetchMonitoringItems, fetchAlertCount])
 
   const handleLogout = async () => {
     await logout()
@@ -56,7 +58,8 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     { name: 'Search', href: '/search', icon: Search },
     { name: 'Dashboard', href: '/dashboard', icon: User, authRequired: true },
     { name: 'Monitoring', href: '/monitoring', icon: Shield, authRequired: true },
-    { name: 'Alerts', href: '/alerts', icon: AlertTriangle, authRequired: true },
+    { name: 'Alerts', href: '/alerts', icon: AlertTriangle, authRequired: true, count: alertCount },
+    { name: 'Notifications', href: '/notifications', icon: Bell, authRequired: true, count: notificationCount },
   ]
 
   return (
@@ -86,9 +89,9 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                   >
                     <item.icon className="h-4 w-4" />
                     <span>{item.name}</span>
-                    {item.name === 'Alerts' && unreadCount > 0 && (
+                    {item.count && item.count > 0 && (
                       <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                        {unreadCount > 9 ? '9+' : unreadCount}
+                        {item.count > 9 ? '9+' : item.count}
                       </span>
                     )}
                   </Link>
@@ -100,7 +103,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             <div className="hidden md:flex items-center space-x-4">
               {/* Real-time Connection Status */}
               {isAuthenticated && (
-                <ConnectionStatus showText className="mr-2" />
+                <NotificationStatusIndicator />
               )}
               
               {isAuthenticated ? (
@@ -120,17 +123,30 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                   )}
                   
                   {/* Notifications */}
-                  {unreadCount > 0 && (
-                    <Link href="/alerts" className="relative">
-                      <Button variant="outline" size="sm">
-                        <Bell className="h-4 w-4" />
-                        {unreadCount > 0 && (
-                          <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                            {unreadCount > 9 ? '9+' : unreadCount}
-                          </span>
-                        )}
-                      </Button>
-                    </Link>
+                  {(alertCount > 0 || notificationCount > 0) && (
+                    <div className="flex items-center gap-2">
+                      {alertCount > 0 && (
+                        <Link href="/alerts" className="relative">
+                          <Button variant="outline" size="sm">
+                            <AlertTriangle className="h-4 w-4 text-red-500" />
+                            <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                              {alertCount > 9 ? '9+' : alertCount}
+                            </span>
+                          </Button>
+                        </Link>
+                      )}
+                      
+                      {notificationCount > 0 && (
+                        <Link href="/notifications" className="relative">
+                          <Button variant="outline" size="sm">
+                            <Bell className="h-4 w-4 text-blue-500" />
+                            <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                              {notificationCount > 9 ? '9+' : notificationCount}
+                            </span>
+                          </Button>
+                        </Link>
+                      )}
+                    </div>
                   )}
                   
                   {/* User Menu */}
@@ -187,9 +203,9 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                   >
                     <item.icon className="h-4 w-4" />
                     <span>{item.name}</span>
-                    {item.name === 'Alerts' && unreadCount > 0 && (
+                    {item.count && item.count > 0 && (
                       <span className="bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center ml-auto">
-                        {unreadCount > 9 ? '9+' : unreadCount}
+                        {item.count > 9 ? '9+' : item.count}
                       </span>
                     )}
                   </Link>

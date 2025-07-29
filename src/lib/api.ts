@@ -807,17 +807,99 @@ const getApiBaseUrl = () => {
 
 const apiConfig: ApiConfig = {
   baseURL: getApiBaseUrl(),
-  timeout: parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || '10000')
+  timeout: parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || '30000') // ✅ Increased from 10s to 30s
 }
 
-// Debug logging in development
-if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
-  console.log('🔧 API Configuration:', {
-    baseURL: apiConfig.baseURL,
-    envVariable: process.env.NEXT_PUBLIC_API_URL,
-    usingFallback: !process.env.NEXT_PUBLIC_API_URL
-  })
+// ✅ FIXED: Enhanced API client with retry logic and better error handling
+class EnhancedApiClient extends ApiClient {
+  private retryCount = 3
+  private retryDelay = 1000
+  
+  constructor(config: ApiConfig) {
+    super(config)
+    this.setupEnhancedInterceptors()
+  }
+  
+  private setupEnhancedInterceptors(): void {
+    // Enhanced response interceptor with retry logic
+    this.client.interceptors.response.use(
+      (response) => {
+        log.info('✅ API Response:', {
+          status: response.status,
+          url: response.config.url,
+          responseTime: Date.now() - (response.config as any).__timestamp
+        })
+        return response
+      },
+      async (error: any) => {
+        const config = error.config
+        
+        // ✅ Add timestamp for response time tracking
+        if (!config.__timestamp) {
+          config.__timestamp = Date.now()
+        }
+        
+        // ✅ Retry logic for network errors and timeouts
+        if (this.shouldRetry(error) && !config.__retryCount) {
+          config.__retryCount = 0
+        }
+        
+        if (config.__retryCount < this.retryCount && this.shouldRetry(error)) {
+          config.__retryCount += 1
+          
+          const delay = this.retryDelay * Math.pow(2, config.__retryCount - 1) // Exponential backoff
+          
+          log.warn(`🔄 Retrying request (${config.__retryCount}/${this.retryCount}): ${config.url}`, {
+            error: error.message,
+            delay: `${delay}ms`
+          })
+          
+          await new Promise(resolve => setTimeout(resolve, delay))
+          return this.client(config)
+        }
+        
+        log.error('❌ API Error (final):', {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          url: error.config?.url,
+          message: error.message,
+          retries: config.__retryCount || 0
+        })
+        
+        // Handle authentication errors
+        if (error.response?.status === 401) {
+          this.removeToken()
+          if (typeof window !== 'undefined' && !window.location.pathname.includes('/demo')) {
+            window.location.href = '/login'
+          }
+        }
+        
+        return Promise.reject(error)
+      }
+    )
+  }
+  
+  private shouldRetry(error: any): boolean {
+    // Retry on network errors, timeouts, and certain HTTP status codes
+    return (
+      error.code === 'ECONNABORTED' ||  // Timeout
+      error.code === 'ENOTFOUND' ||     // DNS lookup failed
+      error.code === 'ECONNREFUSED' ||  // Connection refused
+      error.code === 'ECONNRESET' ||    // Connection reset
+      error.message.includes('Network Error') ||
+      error.message.includes('timeout') ||
+      (error.response && [
+        408,  // Request Timeout
+        429,  // Too Many Requests
+        500,  // Internal Server Error
+        502,  // Bad Gateway
+        503,  // Service Unavailable
+        504   // Gateway Timeout
+      ].includes(error.response.status))
+    )
+  }
 }
 
-export const apiClient = new ApiClient(apiConfig)
+// ✅ Use enhanced API client instead of basic one
+export const apiClient = new EnhancedApiClient(apiConfig)
 export default apiClient
