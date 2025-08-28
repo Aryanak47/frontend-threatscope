@@ -308,9 +308,6 @@ NEXT_PUBLIC_APP_NAME=ThreatScope
 6. **Add search results page**
 7. **Integrate with your ThreatScope backend APIs**
 
-## 📄 License
-
-This project is proprietary software for ThreatScope platform.
 
 ---
 
