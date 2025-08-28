@@ -61,7 +61,7 @@ export function Providers({ children }: ProvidersProps) {
     } else {
       console.log('🔍 Providers: Auth state is consistent, no action needed')
     }
-  }, []) // Remove refreshUser from dependencies to avoid unnecessary reruns
+  }, []) // FIXED: Remove refreshUser from dependencies to avoid unnecessary reruns
 
   return (
     <QueryClientProvider client={queryClient}>

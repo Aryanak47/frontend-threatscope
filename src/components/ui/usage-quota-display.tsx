@@ -24,10 +24,8 @@ export function UsageQuotaDisplay({ className = '', compact = false }: UsageQuot
   const { 
     quota, 
     isLoadingQuota, 
-    quotaError, 
-    fetchQuota,
-    canPerformSearch,
-    getSearchesRemaining
+    quotaError,
+    fetchQuota
   } = useUsageStore()
 
   // Don't show for unauthenticated users
@@ -77,7 +75,7 @@ export function UsageQuotaDisplay({ className = '', compact = false }: UsageQuot
               <p className="text-sm text-red-700 dark:text-red-300">{quotaError}</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={fetchQuota}>
+          <Button variant="outline" size="sm" onClick={() => fetchQuota(isAuthenticated)}>
             <RefreshCw className="h-4 w-4" />
           </Button>
         </div>

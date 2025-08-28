@@ -15,11 +15,17 @@ export interface User {
   email: string
   firstName: string
   lastName: string
-  role: string
+  role?: string
+  roles?: Role[] // Add roles array for better role management
   isEmailVerified: boolean
   subscription?: Subscription
   createdAt: string
   updatedAt: string
+}
+
+export interface Role {
+  id: string
+  name: 'ROLE_USER' | 'ROLE_ADMIN' | 'ROLE_MODERATOR' | 'ROLE_ANALYST' | 'ROLE_ENTERPRISE'
 }
 
 export interface LoginRequest {

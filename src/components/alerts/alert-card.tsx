@@ -3,6 +3,7 @@
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { PlanSelectionModal } from '@/components/consultation/plan-selection-modal'
 import {
   AlertTriangle,
   Shield,
@@ -13,10 +14,13 @@ import {
   EyeOff,
   ExternalLink,
   Copy,
-  CheckCircle
+  CheckCircle,
+  MessageSquare,
+  Users
 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'react-hot-toast'
+import { useRouter } from 'next/navigation'
 
 interface Alert {
   id: string
@@ -121,6 +125,8 @@ function formatDate(dateStr?: string): string {
 export function AlertCard({ alert, onMarkRead, onViewDetails }: AlertCardProps) {
   const [showPassword, setShowPassword] = useState(false)
   const [showRawData, setShowRawData] = useState(false)
+  const [showPlanModal, setShowPlanModal] = useState(false)
+  const router = useRouter()
   
   // Parse breach data and extract info from description
   const breachData = parseBreachData(alert.breachData)
@@ -160,6 +166,11 @@ export function AlertCard({ alert, onMarkRead, onViewDetails }: AlertCardProps) 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text)
     toast.success(`${label} copied to clipboard`)
+  }
+
+  const handleConsultationSuccess = (sessionId: string) => {
+    toast.success('Consultation session created successfully!')
+    router.push(`/consultation/${sessionId}`)
   }
   
   return (
@@ -283,6 +294,28 @@ export function AlertCard({ alert, onMarkRead, onViewDetails }: AlertCardProps) 
             <li>• Use unique passwords for each service</li>
           </ul>
         </div>
+
+        {/* Take Action Section */}
+        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="font-semibold text-green-900 mb-1 flex items-center">
+                <Users className="h-4 w-4 mr-2" />
+                Need Expert Help?
+              </h4>
+              <p className="text-sm text-green-800">
+                Get personalized guidance from cybersecurity experts to respond to this threat
+              </p>
+            </div>
+            <Button
+              onClick={() => setShowPlanModal(true)}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Take Action
+            </Button>
+          </div>
+        </div>
       </div>
       
       {/* Actions */}
@@ -328,6 +361,15 @@ export function AlertCard({ alert, onMarkRead, onViewDetails }: AlertCardProps) 
           </pre>
         </div>
       )}
+
+      {/* Plan Selection Modal */}
+      <PlanSelectionModal
+        isOpen={showPlanModal}
+        onClose={() => setShowPlanModal(false)}
+        alertId={alert.id}
+        alertTitle={alert.title}
+        onSuccess={handleConsultationSuccess}
+      />
     </Card>
   )
 }

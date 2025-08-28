@@ -44,7 +44,7 @@ export function AuthGuard({ children, fallback }: AuthGuardProps) {
     }
 
     initializeAuth()
-  }, []) // Only run once on mount
+  }, []) // FIXED: Only run once on mount, remove refreshUser dependency
 
   // Show loading state during initialization
   if (isInitializing) {

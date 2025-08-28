@@ -18,14 +18,15 @@ import {
   Bell,
   Menu,
   X,
-  Crown
+  Crown,
+  MessageSquare
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  const { isAuthenticated, user, logout } = useAuthStore()
+  const { isAuthenticated, user, logout, isAdmin, hasRole } = useAuthStore()
   const { fetchItems: fetchMonitoringItems } = useMonitoringStore()
   const { unreadCount: notificationCount } = useNotificationStore()
   const { unreadCount: alertCount, fetchUnreadCount: fetchAlertCount } = useAlertStore()
@@ -40,7 +41,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       fetchMonitoringItems()
       fetchAlertCount()
     }
-  }, [isAuthenticated, fetchMonitoringItems, fetchAlertCount])
+  }, [isAuthenticated]) // Removed function dependencies
 
   const handleLogout = async () => {
     await logout()
@@ -59,6 +60,9 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     { name: 'Dashboard', href: '/dashboard', icon: User, authRequired: true },
     { name: 'Monitoring', href: '/monitoring', icon: Shield, authRequired: true },
     { name: 'Alerts', href: '/alerts', icon: AlertTriangle, authRequired: true, count: alertCount },
+    { name: 'Consultations', href: '/consultation', icon: MessageSquare, authRequired: true },
+    { name: 'Expert Panel', href: '/expert', icon: Crown, authRequired: true, expertOnly: true },
+    { name: 'Admin Panel', href: '/admin/consultation', icon: Settings, authRequired: true, adminOnly: true },
     { name: 'Notifications', href: '/notifications', icon: Bell, authRequired: true, count: notificationCount },
   ]
 
@@ -77,20 +81,22 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             </div>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-8">
+            <div className="hidden lg:flex items-center space-x-1 xl:space-x-3">
               {navigation.map((item) => {
                 if (item.authRequired && !isAuthenticated) return null
+                if (item.expertOnly && !hasRole('EXPERT') && !isAdmin()) return null
+                if (item.adminOnly && !isAdmin()) return null
                 
                 return (
                   <Link
                     key={item.name}
                     href={item.href}
-                    className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors relative"
+                    className="flex items-center space-x-1 text-gray-600 hover:text-gray-900 px-1 xl:px-2 py-2 rounded-md text-sm font-medium transition-colors relative"
                   >
                     <item.icon className="h-4 w-4" />
-                    <span>{item.name}</span>
+                    <span className="hidden xl:inline">{item.name}</span>
                     {item.count && item.count > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center text-[10px]">
                         {item.count > 9 ? '9+' : item.count}
                       </span>
                     )}
@@ -100,58 +106,31 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             </div>
 
             {/* Auth Buttons */}
-            <div className="hidden md:flex items-center space-x-4">
+            <div className="hidden lg:flex items-center space-x-1 xl:space-x-3">
               {/* Real-time Connection Status */}
               {isAuthenticated && (
                 <NotificationStatusIndicator />
               )}
               
               {isAuthenticated ? (
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-1 xl:space-x-3">
                   {/* Upgrade Button (only show if not Enterprise) */}
                   {getPlanType() !== 'ENTERPRISE' && (
                     <Link href="/pricing">
                       <Button 
                         variant="outline" 
                         size="sm"
-                        className="border-blue-300 text-blue-600 hover:bg-blue-50"
+                        className="border-blue-300 text-blue-600 hover:bg-blue-50 hidden xl:flex"
                       >
-                        <Crown className="h-4 w-4 mr-1" />
-                        Upgrade
+                        <Crown className="h-4 w-4" />
+                        <span className="hidden 2xl:ml-1 2xl:inline">Upgrade</span>
                       </Button>
                     </Link>
                   )}
                   
-                  {/* Notifications */}
-                  {(alertCount > 0 || notificationCount > 0) && (
-                    <div className="flex items-center gap-2">
-                      {alertCount > 0 && (
-                        <Link href="/alerts" className="relative">
-                          <Button variant="outline" size="sm">
-                            <AlertTriangle className="h-4 w-4 text-red-500" />
-                            <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                              {alertCount > 9 ? '9+' : alertCount}
-                            </span>
-                          </Button>
-                        </Link>
-                      )}
-                      
-                      {notificationCount > 0 && (
-                        <Link href="/notifications" className="relative">
-                          <Button variant="outline" size="sm">
-                            <Bell className="h-4 w-4 text-blue-500" />
-                            <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                              {notificationCount > 9 ? '9+' : notificationCount}
-                            </span>
-                          </Button>
-                        </Link>
-                      )}
-                    </div>
-                  )}
-                  
                   {/* User Menu */}
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-700">
+                  <div className="flex items-center space-x-1 xl:space-x-2">
+                    <span className="text-sm text-gray-700 hidden xl:block max-w-20 truncate">
                       {user?.firstName || user?.email}
                     </span>
                     <Button variant="outline" size="sm" onClick={handleLogout}>
@@ -160,19 +139,19 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-1 xl:space-x-3">
                   <Link href="/login">
-                    <Button variant="outline">Sign In</Button>
+                    <Button variant="outline" size="sm">Sign In</Button>
                   </Link>
                   <Link href="/register">
-                    <Button>Get Started</Button>
+                    <Button size="sm">Get Started</Button>
                   </Link>
                 </div>
               )}
             </div>
 
             {/* Mobile menu button */}
-            <div className="md:hidden flex items-center">
+            <div className="lg:hidden flex items-center">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="text-gray-600 hover:text-gray-900 focus:outline-none focus:text-gray-900"
@@ -189,10 +168,12 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
         {/* Mobile Navigation */}
         {isMobileMenuOpen && (
-          <div className="md:hidden">
+          <div className="lg:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t border-gray-200">
               {navigation.map((item) => {
                 if (item.authRequired && !isAuthenticated) return null
+                if (item.expertOnly && !hasRole('EXPERT') && !isAdmin()) return null
+                if (item.adminOnly && !isAdmin()) return null
                 
                 return (
                   <Link

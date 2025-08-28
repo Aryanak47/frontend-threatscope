@@ -16,21 +16,30 @@ import {
   CheckCircle,
   XCircle,
   Settings,
-  Filter
+  Filter,
+  RefreshCw,
+  Loader2
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 
 export default function NotificationsPage() {
   const { 
     notifications, 
-    unreadCount, 
+    unreadCount,
+    isLoading,
     markAsRead, 
     markAllAsRead, 
     removeNotification, 
-    clearAllNotifications 
+    clearAllNotifications,
+    fetchNotifications 
   } = useNotificationStore()
   
   const [filter, setFilter] = useState<'all' | 'unread' | 'system' | 'alerts'>('all')
+
+  // Fetch notifications on page load
+  useEffect(() => {
+    fetchNotifications()
+  }, [])
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -92,6 +101,21 @@ export default function NotificationsPage() {
           </div>
           
           <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => fetchNotifications()}
+              disabled={isLoading}
+              className="flex items-center gap-2"
+            >
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+              Refresh
+            </Button>
+
             {unreadCount > 0 && (
               <Button 
                 variant="outline" 

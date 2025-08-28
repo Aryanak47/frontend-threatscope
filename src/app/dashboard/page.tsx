@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { useAuthStore } from '@/stores/auth'
-import { useUsageStore } from '@/stores/usage'
+import { useUsageStore, initializeUsageData } from '@/stores/usage'
 import UsageQuotaDisplay from '@/components/ui/usage-quota-display'
 import { ConnectionStatus } from '@/components/ui/connection-status'
 import AuthGuard from '@/components/auth-guard'
@@ -14,6 +14,8 @@ import { RealTimeActivityFeed } from '@/components/ui/real-time-activity-feed'
 import { RealTimeStatsWidget } from '@/components/ui/real-time-stats-widget'
 import { NotificationTestPanel } from '@/components/ui/notification-test-panel'
 import { useNotificationStore } from '@/stores/notifications'
+import { AskExpertButton } from '@/components/consultation/ask-expert-button'
+import AdminDashboardContent from '@/components/admin/admin-dashboard'
 import { 
   Shield, 
   BarChart3,
@@ -24,29 +26,42 @@ import {
   Crown,
   Loader2,
   AlertTriangle,
-  Bell
+  Bell,
+  MessageSquare
 } from 'lucide-react'
 
 function DashboardContent() {
-  const { user, isAuthenticated } = useAuthStore()
+  const { user, isAuthenticated, isAdmin } = useAuthStore()
   const { 
     todayUsage, 
     usageStats, 
     quota,
     isLoadingQuota,
     isLoadingStats,
-    isLoadingToday,
-    refreshAllUsageData 
+    isLoadingToday
   } = useUsageStore()
   const { connect: connectNotifications } = useNotificationStore()
+
+  // Check URL parameter to force user view
+  const [forceUserView, setForceUserView] = useState(false)
+  
+  useEffect(() => {
+    // Check if URL has admin=false parameter
+    const urlParams = new URLSearchParams(window.location.search)
+    if (urlParams.get('admin') === 'false') {
+      setForceUserView(true)
+      // Clean up URL
+      window.history.replaceState({}, '', '/dashboard')
+    }
+  }, [])
 
   useEffect(() => {
     console.log('🔍 Dashboard: Component mounted, isAuthenticated:', isAuthenticated)
     
     if (isAuthenticated) {
-      console.log('🔍 Dashboard: Authenticated, fetching usage data')
-      // Fetch usage data when component mounts
-      refreshAllUsageData()
+      console.log('🔍 Dashboard: Authenticated, initializing usage data')
+      // FIXED: Use manual initialization instead of automatic refresh
+      initializeUsageData()
       
       // Ensure WebSocket connection is established
       console.log('🔍 Dashboard: Triggering WebSocket connection...')
@@ -57,7 +72,17 @@ function DashboardContent() {
         console.error('❌ Dashboard: Error triggering WebSocket connection:', error)
       }
     }
-  }, [isAuthenticated, refreshAllUsageData, connectNotifications])
+  }, [isAuthenticated]) // FIXED: Removed function dependencies
+
+  // 🛡️ ADMIN DASHBOARD: Show admin dashboard for admin users (unless forced to user view)
+  if (isAuthenticated && isAdmin() && !forceUserView) {
+    console.log('🛡️ Rendering Admin Dashboard for admin user')
+    return (
+      <div>
+        <AdminDashboardContent />
+      </div>
+    )
+  }
 
   const getPlanType = () => {
     // Use actual subscription data from user object
@@ -298,123 +323,31 @@ function DashboardContent() {
             </div>
           </Card>
 
-          {/* Alerts */}
+          {/* Other cards... */}
           <Card className="p-6">
             <div className="text-center">
-              <div className="p-4 bg-orange-50 dark:bg-orange-950 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                <AlertTriangle className="h-8 w-8 text-orange-600" />
+              <div className="p-4 bg-green-50 dark:bg-green-950 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                <MessageSquare className="h-8 w-8 text-green-600" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Security Alerts</h3>
+              <h3 className="text-lg font-semibold mb-2">Ask a Security Expert</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                View and manage security alerts from your monitoring items.
+                Get personalized cybersecurity advice from certified experts.
               </p>
-              <Button asChild className="w-full" variant="outline">
-                <Link href="/alerts">
-                  View Alerts
-                </Link>
-              </Button>
-            </div>
-          </Card>
-
-          {/* Upgrade Plan for FREE users */}
-          {getPlanType() === 'FREE' && (
-            <Card className="p-6 border-amber-200 bg-amber-50 dark:bg-amber-950 dark:border-amber-800">
-              <div className="text-center">
-                <div className="p-4 bg-amber-100 dark:bg-amber-900 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <Crown className="h-8 w-8 text-amber-600" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2 text-amber-800 dark:text-amber-200">
-                  Upgrade to Basic
-                </h3>
-                <p className="text-sm text-amber-700 dark:text-amber-300 mb-4">
-                  Get 100 searches/day, monitoring, and email alerts for just $9.99/month.
-                </p>
-                <Button variant="outline" asChild className="w-full border-amber-300">
-                  <Link href="/pricing">
-                    View Plans
-                  </Link>
-                </Button>
-              </div>
-            </Card>
-          )}
-          
-          {/* Upgrade Plan for BASIC users */}
-          {getPlanType() === 'BASIC' && (
-            <Card className="p-6 border-purple-200 bg-purple-50 dark:bg-purple-950 dark:border-purple-800">
-              <div className="text-center">
-                <div className="p-4 bg-purple-100 dark:bg-purple-900 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <BarChart3 className="h-8 w-8 text-purple-600" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2 text-purple-800 dark:text-purple-200">
-                  Upgrade to Professional
-                </h3>
-                <p className="text-sm text-purple-700 dark:text-purple-300 mb-4">
-                  Get 1200 searches/day, API access, webhooks, and advanced analytics.
-                </p>
-                <Button variant="outline" asChild className="w-full border-purple-300">
-                  <Link href="/pricing">
-                    Upgrade Now
-                  </Link>
-                </Button>
-              </div>
-            </Card>
-          )}
-          
-          {/* Upgrade Plan for PROFESSIONAL users */}
-          {getPlanType() === 'PROFESSIONAL' && (
-            <Card className="p-6 border-amber-200 bg-amber-50 dark:bg-amber-950 dark:border-amber-800">
-              <div className="text-center">
-                <div className="p-4 bg-amber-100 dark:bg-amber-900 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <Crown className="h-8 w-8 text-amber-600" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2 text-amber-800 dark:text-amber-200">
-                  Upgrade to Enterprise
-                </h3>
-                <p className="text-sm text-amber-700 dark:text-amber-300 mb-4">
-                  Get unlimited searches, custom integrations, and dedicated support.
-                </p>
-                <Button variant="outline" asChild className="w-full border-amber-300">
-                  <Link href="/pricing">
-                    Contact Sales
-                  </Link>
-                </Button>
-              </div>
-            </Card>
-          )}
-
-          {/* API Access */}
-          <Card className="p-6">
-            <div className="text-center">
-              <div className="p-4 bg-purple-50 dark:bg-purple-950 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                <Zap className="h-8 w-8 text-purple-600" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">API Access</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Integrate ThreatScope into your applications with our powerful API.
-              </p>
-              <Button variant="outline" asChild className="w-full">
-                <Link href="/api-docs">
-                  View API Docs
-                </Link>
-              </Button>
+              <AskExpertButton className="w-full" />
             </div>
           </Card>
         </div>
 
         {/* Real-time Dashboard */}
         <div className="mt-8 space-y-6">
-          {/* Test Panel (Demo) */}
           <div className="flex justify-center">
             <NotificationTestPanel />
           </div>
           
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            {/* Activity Feed */}
             <div className="xl:col-span-2">
               <RealTimeActivityFeed />
             </div>
-            
-            {/* Stats Widget */}
             <div className="xl:col-span-1">
               <RealTimeStatsWidget />
             </div>

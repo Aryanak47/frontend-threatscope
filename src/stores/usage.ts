@@ -357,34 +357,9 @@ function createDefaultAnonymousUsage(): AnonymousUsage {
   }
 }
 
-// Initialize anonymous usage on app start for non-authenticated users
-if (typeof window !== 'undefined') {
-  // Subscribe to auth changes
-  useAuthStore.subscribe((state) => {
-    const { refreshAllUsageData } = useUsageStore.getState()
-    
-    if (state.isAuthenticated && state.user) {
-      // Clear anonymous usage and fetch user quota
-      useUsageStore.setState({ anonymousUsage: null })
-      refreshAllUsageData()
-    } else {
-      // Clear user usage and fetch/initialize anonymous usage
-      useUsageStore.setState({
-        todayUsage: null,
-        quota: null,
-        usageStats: null,
-        quotaError: null,
-        statsError: null,
-        todayError: null
-      })
-      refreshAllUsageData()
-    }
-  })
-  
-  // Initialize on first load
-  setTimeout(() => {
-    const { isAuthenticated } = useAuthStore.getState()
-    const { refreshAllUsageData } = useUsageStore.getState()
-    refreshAllUsageData()
-  }, 100)
+// CRITICAL FIX: Initialize usage data only when components request it
+// No more global subscriptions that cause infinite loops
+export const initializeUsageData = () => {
+  const { refreshAllUsageData } = useUsageStore.getState()
+  refreshAllUsageData()
 }

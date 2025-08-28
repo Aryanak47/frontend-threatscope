@@ -1,332 +1,327 @@
-// Real WebSocket service for notifications using SockJS + STOMP
+// 🚀 Enhanced WebSocket Service with Real-time Chat Support
 import { Client, IFrame, IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
+import { getAuthToken } from '@/lib/auth-utils';
 
-interface WebSocketCallbacks {
-  onOpen?: () => void;
-  onClose?: () => void;
-  onError?: (error: Event) => void;
-  onMessage?: (data: any) => void;
+export interface ChatMessage {
+  id: string;
+  sessionId: string;
+  content: string;
+  sender: 'USER' | 'EXPERT' | 'SYSTEM';
+  messageType: string;
+  isSystemMessage: boolean;
+  createdAt: string;
+  senderName: string;
 }
 
-class WebSocketService {
+export interface NotificationMessage {
+  type: string;
+  title: string;
+  message: string;
+  data?: any;
+  timestamp: string;
+}
+
+export interface SessionStatusUpdate {
+  type: 'SESSION_STATUS_UPDATE';
+  sessionId: string;
+  oldStatus: string;
+  newStatus: string;
+  session: any;
+  timestamp: number;
+}
+
+class EnhancedWebSocketService {
   private client: Client | null = null;
-  private callbacks: WebSocketCallbacks = {};
-  private reconnectAttempts = 0;
-  private maxReconnectAttempts = 5;
-  private reconnectDelay = 1000;
-  private reconnectTimeout: NodeJS.Timeout | null = null;
   private isConnected = false;
+  private callbacks: {
+    onNotification?: (notification: NotificationMessage) => void;
+    onConnectionChange?: (connected: boolean) => void;
+    onConnectionStatusChange?: (connected: boolean) => void; // Alias for compatibility
+    onChatMessage?: (message: ChatMessage) => void;
+    onSessionStatusUpdate?: (update: SessionStatusUpdate) => void;
+    onTypingIndicator?: (data: any) => void;
+    onAlertNotification?: (alert: any) => void;
+    onSystemNotification?: (notification: any) => void;
+    onBroadcastAlert?: (alert: any) => void;
+  } = {};
 
-  connect(callbacks: WebSocketCallbacks) {
-    this.callbacks = callbacks;
+  /**
+   * Connect to WebSocket with enhanced chat support
+   */
+  async connect(userId: string): Promise<boolean> {
+    console.log('🔗 Connecting to enhanced WebSocket service...', userId);
     
-    // Get auth data for connection
-    const token = this.getAuthToken();
-    const userId = this.getCurrentUserId();
-    
-    console.log('🚀 Attempting WebSocket connection...');
-    console.log('  - Has Token:', !!token);
-    console.log('  - User ID:', userId);
-    
-    // Create STOMP client with SockJS
-    this.client = new Client({
-      webSocketFactory: () => {
-        // Build URL with token as query parameter for better compatibility
-        let url = 'http://localhost:8080/api/ws/notifications';
-        if (token) {
-          url += `?access_token=${encodeURIComponent(token)}`;
-        }
-        console.log('🔗 Connecting to:', url.replace(token || '', 'TOKEN_HIDDEN'));
-        return new SockJS(url);
-      },
-      connectHeaders: this.getAuthHeaders(),
-      heartbeatIncoming: 20000,
-      heartbeatOutgoing: 20000,
-      reconnectDelay: this.reconnectDelay,
-      
-      onConnect: (frame: IFrame) => {
-        console.log('🔗 WebSocket connected:', frame);
-        this.isConnected = true;
-        this.reconnectAttempts = 0;
-        this.callbacks.onOpen?.();
+    const token = getAuthToken();
+    if (!token) {
+      console.error('❌ No auth token');
+      return false;
+    }
+
+    return new Promise((resolve) => {
+      this.client = new Client({
+        webSocketFactory: () => new SockJS('http://localhost:8080/api/ws/notifications'),
         
-        // Subscribe to channels
-        this.subscribeToChannels();
-      },
-      
-      onStompError: (frame: IFrame) => {
-        console.error('❌ STOMP error:', frame);
-        this.isConnected = false;
-        this.callbacks.onError?.(new Event('STOMP Error'));
-        this.handleReconnection();
-      },
-      
-      onWebSocketError: (error: Event) => {
-        console.error('❌ WebSocket error:', error);
-        this.isConnected = false;
-        this.callbacks.onError?.(error);
-        this.handleReconnection();
-      },
-      
-      onDisconnect: () => {
-        console.log('🔌 WebSocket disconnected');
-        this.isConnected = false;
-        this.callbacks.onClose?.();
-        this.handleReconnection();
-      }
-    });
-
-    // Start connection
-    try {
-      this.client.activate();
-      console.log('🚀 Attempting WebSocket connection to backend...');
-    } catch (error) {
-      console.error('❌ Failed to start WebSocket connection:', error);
-      this.callbacks.onError?.(new Event('Connection Failed'));
-    }
-  }
-
-  private getAuthHeaders(): Record<string, string> {
-    const headers: Record<string, string> = {};
-    
-    try {
-      // Try to get auth token
-      const token = this.getAuthToken();
-      const userId = this.getCurrentUserId();
-      
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      
-      if (userId) {
-        headers['X-User-ID'] = userId;
-      }
-      
-      console.log('🔐 WebSocket auth headers prepared:', { hasToken: !!token, hasUserId: !!userId });
-    } catch (error) {
-      console.warn('⚠️ Could not prepare auth headers:', error);
-    }
-    
-    return headers;
-  }
-
-  private getAuthToken(): string | null {
-    if (typeof window === 'undefined') return null;
-    
-    try {
-      // Try direct token first (this is what the auth store uses)
-      const directToken = localStorage.getItem('threatscope_token');
-      if (directToken) {
-        console.log('🔐 Found direct token in localStorage');
-        return directToken;
-      }
-      
-      // Try auth store as fallback
-      const authStore = localStorage.getItem('threatscope-auth');
-      if (authStore) {
-        const parsed = JSON.parse(authStore);
-        const token = parsed.state?.token || null;
-        if (token) {
-          console.log('🔐 Found token in auth store');
-          return token;
+        connectHeaders: {
+          'Authorization': `Bearer ${token}`,
+          'X-User-ID': userId
+        },
+        
+        onConnect: (frame: IFrame) => {
+          console.log('✅ Enhanced WebSocket connected!');
+          this.isConnected = true;
+          this.callbacks.onConnectionChange?.(true);
+          this.callbacks.onConnectionStatusChange?.(true); // Compatibility alias
+          this.subscribeToChannels(userId);
+          resolve(true);
+        },
+        
+        onStompError: (frame: IFrame) => {
+          console.error('❌ WebSocket error:', frame);
+          this.isConnected = false;
+          this.callbacks.onConnectionChange?.(false);
+          this.callbacks.onConnectionStatusChange?.(false); // Compatibility alias
+          resolve(false);
+        },
+        
+        onDisconnect: () => {
+          console.log('🔌 WebSocket disconnected');
+          this.isConnected = false;
+          this.callbacks.onConnectionChange?.(false);
+          this.callbacks.onConnectionStatusChange?.(false); // Compatibility alias
         }
-      }
-      
-      console.warn('⚠️ No authentication token found in localStorage');
-      return null;
-    } catch (error) {
-      console.error('❌ Failed to get auth token:', error);
-      return null;
-    }
-  }
-
-  private getCurrentUserId(): string | null {
-    if (typeof window === 'undefined') return null;
-    
-    try {
-      // Try direct user first (this is what the auth store uses)
-      const directUser = localStorage.getItem('threatscope_user');
-      if (directUser) {
-        const user = JSON.parse(directUser);
-        const userId = user?.id?.toString() || null;
-        if (userId) {
-          console.log('👤 Found user ID in localStorage:', userId);
-          return userId;
-        }
-      }
-      
-      // Try auth store as fallback
-      const authStore = localStorage.getItem('threatscope-auth');
-      if (authStore) {
-        const parsed = JSON.parse(authStore);
-        const userId = parsed.state?.user?.id?.toString() || null;
-        if (userId) {
-          console.log('👤 Found user ID in auth store:', userId);
-          return userId;
-        }
-      }
-      
-      console.warn('⚠️ No user ID found in localStorage');
-      return null;
-    } catch (error) {
-      console.error('❌ Failed to get user ID:', error);
-      return null;
-    }
-  }
-
-  private subscribeToChannels() {
-    if (!this.client) return;
-
-    const userId = this.getCurrentUserId();
-    
-    try {
-      // Subscribe to user-specific notifications
-      if (userId) {
-        this.client.subscribe(`/user/${userId}/queue/alerts`, (message: IMessage) => {
-          this.handleMessage(message);
-        });
-
-        this.client.subscribe(`/user/${userId}/queue/monitoring`, (message: IMessage) => {
-          this.handleMessage(message);
-        });
-
-        this.client.subscribe(`/user/${userId}/queue/system`, (message: IMessage) => {
-          this.handleMessage(message);
-        });
-
-        console.log(`📡 Subscribed to user channels for user ${userId}`);
-      }
-
-      // Subscribe to broadcast channels
-      this.client.subscribe('/topic/broadcasts', (message: IMessage) => {
-        this.handleMessage(message);
       });
 
-      console.log('📡 Subscribed to broadcast channels');
-      
-    } catch (error) {
-      console.error('❌ Failed to subscribe to channels:', error);
-    }
+      this.client.activate();
+    });
   }
 
-  private handleMessage(message: IMessage) {
-    try {
-      const data = JSON.parse(message.body);
-      console.log('📨 Received WebSocket message:', data);
-      this.callbacks.onMessage?.(data);
-    } catch (error) {
-      console.error('❌ Failed to parse WebSocket message:', error);
-    }
+  /**
+   * Subscribe to all real-time channels
+   */
+  private subscribeToChannels(userId: string) {
+    if (!this.client) return;
+
+    console.log('📡 Subscribing to enhanced channels...');
+
+    // 1. User notifications (alerts, system messages)
+    this.client.subscribe(`/user/${userId}/queue/notifications`, (message: IMessage) => {
+      this.handleNotificationMessage(message);
+    });
+
+    // 2. Chat messages
+    this.client.subscribe(`/user/${userId}/queue/chat`, (message: IMessage) => {
+      this.handleChatMessage(message);
+    });
+
+    // 3. Session status updates
+    this.client.subscribe(`/user/${userId}/queue/session-updates`, (message: IMessage) => {
+      this.handleSessionStatusUpdate(message);
+    });
+
+    // 4. Connection tests
+    this.client.subscribe(`/user/${userId}/queue/test`, (message: IMessage) => {
+      this.handleConnectionTest(message);
+    });
+
+    // 5. Global broadcasts
+    this.client.subscribe('/topic/broadcasts', (message: IMessage) => {
+      this.handleBroadcastMessage(message);
+    });
+
+    console.log('✅ Subscribed to enhanced channels');
   }
 
-  private handleReconnection() {
-    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.error('❌ Max reconnection attempts reached');
+  /**
+   * Subscribe to session-specific channels
+   */
+  subscribeToSession(sessionId: string) {
+    if (!this.client || !this.isConnected) {
+      console.warn('❌ Cannot subscribe to session - not connected');
       return;
     }
 
-    this.reconnectAttempts++;
-    const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
+    console.log('📡 Subscribing to session channels:', sessionId);
 
-    console.log(`🔄 Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+    // Session chat messages
+    this.client.subscribe(`/topic/session/${sessionId}/chat`, (message: IMessage) => {
+      this.handleChatMessage(message);
+    });
 
-    if (this.reconnectTimeout) {
-      clearTimeout(this.reconnectTimeout);
-    }
+    // Session updates  
+    this.client.subscribe(`/topic/session/${sessionId}/updates`, (message: IMessage) => {
+      this.handleSessionStatusUpdate(message);
+    });
 
-    this.reconnectTimeout = setTimeout(() => {
-      this.forceReconnect();
-    }, delay);
+    // Typing indicators
+    this.client.subscribe(`/topic/session/${sessionId}/typing`, (message: IMessage) => {
+      this.handleTypingIndicator(message);
+    });
   }
 
-  private forceReconnect() {
-    console.log('🔄 Force reconnecting WebSocket...');
-    this.disconnect();
-    this.reconnectAttempts = 0;
-    
-    setTimeout(() => {
-      if (this.callbacks.onOpen) {
-        this.connect(this.callbacks);
+  /**
+   * Send chat message
+   */
+  sendChatMessage(sessionId: string, content: string) {
+    if (!this.client || !this.isConnected) {
+      console.warn('❌ Cannot send message - not connected');
+      return false;
+    }
+
+    this.client.publish({
+      destination: '/app/chat/send',
+      body: JSON.stringify({
+        sessionId,
+        content,
+        type: 'TEXT'
+      })
+    });
+
+    return true;
+  }
+
+  /**
+   * Send typing indicator
+   */
+  sendTypingIndicator(sessionId: string, isTyping: boolean) {
+    if (!this.client || !this.isConnected) return;
+
+    this.client.publish({
+      destination: '/app/chat/typing',
+      body: JSON.stringify({
+        sessionId,
+        isTyping
+      })
+    });
+  }
+
+  /**
+   * Handle different message types
+   */
+  private handleNotificationMessage(message: IMessage) {
+    try {
+      const notification = JSON.parse(message.body) as NotificationMessage;
+      console.log('📨 Notification received:', notification);
+      
+      // Route to general notification handler
+      this.callbacks.onNotification?.(notification);
+      
+      // Also route to specific handlers based on type for compatibility
+      if (notification.type?.includes('ALERT') || notification.type?.includes('BREACH')) {
+        this.callbacks.onAlertNotification?.(notification);
+      } else if (notification.type?.includes('SYSTEM') || 
+                 notification.type?.includes('EXTENSION') ||
+                 notification.type?.includes('TIMER') ||
+                 notification.type?.includes('COMPLETION')) {
+        this.callbacks.onSystemNotification?.(notification);
+      } else if (notification.type?.includes('BROADCAST')) {
+        this.callbacks.onBroadcastAlert?.(notification);
       }
-    }, 1000);
+    } catch (error) {
+      console.error('❌ Failed to parse notification:', error);
+    }
   }
 
-  disconnect() {
-    if (this.reconnectTimeout) {
-      clearTimeout(this.reconnectTimeout);
-      this.reconnectTimeout = null;
+  private handleChatMessage(message: IMessage) {
+    try {
+      const data = JSON.parse(message.body);
+      if (data.type === 'CHAT_MESSAGE' && data.message) {
+        console.log('💬 Chat message received:', data);
+        this.callbacks.onChatMessage?.(data.message);
+      }
+    } catch (error) {
+      console.error('❌ Failed to parse chat message:', error);
     }
+  }
 
+  private handleSessionStatusUpdate(message: IMessage) {
+    try {
+      const update = JSON.parse(message.body) as SessionStatusUpdate;
+      console.log('🔄 Session status update:', update);
+      this.callbacks.onSessionStatusUpdate?.(update);
+    } catch (error) {
+      console.error('❌ Failed to parse session update:', error);
+    }
+  }
+
+  private handleTypingIndicator(message: IMessage) {
+    try {
+      const data = JSON.parse(message.body);
+      console.log('⌨️ Typing indicator:', data);
+      this.callbacks.onTypingIndicator?.(data);
+    } catch (error) {
+      console.error('❌ Failed to parse typing indicator:', error);
+    }
+  }
+
+  private handleConnectionTest(message: IMessage) {
+    try {
+      const data = JSON.parse(message.body);
+      console.log('🧪 Connection test received:', data);
+    } catch (error) {
+      console.error('❌ Failed to parse connection test:', error);
+    }
+  }
+
+  private handleBroadcastMessage(message: IMessage) {
+    try {
+      const notification = JSON.parse(message.body) as NotificationMessage;
+      console.log('📢 Broadcast received:', notification);
+      this.callbacks.onNotification?.(notification);
+    } catch (error) {
+      console.error('❌ Failed to parse broadcast:', error);
+    }
+  }
+
+  /**
+   * Disconnect
+   */
+  disconnect() {
+    console.log('🔌 Disconnecting enhanced WebSocket service...');
     if (this.client) {
       this.client.deactivate();
       this.client = null;
     }
-
     this.isConnected = false;
-    this.callbacks.onClose?.();
+    this.callbacks.onConnectionChange?.(false);
+    this.callbacks.onConnectionStatusChange?.(false);
   }
 
-  // Add missing method for backward compatibility
-  isWebSocketConnected(): boolean {
-    return this.isConnected();
+
+  /**
+   * Connection info
+   */
+  getConnectionInfo() {
+    return {
+      connected: this.isConnected,
+      endpoint: 'http://localhost:8080/api/ws/notifications',
+      hasToken: !!getAuthToken()
+    };
   }
 
+  /**
+   * Set callbacks for different message types
+   */
+  setCallbacks(callbacks: typeof this.callbacks) {
+    this.callbacks = callbacks;
+  }
+
+  /**
+   * Connection status
+   */
   isConnected(): boolean {
-    return this.isConnected && this.client?.connected === true;
+    return this.isConnected;
   }
 
-  // Debug methods
-  getConnectionStatus() {
-    const token = this.getAuthToken();
-    const userId = this.getCurrentUserId();
-    
-    return {
-      isConnected: this.isConnected,
-      clientConnected: this.client?.connected || false,
-      hasToken: !!token,
-      hasUserId: !!userId,
-      token: token ? `${token.substring(0, 10)}...` : null,
-      userId: userId,
-      reconnectAttempts: this.reconnectAttempts,
-      maxReconnectAttempts: this.maxReconnectAttempts
-    };
-  }
-
-  // Test authentication before connecting
+  /**
+   * Test authentication
+   */
   testAuthentication() {
-    const token = this.getAuthToken();
-    const userId = this.getCurrentUserId();
-    
-    console.log('📊 WebSocket Authentication Test:');
-    console.log('  - Has Token:', !!token);
-    console.log('  - Token Preview:', token ? `${token.substring(0, 20)}...` : 'None');
-    console.log('  - Has User ID:', !!userId);
-    console.log('  - User ID:', userId);
-    console.log('  - Auth Store Keys:', Object.keys(localStorage).filter(k => k.includes('threatscope')));
-    
-    return {
-      hasToken: !!token,
-      hasUserId: !!userId,
-      token: token,
-      userId: userId
+    return { 
+      hasToken: !!getAuthToken(), 
+      hasUserId: true 
     };
-  }
-
-  // Send a test message to verify connection
-  sendTestMessage() {
-    if (this.client && this.isConnected) {
-      try {
-        this.client.publish({
-          destination: '/app/test',
-          body: JSON.stringify({ message: 'Test from frontend' })
-        });
-        console.log('📤 Test message sent');
-      } catch (error) {
-        console.error('❌ Failed to send test message:', error);
-      }
-    }
   }
 }
 
-export const webSocketService = new WebSocketService();
+export const webSocketService = new EnhancedWebSocketService();

@@ -103,14 +103,12 @@ class ApiClient {
         }
         
         // Add debugging in development only
-        log.info('🚀 API Request:', {
-          method: config.method?.toUpperCase(),
-          url: config.url,
-          baseURL: config.baseURL,
-          fullURL: `${config.baseURL}${config.url}`,
-          headers: config.headers,
-          data: config.data
-        })
+        if (process.env.NODE_ENV === 'development') {
+          log.info('🚀 API Request:', {
+            method: config.method?.toUpperCase(),
+            url: config.url
+          })
+        }
         
         return config
       },
@@ -120,11 +118,12 @@ class ApiClient {
     // Response interceptor for error handling
     this.client.interceptors.response.use(
       (response) => {
-        log.info('✅ API Response:', {
-          status: response.status,
-          url: response.config.url,
-          data: response.data
-        })
+        if (process.env.NODE_ENV === 'development') {
+          log.info('✅ API Response:', {
+            status: response.status,
+            url: response.config.url
+          })
+        }
         return response
       },
       (error: any) => {
@@ -788,6 +787,162 @@ class ApiClient {
     const response = await this.client.post<ApiResponse<any>>('/mock-payment/cancel')
     return response.data.data!
   }
+
+  // Admin Consultation Methods
+  async getAdminSessions(params: {
+    page?: number
+    size?: number
+    sortBy?: string
+    sortDir?: string
+    status?: string
+    paymentStatus?: string
+    search?: string
+  } = {}): Promise<any> {
+    const queryParams = new URLSearchParams()
+    if (params.page !== undefined) queryParams.append('page', params.page.toString())
+    if (params.size !== undefined) queryParams.append('size', params.size.toString())
+    if (params.sortBy) queryParams.append('sortBy', params.sortBy)
+    if (params.sortDir) queryParams.append('sortDir', params.sortDir)
+    if (params.status) queryParams.append('status', params.status)
+    if (params.paymentStatus) queryParams.append('paymentStatus', params.paymentStatus)
+    if (params.search) queryParams.append('search', params.search)
+    
+    const response = await this.client.get<ApiResponse<any>>(`/admin/consultation/sessions?${queryParams}`)
+    return response.data.data!
+  }
+
+  async getAdminSession(sessionId: string): Promise<any> {
+    const response = await this.client.get<ApiResponse<any>>(`/admin/consultation/sessions/${sessionId}`)
+    return response.data.data!
+  }
+
+  async getAvailableExperts(specialization?: string): Promise<any[]> {
+    const params = specialization ? `?specialization=${encodeURIComponent(specialization)}` : ''
+    const response = await this.client.get<ApiResponse<any[]>>(`/admin/consultation/experts/available${params}`)
+    return response.data.data!
+  }
+
+  async assignExpertToSession(sessionId: string, expertId: string, notes?: string): Promise<any> {
+    const response = await this.client.post<ApiResponse<any>>(`/admin/consultation/sessions/${sessionId}/assign-expert`, {
+      expertId: parseInt(expertId), // Backend expects Long, not string
+      notes: notes || 'Expert assigned by admin'
+    })
+    return response.data.data!
+  }
+
+  async processPaymentApproval(sessionId: string, notes?: string): Promise<any> {
+    const response = await this.client.post<ApiResponse<any>>(`/admin/consultation/sessions/${sessionId}/process-payment`, {
+      notes: notes || 'Payment approved by admin'
+    })
+    return response.data.data!
+  }
+
+  async markSessionAsPaid(sessionId: string, paymentIntentId?: string, notes?: string): Promise<any> {
+    const response = await this.client.post<ApiResponse<any>>(`/admin/consultation/sessions/${sessionId}/mark-paid`, {
+      paymentIntentId: paymentIntentId || `admin_manual_${sessionId}`,
+      notes: notes || 'Payment marked as completed by admin'
+    })
+    return response.data.data!
+  }
+
+  async cancelSession(sessionId: string, reason?: string, refund?: boolean): Promise<any> {
+    const response = await this.client.post<ApiResponse<any>>(`/admin/consultation/sessions/${sessionId}/cancel`, {
+      reason: reason || 'Cancelled by admin',
+      refund: refund ? 'true' : 'false'
+    })
+    return response.data.data!
+  }
+
+  async completeSession(sessionId: string, expertSummary?: string, deliverables?: string): Promise<any> {
+    const response = await this.client.post<ApiResponse<any>>(`/admin/consultation/sessions/${sessionId}/complete`, {
+      expertSummary: expertSummary || 'Session completed by admin',
+      deliverables: deliverables || 'Session deliverables provided'
+    })
+    return response.data.data!
+  }
+
+  async extendSession(sessionId: string, additionalHours: number, reason?: string): Promise<any> {
+    const response = await this.client.post<ApiResponse<any>>(`/admin/consultation/sessions/${sessionId}/extend`, {
+      additionalHours,
+      reason: reason || 'Session extended by admin'
+    })
+    return response.data.data!
+  }
+
+  async setSessionManaged(sessionId: string, managed: boolean, reason?: string): Promise<any> {
+    const response = await this.client.post<ApiResponse<any>>(`/admin/consultation/sessions/${sessionId}/manage`, {
+      managed,
+      reason: reason || `Session ${managed ? 'placed under' : 'removed from'} admin management`
+    })
+    return response.data.data!
+  }
+
+  async reactivateExpiredSession(sessionId: string, reason?: string): Promise<any> {
+    const response = await this.client.post<ApiResponse<any>>(`/admin/consultation/sessions/${sessionId}/reactivate`, {
+      reason: reason || 'Session reactivated by admin'
+    })
+    return response.data.data!
+  }
+
+  async getConsultationAdminDashboard(): Promise<any> {
+    const response = await this.client.get<ApiResponse<any>>('/admin/consultation/dashboard')
+    return response.data.data!
+  }
+
+  async getPendingConsultationSessions(): Promise<any[]> {
+    const response = await this.client.get<ApiResponse<any[]>>('/admin/consultation/sessions/pending')
+    return response.data.data!
+  }
+
+  async getRecentConsultationSessions(minutesBack: number = 60): Promise<any[]> {
+    const response = await this.client.get<ApiResponse<any[]>>(`/admin/consultation/sessions/recent?minutesBack=${minutesBack}`)
+    return response.data.data!
+  }
+
+  async getSessionsNeedingAttention(): Promise<any[]> {
+    const response = await this.client.get<ApiResponse<any[]>>('/admin/consultation/sessions/attention')
+    return response.data.data!
+  }
+
+  async bulkProcessPayments(sessionIds: string[], notes?: string): Promise<any> {
+    const response = await this.client.post<ApiResponse<any>>('/admin/consultation/sessions/bulk/process-payments', {
+      sessionIds: sessionIds.map(id => parseInt(id)), // Backend expects Long[]
+      notes: notes || 'Bulk payment processing by admin'
+    })
+    return response.data.data!
+  }
+
+  async bulkExtendSessions(sessionIds: string[], additionalHours: number, reason?: string): Promise<any> {
+    const response = await this.client.post<ApiResponse<any>>('/admin/consultation/sessions/bulk/extend', {
+      sessionIds: sessionIds.map(id => parseInt(id)), // Backend expects Long[]
+      additionalHours,
+      reason: reason || 'Bulk session extension by admin'
+    })
+    return response.data.data!
+  }
+
+  // Notification endpoints
+  async getNotifications(): Promise<any[]> {
+    const response = await this.client.get<ApiResponse<any[]>>('/notifications')
+    return response.data.data!
+  }
+
+  async markNotificationAsRead(notificationId: string): Promise<void> {
+    await this.client.post(`/notifications/${notificationId}/read`)
+  }
+
+  async deleteNotification(notificationId: string): Promise<void> {
+    await this.client.delete(`/notifications/${notificationId}`)
+  }
+
+  async markAllNotificationsAsRead(): Promise<void> {
+    await this.client.post('/notifications/mark-all-read')
+  }
+
+  async clearAllNotifications(): Promise<void> {
+    await this.client.delete('/notifications/all')
+  }
+
   async request<T = any>(config: AxiosRequestConfig): Promise<T> {
     const response = await this.client.request<ApiResponse<T>>(config)
     return response.data.data!
@@ -807,7 +962,7 @@ const getApiBaseUrl = () => {
 
 const apiConfig: ApiConfig = {
   baseURL: getApiBaseUrl(),
-  timeout: parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || '30000') // ✅ Increased from 10s to 30s
+  timeout: parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || '10000') // ✅ Reduced from 30s to 10s
 }
 
 // ✅ FIXED: Enhanced API client with retry logic and better error handling

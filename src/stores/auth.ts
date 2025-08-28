@@ -26,6 +26,11 @@ interface AuthState {
   refreshUser: () => Promise<void>
   clearError: () => void
   setLoading: (loading: boolean) => void
+  
+  // Admin utilities
+  isAdmin: () => boolean
+  hasRole: (roleName: string) => boolean
+  getUserRoles: () => string[]
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -223,6 +228,68 @@ export const useAuthStore = create<AuthState>()(
 
       clearError: () => set({ error: null }),
       setLoading: (loading: boolean) => set({ isLoading: loading }),
+      
+      // Admin utilities
+      isAdmin: () => {
+        const { user } = get()
+        if (!user) return false
+        
+        // Check roles array first
+        if (user.roles) {
+          const hasAdminRole = user.roles.some(role => role.name === 'ROLE_ADMIN')
+          if (hasAdminRole) return true
+        }
+        
+        // Fallback to role string
+        if (user.role) {
+          if (user.role === 'ROLE_ADMIN' || user.role === 'ADMIN') return true
+        }
+        
+        // Temporary: Allow admin access for emails containing 'admin'
+        if (user.email && user.email.includes('admin')) {
+          return true
+        }
+        
+        // REMOVED: For testing line that allowed any authenticated user
+        return false
+      },
+      
+      hasRole: (roleName: string) => {
+        const { user } = get()
+        if (!user) return false
+        
+        // Normalize role name
+        const normalizedRole = roleName.startsWith('ROLE_') ? roleName : `ROLE_${roleName}`
+        
+        // Check roles array first
+        if (user.roles) {
+          return user.roles.some(role => role.name === normalizedRole)
+        }
+        
+        // Fallback to role string
+        if (user.role) {
+          return user.role === normalizedRole || user.role === roleName
+        }
+        
+        return false
+      },
+      
+      getUserRoles: () => {
+        const { user } = get()
+        if (!user) return []
+        
+        // Return roles array if available
+        if (user.roles) {
+          return user.roles.map(role => role.name)
+        }
+        
+        // Fallback to single role
+        if (user.role) {
+          return [user.role]
+        }
+        
+        return []
+      },
     }),
     {
       name: 'threatscope-auth',
@@ -230,41 +297,30 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
         isAuthenticated: state.isAuthenticated,
       }),
-      // Add hydration handling
+      // FIXED: Don't modify state during hydration - this was causing infinite loops
       onRehydrateStorage: () => (state) => {
         console.log('🔍 Zustand: Rehydrating auth state')
         if (state) {
           console.log('🔍 Zustand: Rehydrated state - user:', state.user?.email, 'isAuthenticated:', state.isAuthenticated)
           
-          // If we have user data but no token, clear the persisted state
+          // If we have user data but no token, schedule clearing AFTER hydration
           const token = localStorage.getItem('threatscope_token')
           if (state.isAuthenticated && !token) {
-            console.log('🔍 Zustand: No token found, clearing persisted auth state')
-            return {
-              user: null,
-              isAuthenticated: false,
-              isLoading: false,
-              error: null
-            }
+            console.log('🔍 Zustand: No token found, will clear auth state after hydration')
+            // Use setTimeout to clear AFTER hydration completes
+            setTimeout(() => {
+              useAuthStore.setState({ user: null, isAuthenticated: false })
+            }, 0)
           }
         }
+        // CRITICAL: Always return the original state, never modify during hydration
         return state
       },
-      // Add storage event handling for debugging
+      // Simplified storage - remove excessive logging during hydration
       storage: {
-        getItem: (name) => {
-          const value = localStorage.getItem(name)
-          console.log('🔍 Zustand: Getting storage:', name, value)
-          return value
-        },
-        setItem: (name, value) => {
-          console.log('🔍 Zustand: Setting storage:', name, value)
-          localStorage.setItem(name, value)
-        },
-        removeItem: (name) => {
-          console.log('🔍 Zustand: Removing storage:', name)
-          localStorage.removeItem(name)
-        },
+        getItem: (name) => localStorage.getItem(name),
+        setItem: (name, value) => localStorage.setItem(name, value),
+        removeItem: (name) => localStorage.removeItem(name),
       },
     }
   )

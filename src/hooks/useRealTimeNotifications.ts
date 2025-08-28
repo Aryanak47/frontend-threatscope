@@ -1,10 +1,9 @@
+// 🚀 Simple Real-Time Notifications Hook (Fixed)
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import webSocketService, { NotificationCallbacks, MonitoringUpdate, AlertNotification } from '@/lib/websocket';
 import { useAuthStore } from '@/stores/auth';
 import { useMonitoringStore } from '@/stores/monitoring';
 import useAlertStore from '@/stores/alerts';
-import { useNotificationStore } from '@/stores/notifications';
+import webSocketService, { NotificationMessage } from '@/lib/websocket';
 
 interface ConnectionStatus {
   connected: boolean;
@@ -13,25 +12,10 @@ interface ConnectionStatus {
   reconnectAttempts: number;
 }
 
-interface RealTimeNotifications {
-  connectionStatus: ConnectionStatus;
-  latestMonitoringUpdate: MonitoringUpdate | null;
-  latestAlert: AlertNotification | null;
-  connect: () => Promise<void>;
-  disconnect: () => void;
-  forceReconnect: () => void;
-}
-
-export function useRealTimeNotifications(): RealTimeNotifications {
-  const router = useRouter();
+export function useRealTimeNotifications() {
   const { isAuthenticated } = useAuthStore();
   const { refreshAll: refreshMonitoring, items: monitoringItems } = useMonitoringStore();
   const { fetchUnreadCount, fetchAlerts } = useAlertStore();
-
-  // Helper to get monitoring items with real-time frequency
-  const getRealTimeMonitoringItems = () => {
-    return monitoringItems.filter(item => item.isActive && item.frequency === 'REAL_TIME');
-  };
 
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({
     connected: false,
@@ -40,159 +24,63 @@ export function useRealTimeNotifications(): RealTimeNotifications {
     reconnectAttempts: 0,
   });
 
-  const [latestMonitoringUpdate, setLatestMonitoringUpdate] = useState<MonitoringUpdate | null>(null);
-  const [latestAlert, setLatestAlert] = useState<AlertNotification | null>(null);
+  const [latestAlert, setLatestAlert] = useState<NotificationMessage | null>(null);
 
-  // Setup WebSocket callbacks
-  useEffect(() => {
-    const callbacks: NotificationCallbacks = {
-      onConnectionStatusChange: (connected: boolean) => {
-        setConnectionStatus(prev => ({
-          ...prev,
-          connected,
-          connecting: false,
-          error: connected ? null : prev.error,
-        }));
-      },
-
-      onMonitoringUpdate: (update: MonitoringUpdate) => {
-        console.log('🔄 Received monitoring update:', update);
-        setLatestMonitoringUpdate(update);
-        
-        // Update monitoring store
-        const { items, fetchItems } = useMonitoringStore.getState();
-        const updatedItems = items.map(item => 
-          item.id === update.itemId 
-            ? { ...item, lastChecked: update.lastChecked, status: update.status }
-            : item
-        );
-        
-        // If the item was updated, refresh items
-        if (updatedItems.some(item => item.id === update.itemId)) {
-          fetchItems(); // Refresh to get latest data
-        }
-      },
-
-      onAlertNotification: (alert: AlertNotification) => {
-        console.log('🚨 Received alert notification:', alert);
-        setLatestAlert(alert);
-        
-        // Refresh alerts and unread count
-        fetchAlerts();
-        fetchUnreadCount();
-        
-        // Refresh monitoring dashboard to update counts
-        refreshMonitoring();
-      },
-
-      onUnreadCountUpdate: (count: number) => {
-        console.log('📊 Unread count updated:', count);
-        
-        // Update alerts store
-        const alertStore = useAlertStore.getState();
-        alertStore.unreadCount = count;
-      },
-    };
-
-    webSocketService.setCallbacks(callbacks);
-
-    return () => {
-      webSocketService.setCallbacks({});
-    };
-  }, [refreshMonitoring, fetchUnreadCount, fetchAlerts]);
-
-  // Connect when authenticated AND has monitoring items with real-time frequency
-  useEffect(() => {
-    console.log('🔍 Auth/Monitoring state changed:');
-    console.log('  - isAuthenticated:', isAuthenticated);
-    console.log('  - monitoringItems count:', monitoringItems.length);
-    
-    const realTimeItems = getRealTimeMonitoringItems();
-    console.log('  - real-time monitoring items:', realTimeItems.length);
-    
-    if (isAuthenticated && realTimeItems.length > 0) {
-      // Small delay to ensure token is set in localStorage
-      const timer = setTimeout(() => {
-        const token = localStorage.getItem('threatscope_token');
-        console.log('🔐 Checking for token:', !!token);
-        
-        if (token) {
-          console.log('🔗 User has real-time monitoring items, connecting to WebSocket...');
-          console.log('📊 Real-time monitoring items:', realTimeItems.map(item => `${item.monitorType}: ${item.targetValue} (${item.frequency})`));
-          connect();
-        } else {
-          console.log('🔌 User authenticated but no token found, disconnecting WebSocket...');
-          disconnect();
-        }
-      }, 100); // Small delay to ensure localStorage is updated
+  // Get user ID
+  const getUserId = () => {
+    try {
+      const directUser = localStorage.getItem('threatscope_user');
+      if (directUser) {
+        return JSON.parse(directUser)?.id?.toString();
+      }
       
-      return () => clearTimeout(timer);
-    } else {
-      if (!isAuthenticated) {
-        console.log('🔌 User not authenticated, disconnecting WebSocket...');
-      } else if (realTimeItems.length === 0) {
-        console.log('🔌 No real-time monitoring items, disconnecting WebSocket...');
+      const authStore = localStorage.getItem('threatscope-auth');
+      if (authStore) {
+        return JSON.parse(authStore).state?.user?.id?.toString();
       }
-      disconnect();
+    } catch (error) {
+      console.error('Failed to get user ID:', error);
     }
-  }, [isAuthenticated, monitoringItems]);
+    return null;
+  };
 
-  // Listen for localStorage changes (token updates)
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'threatscope_token') {
-        console.log('🔐 Token changed in localStorage, checking WebSocket connection...');
-        
-        const realTimeItems = getRealTimeMonitoringItems();
-        
-        if (e.newValue && isAuthenticated && realTimeItems.length > 0) {
-          console.log('🔗 New token detected and has real-time monitoring, connecting WebSocket...');
-          connect();
-        } else if (!e.newValue) {
-          console.log('🔌 Token removed, disconnecting WebSocket...');
-          disconnect();
-        }
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, [isAuthenticated, monitoringItems]);
-
-  // Monitor connection status
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      const info = webSocketService.getConnectionInfo();
-      setConnectionStatus(prev => ({
-        ...prev,
-        reconnectAttempts: info.reconnectAttempts,
-      }));
-    }, 5000);
-
-    return () => clearInterval(intervalId);
-  }, []);
+  // Check if user has real-time monitoring items
+  const hasRealTimeMonitoring = () => {
+    return monitoringItems.some(item => 
+      item.isActive && item.frequency === 'REAL_TIME'
+    );
+  };
 
   const connect = async (): Promise<void> => {
-    if (!isAuthenticated) {
-      console.warn('Cannot connect WebSocket: user not authenticated');
+    const userId = getUserId();
+    
+    if (!isAuthenticated || !userId) {
+      console.warn('Cannot connect: user not authenticated or no user ID');
+      return;
+    }
+
+    if (!hasRealTimeMonitoring()) {
+      console.log('No real-time monitoring items, skipping WebSocket connection');
       return;
     }
 
     try {
+      console.log('🔗 Connecting WebSocket for real-time notifications...');
       setConnectionStatus(prev => ({ ...prev, connecting: true, error: null }));
       
-      await webSocketService.connect();
+      const success = await webSocketService.connect(userId);
       
-      console.log('✅ WebSocket connected successfully');
-      setConnectionStatus(prev => ({ 
-        ...prev, 
-        connected: true, 
-        connecting: false, 
-        error: null 
-      }));
+      if (success) {
+        console.log('✅ WebSocket connected for notifications');
+        setConnectionStatus(prev => ({ 
+          ...prev, 
+          connected: true, 
+          connecting: false, 
+          error: null 
+        }));
+      } else {
+        throw new Error('Connection failed');
+      }
       
     } catch (error) {
       console.error('❌ WebSocket connection failed:', error);
@@ -206,6 +94,7 @@ export function useRealTimeNotifications(): RealTimeNotifications {
   };
 
   const disconnect = (): void => {
+    console.log('🔌 Disconnecting WebSocket for notifications...');
     webSocketService.disconnect();
     setConnectionStatus(prev => ({ 
       ...prev, 
@@ -214,30 +103,65 @@ export function useRealTimeNotifications(): RealTimeNotifications {
     }));
   };
 
-  const forceReconnect = (): void => {
-    setConnectionStatus(prev => ({ 
-      ...prev, 
-      connecting: true, 
-      error: null, 
-      reconnectAttempts: 0 
-    }));
-    webSocketService.forceReconnect();
-  };
+  // Setup WebSocket callbacks
+  useEffect(() => {
+    webSocketService.setCallbacks({
+      onConnectionChange: (connected: boolean) => {
+        console.log('🔌 WebSocket connection status:', connected);
+        setConnectionStatus(prev => ({
+          ...prev,
+          connected,
+          connecting: false,
+          error: connected ? null : prev.error,
+        }));
+      },
+
+      onNotification: (notification: NotificationMessage) => {
+        console.log('📨 Received notification:', notification);
+        setLatestAlert(notification);
+        
+        // Refresh alerts and monitoring data
+        if (notification.type === 'alert' || notification.type === 'ALERT') {
+          fetchAlerts();
+          fetchUnreadCount();
+        }
+        
+        if (notification.type === 'monitoring_update' || notification.type === 'MONITORING_UPDATE') {
+          refreshMonitoring();
+        }
+      }
+    });
+
+    return () => {
+      webSocketService.setCallbacks({});
+    };
+  }, [fetchAlerts, fetchUnreadCount, refreshMonitoring]);
+
+  // Auto-connect when conditions are met
+  useEffect(() => {
+    if (isAuthenticated && hasRealTimeMonitoring()) {
+      console.log('🚀 User authenticated with real-time monitoring, connecting...');
+      const timer = setTimeout(() => connect(), 100);
+      return () => clearTimeout(timer);
+    } else {
+      console.log('🔌 Conditions not met for WebSocket, disconnecting...');
+      disconnect();
+    }
+  }, [isAuthenticated, monitoringItems.length]);
 
   return {
     connectionStatus,
-    latestMonitoringUpdate,
     latestAlert,
     connect,
     disconnect,
-    forceReconnect,
+    forceReconnect: connect // Use connect as reconnect for simplicity
   };
 }
 
-// Hook for connection status indicator
+// Simple connection status hook
 export function useConnectionStatus() {
-  const { isConnected } = useNotificationStore();
-  return isConnected;
+  const { connectionStatus } = useRealTimeNotifications();
+  return connectionStatus.connected;
 }
 
 export default useRealTimeNotifications;

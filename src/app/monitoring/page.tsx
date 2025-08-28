@@ -11,7 +11,6 @@ import { useSubscriptionStore } from '@/stores/subscription'
 import { apiClient } from '@/lib/api'
 import { CreateMonitoringModal } from '@/components/monitoring/create-monitoring-modal'
 import { EditMonitoringModal } from '@/components/monitoring/edit-monitoring-modal'
-import { RealTimeMonitoringWidget } from '@/components/monitoring/real-time-monitoring-widget'
 import { 
   Shield,
   Plus,

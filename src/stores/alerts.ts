@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { AlertAction, BreachAlert, CreateAlertActionRequest, ActionTypeInfo, AlertActionStatistics } from '@/types/alerts';
 import { ApiResponse, PaginatedResponse } from '@/types/api';
+import { apiClient } from '@/lib/api';
 
 interface AlertState {
   // Alerts
@@ -80,27 +81,17 @@ const useAlertStore = create<AlertState>((set, get) => ({
     set({ alertsLoading: true, alertsError: null });
     
     try {
-      const response = await fetch(`/api/monitoring/alerts?page=${page}&size=${size}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('threatscope_token')}`,
-        },
+      // Use the API client which already handles the base URL and authentication
+      const data = await apiClient.request<PaginatedResponse<BreachAlert>>({
+        url: `/monitoring/alerts?page=${page}&size=${size}`,
+        method: 'GET'
       });
       
-      if (!response.ok) {
-        throw new Error(`Failed to fetch alerts: ${response.status}`);
-      }
-      
-      const data: ApiResponse<PaginatedResponse<BreachAlert>> = await response.json();
-      
-      if (data.success) {
-        set({ alerts: data.data.content, alertsLoading: false });
-      } else {
-        throw new Error(data.message || 'Failed to fetch alerts');
-      }
-    } catch (error) {
+      set({ alerts: data.content, alertsLoading: false });
+    } catch (error: any) {
       console.error('Error fetching alerts:', error);
       set({ 
-        alertsError: error instanceof Error ? error.message : 'Failed to fetch alerts',
+        alertsError: error.response?.data?.message || error.message || 'Failed to fetch alerts',
         alertsLoading: false 
       });
     }
@@ -241,33 +232,32 @@ const useAlertStore = create<AlertState>((set, get) => ({
   fetchUnreadCount: async () => {
     try {
       // Try the new breach alerts endpoint first
-      let response = await fetch('/api/monitoring/alerts/unread-count', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('threatscope_token')}`,
-        },
-      });
-      
-      if (response.ok) {
-        const data: ApiResponse<number> = await response.json();
-        if (data.success) {
-          set({ unreadCount: data.data || 0 });
-          return;
+      try {
+        const count = await apiClient.request<number>({
+          url: '/monitoring/alerts/unread-count',
+          method: 'GET'
+        });
+        set({ unreadCount: count || 0 });
+        return;
+      } catch (error: any) {
+        // If breach alerts endpoint doesn't exist yet, try fallback
+        if (error.response?.status === 404) {
+          console.log('Breach alerts endpoint not found, trying fallback...');
+        } else {
+          throw error;
         }
       }
       
-      // Fallback to alert actions statistics if breach alerts endpoint doesn't exist yet
-      response = await fetch('/api/alerts/actions/statistics', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('threatscope_token')}`,
-        },
-      });
-      
-      if (response.ok) {
-        const data: ApiResponse<AlertActionStatistics> = await response.json();
-        if (data.success) {
-          set({ unreadCount: data.data.pendingActions || 0 });
-          return;
-        }
+      // Fallback to alert actions statistics
+      try {
+        const stats = await apiClient.request<AlertActionStatistics>({
+          url: '/alerts/actions/statistics',
+          method: 'GET'
+        });
+        set({ unreadCount: stats.pendingActions || 0 });
+        return;
+      } catch (error: any) {
+        console.log('Alert actions statistics endpoint also failed, using 0');
       }
       
       // Final fallback
@@ -369,16 +359,10 @@ const useAlertStore = create<AlertState>((set, get) => ({
   // Quick action: Mark as read
   markAsRead: async (alertId: number) => {
     try {
-      const response = await fetch(`/api/monitoring/alerts/${alertId}/read`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('threatscope_token')}`,
-        },
+      await apiClient.request({
+        url: `/monitoring/alerts/${alertId}/read`,
+        method: 'PUT'
       });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to mark alert as read: ${response.status}`);
-      }
       
       // Update the alert in local state
       const currentAlerts = get().alerts;
@@ -396,7 +380,7 @@ const useAlertStore = create<AlertState>((set, get) => ({
       
       // Also refresh from server to ensure sync
       get().fetchUnreadCount();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error marking alert as read:', error);
       throw error;
     }
