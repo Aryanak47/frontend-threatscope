@@ -22,7 +22,8 @@ import {
   RefreshCw,
   Activity
 } from 'lucide-react'
-import { toast } from 'react-hot-toast'
+import toastUtils from '@/lib/toast/index'
+import { format, formatDistanceToNow } from 'date-fns'
 
 function AdminConsultationDashboardContent() {
   const router = useRouter()
@@ -86,7 +87,11 @@ function AdminConsultationDashboardContent() {
   // Handle errors
   useEffect(() => {
     if (error) {
-      toast.error(error)
+      toastUtils.error({
+        title: 'Admin Console Error',
+        message: error,
+        tip: 'Please refresh the page or check your admin permissions.'
+      })
       clearError()
     }
   }, [error, clearError])
@@ -94,7 +99,11 @@ function AdminConsultationDashboardContent() {
   // Helper functions
   const handleRefresh = async () => {
     await refreshSessions()
-    toast.success('Sessions refreshed!')
+    toastUtils.success({
+      title: 'Sessions Refreshed!',
+      message: 'All consultation sessions have been updated.',
+      tip: 'The data is now current with the latest session statuses.'
+    })
   }
 
   const handleClearFilters = () => {
@@ -155,17 +164,18 @@ function AdminConsultationDashboardContent() {
 
   const formatTimeAgo = (dateString: string) => {
     if (!dateString) return 'N/A'
-    const now = new Date()
     const date = new Date(dateString)
+    const now = new Date()
     const diffMs = now.getTime() - date.getTime()
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-    const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
     
-    if (diffHours > 0) {
-      return `${diffHours}h ${diffMinutes}m ago`
-    } else {
-      return `${diffMinutes}m ago`
+    // For recent dates (< 7 days), use relative format
+    if (diffDays < 7) {
+      return formatDistanceToNow(date, { addSuffix: true })
     }
+    
+    // For older dates, show the actual date
+    return format(date, 'MMM dd, yyyy')
   }
 
   const stats = {
@@ -391,7 +401,11 @@ function AdminConsultationDashboardContent() {
                       {statusInfo.status === 'WAITING_FOR_EXPERT' && (
                         <Button
                           onClick={() => {
-                            toast.success('Expert will be notified to respond immediately')
+                            toastUtils.info({
+                            title: 'Expert Notified',
+                            message: 'The expert will be notified to respond immediately.',
+                            tip: 'You can track the response time in the session status.'
+                          })
                           }}
                           variant="outline"
                           className="text-orange-600 border-orange-300 hover:bg-orange-50"

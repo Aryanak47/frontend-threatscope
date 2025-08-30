@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { useAuthStore } from '@/stores/auth'
-import toast from 'react-hot-toast'
+import toastUtils from '@/lib/toast/index'
 import { 
   Shield, 
   Mail, 
@@ -110,7 +110,11 @@ export default function RegisterPage() {
     
     if (formData.password !== formData.confirmPassword) {
       console.log('❌ Password mismatch')
-      toast.error('Passwords do not match')
+      toastUtils.error({
+        title: 'Password Mismatch',
+        message: 'The passwords you entered do not match.',
+        tip: 'Please ensure both password fields contain the same value.'
+      })
       return
     }
     
@@ -119,21 +123,53 @@ export default function RegisterPage() {
       
       // Provide specific validation messages
       if (!formData.firstName || !formData.lastName) {
-        toast.error('📄 Please enter your first and last name')
+        toastUtils.error({
+          title: 'Name Required',
+          message: 'Please enter your first and last name.',
+          tip: 'Your name helps us personalize your ThreatScope experience.'
+        })
       } else if (!formData.email) {
-        toast.error('📬 Please enter a valid email address')
+        toastUtils.error({
+          title: 'Email Required',
+          message: 'Please enter a valid email address.',
+          tip: 'We\'ll use this email for account verification and important updates.'
+        })
       } else if (!formData.phoneNumber) {
-        toast.error('📱 Please enter your phone number')
+        toastUtils.error({
+          title: 'Phone Required',
+          message: 'Please enter your phone number.',
+          tip: 'Your phone number helps us verify your identity and provide support.'
+        })
       } else if (!formData.password) {
-        toast.error('🔒 Please create a password')
+        toastUtils.error({
+          title: 'Password Required',
+          message: 'Please create a password for your account.',
+          tip: 'Choose a strong password to keep your security data safe.'
+        })
       } else if (!isValidPassword(formData.password)) {
-        toast.error('🔒 Password doesn\'t meet security requirements. Please check the requirements below.')
+        toastUtils.error({
+          title: 'Password Too Weak',
+          message: 'Your password doesn\'t meet our security requirements.',
+          tip: 'Please check the requirements below and create a stronger password.'
+        })
       } else if (formData.password !== formData.confirmPassword) {
-        toast.error('🔒 Passwords don\'t match. Please confirm your password.')
+        toastUtils.error({
+          title: 'Password Confirmation Failed',
+          message: 'The confirmation password doesn\'t match your password.',
+          tip: 'Please make sure both password fields contain the same value.'
+        })
       } else if (!acceptTerms) {
-        toast.error('📜 Please accept the Terms of Service to continue')
+        toastUtils.error({
+          title: 'Terms Required',
+          message: 'Please accept the Terms of Service to continue.',
+          tip: 'You need to agree to our terms to create your ThreatScope account.'
+        })
       } else {
-        toast.error('📄 Please fill in all required fields')
+        toastUtils.error({
+          title: 'Missing Information',
+          message: 'Please fill in all required fields.',
+          tip: 'Check the form above for any fields marked with a red asterisk.'
+        })
       }
       return
     }
@@ -158,7 +194,11 @@ export default function RegisterPage() {
       await register(registrationData)
       
       console.log('✅ Registration successful!')
-      toast.success('Welcome to ThreatScope! Your account has been created.')
+      toastUtils.success({
+        title: 'Welcome to ThreatScope!',
+        message: 'Your account has been successfully created.',
+        tip: 'You can now start searching through billions of breach records and threat intelligence.'
+      })
       router.push('/dashboard')
     } catch (error: any) {
       console.error('❌ Registration error:', error)

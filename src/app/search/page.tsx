@@ -9,7 +9,7 @@ import { SearchType } from '@/types'
 import { SearchInterface } from '@/components/search/search-interface'
 import ResultsDisplay from '@/components/ui/results-display'
 import { DebugInfo } from '@/components/debug-info'
-import toast from 'react-hot-toast'
+import toastUtils from '@/lib/toast/index'
 import { 
   Shield, 
   ArrowLeft,
@@ -30,7 +30,11 @@ export default function SearchPage() {
 
   const handleSearch = async (query: string, type: SearchType) => {
     if (!query.trim()) {
-      toast.error('Please enter a search query')
+      toastUtils.error({
+        title: 'Search Query Required',
+        message: 'Please enter a search term to continue.',
+        tip: 'Try searching for an email, username, domain, or IP address.'
+      })
       return
     }
 
@@ -49,27 +53,47 @@ export default function SearchPage() {
       const resultCount = searchResults?.results?.length || 0
       console.log('📊 [Search Page] Result count:', resultCount)
       
-      toast.success(`Search completed! Found ${resultCount} result${resultCount !== 1 ? 's' : ''}`)
+      toastUtils.success({
+        title: 'Search Complete!',
+        message: `Found ${resultCount} result${resultCount !== 1 ? 's' : ''} in our database.`,
+        tip: 'Use the export and filter options to analyze your results.'
+      })
       
     } catch (error: any) {
       console.error('❌ [Search Page] Search failed:', error)
       const errorMessage = error?.response?.data?.message || error?.message || 'Search failed. Please try again.'
-      toast.error(errorMessage)
+      toastUtils.error({
+        title: 'Search Failed',
+        message: errorMessage,
+        tip: 'Please check your search terms and try again.'
+      })
     }
   }
 
   const handleExport = () => {
     if (!results?.results?.length) {
-      toast.error('No results to export')
+      toastUtils.warning({
+        title: 'No Results to Export',
+        message: 'Please perform a search first to get results.',
+        tip: 'Search for emails, usernames, domains, or other identifiers.'
+      })
       return
     }
     
     // This would integrate with your export API
-    toast.success('Export feature coming soon')
+    toastUtils.info({
+      title: 'Export Coming Soon',
+      message: 'Export functionality is being developed.',
+      tip: 'You\'ll be able to export results to CSV, JSON, and PDF formats.'
+    })
   }
 
   const handleFilter = () => {
-    toast.success('Advanced filtering coming soon')
+    toastUtils.info({
+      title: 'Advanced Filtering',
+      message: 'Advanced filtering options are coming soon.',
+      tip: 'You\'ll be able to filter by date range, data source, and breach type.'
+    })
   }
 
   const hasResults = results && results.results && results.results.length > 0

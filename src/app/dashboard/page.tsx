@@ -10,9 +10,6 @@ import UsageQuotaDisplay from '@/components/ui/usage-quota-display'
 import { ConnectionStatus } from '@/components/ui/connection-status'
 import AuthGuard from '@/components/auth-guard'
 import { MainLayout } from '@/components/layout/main-layout'
-import { RealTimeActivityFeed } from '@/components/ui/real-time-activity-feed'
-import { RealTimeStatsWidget } from '@/components/ui/real-time-stats-widget'
-import { NotificationTestPanel } from '@/components/ui/notification-test-panel'
 import { useNotificationStore } from '@/stores/notifications'
 import { AskExpertButton } from '@/components/consultation/ask-expert-button'
 import AdminDashboardContent from '@/components/admin/admin-dashboard'
@@ -285,8 +282,8 @@ function DashboardContent() {
           </Card>
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Main Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Search */}
           <Card className="p-6">
             <div className="text-center">
@@ -323,7 +320,7 @@ function DashboardContent() {
             </div>
           </Card>
 
-          {/* Other cards... */}
+          {/* Expert Consultation */}
           <Card className="p-6">
             <div className="text-center">
               <div className="p-4 bg-green-50 dark:bg-green-950 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
@@ -338,19 +335,54 @@ function DashboardContent() {
           </Card>
         </div>
 
-        {/* Real-time Dashboard */}
-        <div className="mt-8 space-y-6">
-          <div className="flex justify-center">
-            <NotificationTestPanel />
-          </div>
-          
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <div className="xl:col-span-2">
-              <RealTimeActivityFeed />
-            </div>
-            <div className="xl:col-span-1">
-              <RealTimeStatsWidget />
-            </div>
+        {/* Quick Access Links */}
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold mb-4">Quick Access</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                  <Bell className="h-5 w-5 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-medium">Alerts & Notifications</h3>
+                  <p className="text-sm text-muted-foreground">Manage your alert settings</p>
+                </div>
+                <Button asChild variant="ghost" size="sm">
+                  <Link href="/alerts">View</Link>
+                </Button>
+              </div>
+            </Card>
+            
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-yellow-50 dark:bg-yellow-950 rounded-lg">
+                  <Shield className="h-5 w-5 text-yellow-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-medium">Monitoring Items</h3>
+                  <p className="text-sm text-muted-foreground">Manage what you're monitoring</p>
+                </div>
+                <Button asChild variant="ghost" size="sm">
+                  <Link href="/monitoring">View</Link>
+                </Button>
+              </div>
+            </Card>
+            
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-50 dark:bg-green-950 rounded-lg">
+                  <MessageSquare className="h-5 w-5 text-green-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-medium">Ask Expert</h3>
+                  <p className="text-sm text-muted-foreground">Get cybersecurity advice</p>
+                </div>
+                <AskExpertButton variant="ghost" size="sm" className="h-8 px-3 text-sm">
+                  Chat
+                </AskExpertButton>
+              </div>
+            </Card>
           </div>
         </div>
       </div>

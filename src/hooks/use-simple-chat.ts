@@ -1,7 +1,7 @@
 // 🚀 Simple Chat Hook - Minimal Implementation
 import { useEffect, useState, useCallback } from 'react';
 import { simpleWebSocketService } from '../services/simple-websocket';
-import { toast } from 'react-hot-toast';
+import toastUtils from '@/lib/toast/index';
 import { getUserId } from '@/lib/auth-utils';
 
 interface SimpleChatMessage {
@@ -127,19 +127,22 @@ export function useSimpleChat({ sessionId, onChatMessage, onConsultationNotifica
             duration: 5000 
           });
         } else if (notificationType === 'TIMER_STARTED') {
-          toast.success('⏰ Your consultation timer has started!', { 
-            id: `timer-started-${sessionId}`,
-            duration: 4000 
+          toastUtils.success({
+            title: 'Consultation Started!',
+            message: 'Your session timer has begun and you can now chat with your expert.',
+            tip: 'Make the most of your consultation time by asking specific security questions.'
           });
         } else if (notificationType === 'SESSION_COMPLETED') {
-          toast.success('✅ Your consultation has been completed!', { 
-            id: `session-completed-${sessionId}`,
-            duration: 4000 
+          toastUtils.success({
+            title: 'Session Complete!',
+            message: 'Your consultation has been completed successfully.',
+            tip: 'You can view the session summary and any recommendations provided by your expert.'
           });
         } else if (notificationType === 'EXPERT_ASSIGNED') {
-          toast.success('👨‍💼 Your expert has been assigned!', { 
-            id: `expert-assigned-${sessionId}`,
-            duration: 4000 
+          toastUtils.success({
+            title: 'Expert Assigned!',
+            message: 'A security expert has been assigned to your consultation.',
+            tip: 'Your expert will start the session shortly. They will review your case and provide guidance.'
           });
         } else {
           // Generic notification

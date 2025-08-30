@@ -13,19 +13,16 @@ import {
   MessageSquare,
   Clock,
   CheckCircle,
-  Star,
   Calendar,
-  DollarSign,
   User,
   FileText,
   Crown,
   Loader2,
   AlertTriangle,
-  ArrowRight,
-  Settings
+  ArrowRight
 } from 'lucide-react'
 import { format } from 'date-fns'
-import { toast } from 'react-hot-toast'
+import toastUtils from '@/lib/toast/index'
 
 function ConsultationDashboardContent() {
   const router = useRouter()
@@ -45,8 +42,6 @@ function ConsultationDashboardContent() {
     clearError
   } = useConsultationStore()
   
-  const [testLoading, setTestLoading] = useState(false)
-
   // Fetch sessions on mount
   useEffect(() => {
     fetchSessions(0, 10, 'priority', 'desc')
@@ -55,39 +50,14 @@ function ConsultationDashboardContent() {
   // Handle errors
   useEffect(() => {
     if (error) {
-      toast.error(error)
+      toastUtils.error({
+        title: 'Consultation Error',
+        message: error,
+        tip: 'Please try refreshing the page or contact support if the issue persists.'
+      })
       clearError()
     }
   }, [error, clearError])
-  
-  // Create test session
-  const handleCreateTestSession = async () => {
-    setTestLoading(true)
-    try {
-      const response = await fetch('http://localhost:8080/api/v1/consultation/test/create-mock-session', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('threatscope_token')}`,
-          'Content-Type': 'application/json'
-        }
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        toast.success('Test session created successfully!')
-        fetchSessions(0, 10, 'priority', 'desc') // Refresh the sessions list
-        router.push(`/consultation/${data.data.id}`)
-      } else {
-        const errorData = await response.json()
-        toast.error(errorData.message || 'Failed to create test session')
-      }
-    } catch (error: any) {
-      console.error('Error creating test session:', error)
-      toast.error('Failed to create test session: ' + error.message)
-    } finally {
-      setTestLoading(false)
-    }
-  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -155,30 +125,10 @@ function ConsultationDashboardContent() {
           <h1 className="text-3xl font-bold">Expert Consultations</h1>
           <p className="text-gray-600 mt-1">Get personalized cybersecurity guidance from our experts</p>
         </div>
-        <div className="flex items-center space-x-4">
+        <div>
           <Button onClick={() => router.push('/alerts')} className="bg-blue-600 hover:bg-blue-700">
             <Plus className="h-4 w-4 mr-2" />
             New Consultation
-          </Button>
-          <Button 
-            onClick={handleCreateTestSession} 
-            variant="outline" 
-            className="border-green-600 text-green-600 hover:bg-green-50"
-            disabled={testLoading}
-          >
-            {testLoading ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              '🧪'
-            )} Create Test Session
-          </Button>
-          <Button 
-            onClick={() => router.push('/admin/consultation')} 
-            variant="outline"
-            className="border-purple-600 text-purple-600 hover:bg-purple-50"
-          >
-            <Settings className="h-4 w-4 mr-2" />
-            Admin Panel
           </Button>
         </div>
       </div>
@@ -204,7 +154,7 @@ function ConsultationDashboardContent() {
 
       {/* Quick Stats */}
       {sessions.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="p-6">
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -213,18 +163,6 @@ function ConsultationDashboardContent() {
               <div>
                 <p className="text-sm text-gray-600">Total Sessions</p>
                 <p className="text-2xl font-bold">{sessions.length}</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <CheckCircle className="h-6 w-6 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Completed</p>
-                <p className="text-2xl font-bold">{completedSessions.length}</p>
               </div>
             </div>
           </Card>
@@ -243,17 +181,12 @@ function ConsultationDashboardContent() {
 
           <Card className="p-6">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <Star className="h-6 w-6 text-purple-600" />
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <CheckCircle className="h-6 w-6 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Avg Rating</p>
-                <p className="text-2xl font-bold">
-                  {completedSessions.length > 0 
-                    ? (completedSessions.filter(s => s.userRating).reduce((sum, s) => sum + (s.userRating || 0), 0) / completedSessions.filter(s => s.userRating).length).toFixed(1)
-                    : '—'
-                  }
-                </p>
+                <p className="text-sm text-gray-600">Completed</p>
+                <p className="text-2xl font-bold">{completedSessions.length}</p>
               </div>
             </div>
           </Card>
@@ -311,7 +244,11 @@ function ConsultationDashboardContent() {
                   onClick={async () => {
                     // Check if session is accessible first
                     if (!isSessionAccessible(session)) {
-                      toast.error(`Cannot access ${session.status.toLowerCase()} session`)
+                      toastUtils.error({
+                        title: 'Session Not Accessible',
+                        message: `Cannot access ${session.status.toLowerCase()} session.`,
+                        tip: 'Only active and assigned sessions can be accessed.'
+                      })
                       return
                     }
                     

@@ -314,7 +314,21 @@ export function SessionChatInterface({
       case 'ACTIVE':
         return null // Show chat interface
       case 'COMPLETED':
-        return 'This consultation has been completed. Thank you for using ThreatScope!'
+        return isAdmin 
+          ? null // Admins can still chat even after completion
+          : (
+            <div className="space-y-3">
+              <p className="text-green-800 font-medium">🎉 Your consultation has been completed!</p>
+              <div className="space-y-2 text-sm">
+                <p className="text-green-700">✅ All questions have been addressed by your security expert</p>
+                <p className="text-green-700">📋 Session summary and recommendations are available</p>
+                <p className="text-green-700">💌 A follow-up email will be sent with consultation details</p>
+              </div>
+              <p className="text-green-600 text-sm mt-3">
+                Thank you for choosing ThreatScope! We hope our expert guidance helps improve your security posture.
+              </p>
+            </div>
+          )
       case 'CANCELLED':
         return 'This consultation has been cancelled.'
       case 'EXPIRED':
@@ -329,6 +343,11 @@ export function SessionChatInterface({
   const canCurrentlySendMessages = () => {
     if (isAdmin) return true // Admins can always send
     
+    // Users cannot send messages if session is completed, cancelled, or expired
+    if (['COMPLETED', 'CANCELLED', 'EXPIRED'].includes(sessionStatus)) {
+      return false
+    }
+    
     const hasActiveExtension = (adminExtendedUntil && new Date(adminExtendedUntil) > new Date()) ||
                               (effectiveExpirationTime && new Date(effectiveExpirationTime) > new Date())
     
@@ -342,27 +361,10 @@ export function SessionChatInterface({
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <MessageSquare className="h-5 w-5 text-blue-600" />
-            <h3 className="font-semibold">
-              {isAdmin ? 'Admin Console - Consultation Chat' : 'Consultation Chat'}
-            </h3>
+            <h3 className="font-semibold">Chat</h3>
           </div>
           
           <div className="flex items-center space-x-3">
-            {/* Admin Badge */}
-            {isAdmin && (
-              <Badge className="bg-purple-100 text-purple-800">
-                <Shield className="h-3 w-3 mr-1" />
-                Admin Mode
-              </Badge>
-            )}
-            
-            {/* Expert Status */}
-            {expertName && sessionStatus === 'ACTIVE' && (
-              <Badge className="bg-green-100 text-green-800">
-                <User className="h-3 w-3 mr-1" />
-                {expertName} assigned
-              </Badge>
-            )}
             
             {/* WebSocket Connection Status - ENHANCED */}
             {!isAdmin && (

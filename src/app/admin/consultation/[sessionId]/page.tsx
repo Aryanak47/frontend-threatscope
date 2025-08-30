@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { MainLayout } from '@/components/layout/main-layout'
 import { SessionChatInterface } from '@/components/consultation/session-chat-interface'
 import { useConsultationStore } from '@/stores/consultation'
@@ -26,7 +27,7 @@ import {
   Settings,
   Timer,
 } from 'lucide-react'
-import { toast } from 'react-hot-toast'
+import toastUtils from '@/lib/toast/index'
 import { format } from 'date-fns'
 import { AdminSessionExtensionDialog } from '@/components/admin/admin-session-extension-dialog'
 
@@ -71,6 +72,7 @@ function AdminConsultationSessionContent() {
   
   const [sendingMessage, setSendingMessage] = useState(false)
   const [showExtensionDialog, setShowExtensionDialog] = useState(false)
+  const [showStopTimerConfirm, setShowStopTimerConfirm] = useState(false)
 
   // Fetch session and chat data with admin context
   useEffect(() => {
@@ -163,7 +165,11 @@ function AdminConsultationSessionContent() {
       const experts = data.data || []
       
       if (experts.length === 0) {
-        toast.error('No experts available at the moment')
+        toastUtils.warning({
+          title: 'No Experts Available',
+          message: 'There are currently no experts available for assignment.',
+          tip: 'Please try again later or contact system administrator.'
+        })
         return
       }
       
@@ -189,7 +195,11 @@ function AdminConsultationSessionContent() {
       
       const assignData = await assignResponse.json()
       
-      toast.success(`Expert ${firstExpert.name} assigned successfully!`)
+      toastUtils.success({
+        title: 'Expert Assigned!',
+        message: `${firstExpert.name} has been assigned to this consultation.`,
+        tip: 'The expert will be notified and can now start the session.'
+      })
       
       // Refresh session data
       fetchSession(sessionId)
@@ -198,11 +208,27 @@ function AdminConsultationSessionContent() {
       
     } catch (error: any) {
       console.error('❌ Error assigning expert:', error)
-      toast.error(error.message || 'Failed to assign expert')
+      toastUtils.error({
+        title: 'Assignment Failed',
+        message: error.message || 'Failed to assign expert to the session.',
+        tip: 'Please check expert availability and try again.'
+      })
     }
   }
 
   const handleCompleteSession = async () => {
+    // Check if timer is still running
+    const isTimerRunning = currentSession?.timerStartedAt && currentSession?.status === 'ACTIVE'
+    
+    if (isTimerRunning) {
+      toastUtils.warning({
+        title: 'Timer Still Running!',
+        message: 'Please stop the timer first before completing the session.',
+        tip: 'Use the "Stop Timer" button to end the consultation billing period.'
+      })
+      return
+    }
+    
     try {
       console.log('✅ Completing session:', sessionId)
       
@@ -224,7 +250,11 @@ function AdminConsultationSessionContent() {
       
       const data = await response.json()
       
-      toast.success('Session completed successfully!')
+      toastUtils.success({
+        title: 'Session Completed!',
+        message: 'The consultation session has been marked as complete.',
+        tip: 'The user will be notified and can view the session summary.'
+      })
       
       // Refresh session data
       fetchSession(sessionId)
@@ -233,7 +263,11 @@ function AdminConsultationSessionContent() {
       
     } catch (error: any) {
       console.error('❌ Error completing session:', error)
-      toast.error(error.message || 'Failed to complete session')
+      toastUtils.error({
+        title: 'Completion Failed',
+        message: error.message || 'Failed to complete the session.',
+        tip: 'Please check the session status and try again.'
+      })
     }
   }
 
@@ -299,7 +333,11 @@ function AdminConsultationSessionContent() {
       
       const data = await response.json()
       
-      toast.success('⏰ Timer started! Session billing is now active.')
+      toastUtils.success({
+        title: 'Timer Started!',
+        message: 'Session billing is now active and time tracking has begun.',
+        tip: 'The consultation clock is now running and will be billed accordingly.'
+      })
       
       // Auto-refresh session data after a short delay to see timer updates
       setTimeout(() => {
@@ -310,14 +348,20 @@ function AdminConsultationSessionContent() {
       
     } catch (error: any) {
       console.error('❌ Error starting timer:', error)
-      toast.error(error.message || 'Failed to start timer')
+      toastUtils.error({
+        title: 'Failed to Start Timer',
+        message: error.message || 'Unable to start the session timer.',
+        tip: 'Please check the session status and try again.'
+      })
     }
   }
 
-  const handleStopTimer = async () => {
-    if (!confirm('Are you sure you want to stop the timer? This will complete the session.')) {
-      return
-    }
+  const handleStopTimer = () => {
+    setShowStopTimerConfirm(true)
+  }
+
+  const confirmStopTimer = async () => {
+    setShowStopTimerConfirm(false)
     
     try {
       console.log('⏹️ Admin stopping timer for session:', sessionId)
@@ -339,7 +383,11 @@ function AdminConsultationSessionContent() {
       
       const data = await response.json()
       
-      toast.success('⏹️ Timer stopped! Session has been completed.')
+      toastUtils.success({
+        title: 'Timer Stopped!',
+        message: 'Session billing has ended and the consultation is complete.',
+        tip: 'The user will be notified and can view their session summary.'
+      })
       
       // Auto-refresh session data after a short delay to see completion status
       setTimeout(() => {
@@ -350,7 +398,11 @@ function AdminConsultationSessionContent() {
       
     } catch (error: any) {
       console.error('❌ Error stopping timer:', error)
-      toast.error(error.message || 'Failed to stop timer')
+      toastUtils.error({
+        title: 'Failed to Stop Timer',
+        message: error.message || 'Unable to stop the session timer.',
+        tip: 'Please try again or contact support if the issue persists.'
+      })
     }
   }
 
@@ -413,36 +465,6 @@ function AdminConsultationSessionContent() {
               You are viewing {currentSession.user?.firstName} {currentSession.user?.lastName}'s consultation session with full administrative privileges.
             </p>
           </div>
-          <div className="flex items-center space-x-2">
-          <Button size="sm" variant="outline" onClick={handleAssignExpert}>
-          <User className="h-4 w-4 mr-1" />
-          Assign Expert
-          </Button>
-          <Button size="sm" variant="outline" onClick={handleCompleteSession}>
-          <CheckCircle className="h-4 w-4 mr-1" />
-          Complete Session
-          </Button>
-          <Button 
-          size="sm" 
-          variant="outline" 
-          onClick={handleExtendSession}
-          className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
-          >
-          <Timer className="h-4 w-4 mr-1" />
-          Extend Session
-          </Button>
-          {/* Admin Start Session Button */}
-            {currentSession.status === 'ASSIGNED' && currentSession.paymentStatus === 'PAID' && (
-              <Button 
-                size="sm" 
-                onClick={handleStartSession}
-                className="bg-green-600 hover:bg-green-700 text-white"
-              >
-                <MessageSquare className="h-4 w-4 mr-1" />
-                Start Session
-              </Button>
-            )}
-            </div>
         </div>
       </div>
 
@@ -533,15 +555,8 @@ function AdminConsultationSessionContent() {
                     {currentSession.expert ? currentSession.expert.name : 'No Expert Assigned'}
                   </span>
                 </div>
-                {currentSession.expert ? (
+                {currentSession.expert && (
                   <p className="text-sm text-green-700">{currentSession.expert.specialization}</p>
-                ) : (
-                  <div className="flex items-center space-x-2">
-                    <Button size="sm" onClick={handleAssignExpert} className="bg-yellow-600 hover:bg-yellow-700">
-                      <User className="h-3 w-3 mr-1" />
-                      Assign Expert
-                    </Button>
-                  </div>
                 )}
               </div>
 
@@ -716,6 +731,53 @@ function AdminConsultationSessionContent() {
           )}
         </div>
       </div>
+
+      {/* Stop Timer Confirmation Dialog */}
+      <Dialog open={showStopTimerConfirm} onOpenChange={setShowStopTimerConfirm}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Timer className="h-5 w-5 text-red-600" />
+              Stop Session Timer?
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to stop the timer? This action will:
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4 space-y-3">
+            <div className="flex items-center gap-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+              <span className="text-sm text-red-800">End the billing period for this consultation</span>
+            </div>
+            <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              <span className="text-sm text-blue-800">Mark the session as completed</span>
+            </div>
+            <div className="flex items-center gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+              <span className="text-sm text-yellow-800">Notify the user that the session has ended</span>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowStopTimerConfirm(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive"
+              onClick={confirmStopTimer}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              <Timer className="h-4 w-4 mr-2" />
+              Stop Timer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Admin Session Extension Dialog */}
       <AdminSessionExtensionDialog

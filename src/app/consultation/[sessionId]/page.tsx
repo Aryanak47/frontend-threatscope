@@ -28,7 +28,7 @@ import {
   CreditCard,
   Shield
 } from 'lucide-react'
-import { toast } from 'react-hot-toast'
+import toastUtils from '@/lib/toast/index'
 import { format } from 'date-fns'
 
 function ConsultationSessionContent() {
@@ -81,8 +81,46 @@ function ConsultationSessionContent() {
     onMessage: (message) => {
       console.log('📨 Admin notification received:', message)
       
-      // Refresh session data when important events happen
+      // Handle important session events with enhanced notifications
       if (['TIMER_STARTED', 'SESSION_EXTENDED', 'SESSION_COMPLETED', 'EXPERT_ASSIGNED'].includes(message.type)) {
+        
+        // Special handling for session completion by admin
+        if (message.type === 'SESSION_COMPLETED') {
+          toastUtils.success({
+            title: 'Session Completed by Expert!',
+            message: 'Your consultation has been successfully completed.',
+            tip: 'Check your email for a detailed summary and security recommendations.'
+          })
+          
+          // Immediately update the session status in the store to prevent further messaging
+          const currentSessionData = useConsultationStore.getState().currentSession
+          if (currentSessionData) {
+            useConsultationStore.setState({
+              currentSession: {
+                ...currentSessionData,
+                status: 'COMPLETED'
+              }
+            })
+          }
+        }
+        
+        // Special handling for timer started by admin
+        if (message.type === 'TIMER_STARTED') {
+          toastUtils.info({
+            title: 'Consultation Timer Started',
+            message: 'Your session is now active and being tracked.',
+            tip: 'Make the most of your consultation time with focused security questions.'
+          })
+        }
+        
+        // Immediate refresh for critical events
+        if (message.type === 'SESSION_COMPLETED') {
+          // Immediate refresh for session completion
+          fetchSession(sessionId)
+          fetchChat(sessionId)
+        }
+        
+        // Additional refresh after delay for all events
         setTimeout(() => {
           fetchSession(sessionId)
           fetchChat(sessionId)
@@ -157,7 +195,11 @@ function ConsultationSessionContent() {
   // FIXED: Simple error handling
   useEffect(() => {
     if (error) {
-      toast.error(error)
+      toastUtils.error({
+        title: 'Session Error',
+        message: error,
+        tip: 'Please refresh the page or contact support if the issue persists.'
+      })
       clearError()
     }
   }, [error]) // clearError is stable in Zustand
@@ -218,6 +260,16 @@ function ConsultationSessionContent() {
   
   const handleSendMessage = async (content: string, type = 'TEXT') => {
     if (!sessionId || !content.trim()) return
+    
+    // Double-check session status before sending
+    if (currentSession?.status === 'COMPLETED') {
+      toastUtils.warning({
+        title: 'Session Completed',
+        message: 'This consultation session has been completed.',
+        tip: 'You cannot send messages after the session is finished.'
+      })
+      return
+    }
     
     setSendingMessage(true)
     try {
@@ -618,7 +670,11 @@ function ConsultationSessionContent() {
               onSessionExpired={() => {
                 if (!sessionExpiredNotifiedRef.current) {
                   sessionExpiredNotifiedRef.current = true
-                  toast.error('Your consultation session has expired')
+                  toastUtils.warning({
+                    title: 'Session Expired',
+                    message: 'Your consultation session has reached its time limit.',
+                    tip: 'You can book another consultation or contact support if you need additional help.'
+                  })
                   
                   // Clear auto-refresh
                   if (autoRefreshRef.current) {

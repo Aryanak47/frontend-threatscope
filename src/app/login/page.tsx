@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { useAuthStore } from '@/stores/auth'
-import toast from 'react-hot-toast'
+import toastUtils from '@/lib/toast/index'
 import { 
   Shield, 
   Mail, 
@@ -43,10 +43,18 @@ export default function LoginPage() {
     
     try {
       await login(formData.email, formData.password)
-      toast.success('Welcome back to ThreatScope!')
+      toastUtils.success({
+        title: 'Welcome Back!',
+        message: 'Successfully signed into your ThreatScope account.',
+        tip: 'You can now access all your security investigations and monitoring.'
+      })
       router.push('/dashboard')
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Login failed')
+      toastUtils.error({
+        title: 'Login Failed',
+        message: error.response?.data?.message || 'Unable to sign into your account.',
+        tip: 'Please check your email and password, or try resetting your password.'
+      })
     }
   }
 
