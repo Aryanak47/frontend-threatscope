@@ -2,6 +2,14 @@
 
 A professional OSINT and breach monitoring platform frontend built with Next.js 14, TypeScript, and Tailwind CSS.
 
+
+<img width="1920" height="4397" alt="Firefox_Screenshot_2025-08-28T17-29-33 026Z" src="https://github.com/user-attachments/assets/0ca33e24-49e3-40bd-bd22-b423d7ce0fc5" />
+
+<img width="1918" height="1214" alt="Firefox_Screenshot_2025-08-28T17-32-41 464Z" src="https://github.com/user-attachments/assets/f0422103-e2cc-4854-8cde-4a60e7c35c45" />
+
+<img width="1920" height="1330" alt="Firefox_Screenshot_2025-08-28T17-33-54 121Z" src="https://github.com/user-attachments/assets/281bea94-0d33-49e0-ae80-4f19fc7043ef" />
+
+
 ## 🚀 Features
 
 - **Modern Tech Stack**: Next.js 14 with App Router, TypeScript, Tailwind CSS
