@@ -29,7 +29,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user, logout, isAdmin, hasRole } = useAuthStore()
   const { fetchItems: fetchMonitoringItems } = useMonitoringStore()
   const { unreadCount: notificationCount } = useNotificationStore()
-  const { unreadCount: alertCount, fetchUnreadCount: fetchAlertCount } = useAlertStore()
+  const { unreadCount: alertCount, fetchUnreadCount: fetchAlertCount, setupWebSocketListeners: setupAlertWebSocket } = useAlertStore()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   
   // Initialize real-time notifications
@@ -40,6 +40,8 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       // Fetch monitoring items so WebSocket knows about active monitoring
       fetchMonitoringItems()
       fetchAlertCount()
+      // Set up WebSocket listeners for real-time alert count updates
+      setupAlertWebSocket()
     }
   }, [isAuthenticated]) // Removed function dependencies
 
@@ -59,11 +61,11 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     { name: 'Search', href: '/search', icon: Search },
     { name: 'Dashboard', href: '/dashboard', icon: User, authRequired: true },
     { name: 'Monitoring', href: '/monitoring', icon: Shield, authRequired: true },
-    { name: 'Alerts', href: '/alerts', icon: AlertTriangle, authRequired: true, count: alertCount },
+    { name: 'Alerts', href: '/alerts', icon: AlertTriangle, authRequired: true, count: alertCount > 0 ? alertCount : undefined },
     { name: 'Consultations', href: '/consultation', icon: MessageSquare, authRequired: true },
     { name: 'Expert Panel', href: '/expert', icon: Crown, authRequired: true, expertOnly: true },
     { name: 'Admin Panel', href: '/admin/consultation', icon: Settings, authRequired: true, adminOnly: true },
-    { name: 'Notifications', href: '/notifications', icon: Bell, authRequired: true, count: notificationCount },
+    { name: 'Notifications', href: '/notifications', icon: Bell, authRequired: true, count: notificationCount > 0 ? notificationCount : undefined },
   ]
 
   return (
@@ -95,7 +97,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                   >
                     <item.icon className="h-4 w-4" />
                     <span className="hidden xl:inline">{item.name}</span>
-                    {item.count && item.count > 0 && (
+                    {item.count && (
                       <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center text-[10px]">
                         {item.count > 9 ? '9+' : item.count}
                       </span>
@@ -184,7 +186,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                   >
                     <item.icon className="h-4 w-4" />
                     <span>{item.name}</span>
-                    {item.count && item.count > 0 && (
+                    {item.count && (
                       <span className="bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center ml-auto">
                         {item.count > 9 ? '9+' : item.count}
                       </span>

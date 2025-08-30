@@ -93,6 +93,14 @@ export const useSearchStore = create<SearchState>((set, get) => ({
       let errorMessage = 'Search failed'
       
       if (error.response?.status === 401) {
+        console.log('🔐 Session expired during search, redirecting to login...');
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('threatscope_token');
+          localStorage.removeItem('threatscope_user');
+          localStorage.removeItem('threatscope_refresh_token');
+          window.location.href = '/login';
+          return;
+        }
         errorMessage = 'Authentication required. Please log in to perform searches.'
       } else if (error.response?.status === 403) {
         errorMessage = 'Access denied. You do not have permission to perform this search.'

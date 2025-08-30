@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { AlertAction, BreachAlert, CreateAlertActionRequest, ActionTypeInfo, AlertActionStatistics } from '@/types/alerts';
 import { ApiResponse, PaginatedResponse } from '@/types/api';
 import { apiClient } from '@/lib/api';
+import { webSocketService } from '@/lib/websocket';
 
 interface AlertState {
   // Alerts
@@ -51,6 +52,9 @@ interface AlertState {
   openActionModal: (alertId: number) => void;
   closeActionModal: () => void;
   
+  // WebSocket
+  setupWebSocketListeners: () => void;
+  
   // Utility
   clearError: () => void;
   reset: () => void;
@@ -90,6 +94,20 @@ const useAlertStore = create<AlertState>((set, get) => ({
       set({ alerts: data.content, alertsLoading: false });
     } catch (error: any) {
       console.error('Error fetching alerts:', error);
+      
+      // Handle authentication errors - redirect instead of showing error UI
+      if (error.response?.status === 401) {
+        console.log('🔐 Session expired, redirecting to login...');
+        // Clear auth state and redirect
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('threatscope_token');
+          localStorage.removeItem('threatscope_user');
+          localStorage.removeItem('threatscope_refresh_token');
+          window.location.href = '/login';
+          return; // Don't set error state
+        }
+      }
+      
       set({ 
         alertsError: error.response?.data?.message || error.message || 'Failed to fetch alerts',
         alertsLoading: false 
@@ -240,6 +258,18 @@ const useAlertStore = create<AlertState>((set, get) => ({
         set({ unreadCount: count || 0 });
         return;
       } catch (error: any) {
+        // Handle authentication errors - redirect instead of showing error UI
+        if (error.response?.status === 401) {
+          console.log('🔐 Session expired while fetching unread count, redirecting to login...');
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('threatscope_token');
+            localStorage.removeItem('threatscope_user');
+            localStorage.removeItem('threatscope_refresh_token');
+            window.location.href = '/login';
+            return;
+          }
+        }
+        
         // If breach alerts endpoint doesn't exist yet, try fallback
         if (error.response?.status === 404) {
           console.log('Breach alerts endpoint not found, trying fallback...');
@@ -257,13 +287,37 @@ const useAlertStore = create<AlertState>((set, get) => ({
         set({ unreadCount: stats.pendingActions || 0 });
         return;
       } catch (error: any) {
+        // Handle authentication errors in fallback too
+        if (error.response?.status === 401) {
+          console.log('🔐 Session expired while fetching fallback unread count, redirecting to login...');
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('threatscope_token');
+            localStorage.removeItem('threatscope_user');
+            localStorage.removeItem('threatscope_refresh_token');
+            window.location.href = '/login';
+            return;
+          }
+        }
         console.log('Alert actions statistics endpoint also failed, using 0');
       }
       
       // Final fallback
       set({ unreadCount: 0 });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching unread count:', error);
+      
+      // Handle authentication errors in main catch
+      if (error.response?.status === 401) {
+        console.log('🔐 Session expired, redirecting to login...');
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('threatscope_token');
+          localStorage.removeItem('threatscope_user');
+          localStorage.removeItem('threatscope_refresh_token');
+          window.location.href = '/login';
+          return;
+        }
+      }
+      
       // Fallback to 0 if there's an error
       set({ unreadCount: 0 });
     }
@@ -382,6 +436,19 @@ const useAlertStore = create<AlertState>((set, get) => ({
       get().fetchUnreadCount();
     } catch (error: any) {
       console.error('Error marking alert as read:', error);
+      
+      // Handle authentication errors - redirect instead of showing error
+      if (error.response?.status === 401) {
+        console.log('🔐 Session expired while marking alert as read, redirecting to login...');
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('threatscope_token');
+          localStorage.removeItem('threatscope_user');
+          localStorage.removeItem('threatscope_refresh_token');
+          window.location.href = '/login';
+          return;
+        }
+      }
+      
       throw error;
     }
   },
@@ -491,6 +558,44 @@ const useAlertStore = create<AlertState>((set, get) => ({
     set({ alertsError: null, actionsError: null });
   },
   
+  // Set up WebSocket listeners for real-time alert updates
+  setupWebSocketListeners: () => {
+    console.log('🔗 Alert store: Setting up WebSocket listeners for real-time updates...');
+    
+    // Set up WebSocket callbacks for alert-related notifications
+    webSocketService.setCallbacks({
+      onAlertNotification: (alert) => {
+        console.log('🚨 Alert store: Received new alert notification, refreshing alerts...');
+        // Refresh alerts and unread count when new alert arrives
+        get().fetchAlerts();
+        get().fetchUnreadCount();
+      },
+      
+      onSystemNotification: (notification) => {
+        // Check if it's a monitoring/breach notification
+        if (notification.notificationType === 'MONITORING_UPDATE' || 
+            notification.type === 'BREACH_ALERT' ||
+            notification.data?.type === 'MONITORING_UPDATE' ||
+            notification.data?.status === 'BREACH_FOUND' ||
+            notification.title?.toLowerCase().includes('breach') ||
+            notification.message?.toLowerCase().includes('breach') ||
+            notification.message?.toLowerCase().includes('alert')) {
+          console.log('🔄 Alert store: Received monitoring/breach notification, refreshing alerts...');
+          // Refresh alerts and unread count
+          get().fetchAlerts();
+          get().fetchUnreadCount();
+        }
+      },
+      
+      onBroadcastAlert: (alert) => {
+        console.log('📢 Alert store: Received broadcast alert, refreshing alerts...');
+        // Refresh alerts and unread count when broadcast alert arrives
+        get().fetchAlerts();
+        get().fetchUnreadCount();
+      }
+    });
+  },
+
   reset: () => {
     set({
       alerts: [],

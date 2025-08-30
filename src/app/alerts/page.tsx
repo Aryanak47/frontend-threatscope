@@ -37,7 +37,8 @@ export default function AlertsPage() {
     unreadCount, 
     fetchAlerts, 
     fetchUnreadCount,
-    markAsRead
+    markAsRead,
+    setupWebSocketListeners
   } = useAlertStore()
   const [searchQuery, setSearchQuery] = useState('')
   const [showFilters, setShowFilters] = useState(false)
@@ -75,8 +76,10 @@ export default function AlertsPage() {
       console.log('🔄 User has alert access, fetching alerts...')
       fetchAlerts()
       fetchUnreadCount()
+      // Set up WebSocket listeners for real-time alert updates
+      setupWebSocketListeners()
     }
-  }, [isAuthenticated, subscriptionDetails, fetchAlerts, fetchUnreadCount])
+  }, [isAuthenticated, subscriptionDetails, fetchAlerts, fetchUnreadCount, setupWebSocketListeners])
 
   const handleUpgradeClick = () => {
     // Redirect to pricing page

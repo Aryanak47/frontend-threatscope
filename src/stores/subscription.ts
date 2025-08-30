@@ -112,6 +112,14 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
       } else if (error.response?.status === 404) {
         errorMessage = 'Subscription endpoint not found. Check if backend is running with correct API path.'
       } else if (error.response?.status === 401) {
+        console.log('🔐 Session expired while fetching subscription, redirecting to login...');
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('threatscope_token');
+          localStorage.removeItem('threatscope_user');
+          localStorage.removeItem('threatscope_refresh_token');
+          window.location.href = '/login';
+          return;
+        }
         errorMessage = 'Authentication required. Please log in again.'
       } else if (error.response?.data?.message) {
         errorMessage = error.response.data.message

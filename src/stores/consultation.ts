@@ -334,6 +334,14 @@ export const useConsultationStore = create<ConsultationStore>((set, get) => ({
         } else if (error.response?.status === 410) {
           errorMessage = 'This consultation session has expired'
         } else if (error.response?.status === 401) {
+          console.log('🔐 Session expired while accessing consultation, redirecting to login...');
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('threatscope_token');
+            localStorage.removeItem('threatscope_user');
+            localStorage.removeItem('threatscope_refresh_token');
+            window.location.href = '/login';
+            return;
+          }
           errorMessage = 'Authentication required - please log in again'
         } else if (!errorMessage) {
           errorMessage = isAdmin 
