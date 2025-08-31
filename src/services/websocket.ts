@@ -33,7 +33,10 @@ export interface SessionStatusUpdate {
 
 class EnhancedWebSocketService {
   private client: Client | null = null;
-  private isConnected = false;
+  private connected = false;
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 10;
+  private reconnectTimer: NodeJS.Timeout | null = null;
   private callbacks: {
     onNotification?: (notification: NotificationMessage) => void;
     onConnectionChange?: (connected: boolean) => void;
@@ -62,6 +65,14 @@ class EnhancedWebSocketService {
       this.client = new Client({
         webSocketFactory: () => new SockJS('http://localhost:8080/api/ws/notifications'),
         
+        // STOMP heartbeat configuration
+        heartbeatIncoming: 10000, // Expect heartbeat from server every 10s
+        heartbeatOutgoing: 10000, // Send heartbeat to server every 10s
+        
+        // Connection recovery settings
+        reconnectDelay: 5000, // Auto-reconnect after 5s
+        maxReconnectAttempts: 10, // Try reconnecting up to 10 times
+        
         connectHeaders: {
           'Authorization': `Bearer ${token}`,
           'X-User-ID': userId
@@ -69,7 +80,9 @@ class EnhancedWebSocketService {
         
         onConnect: (frame: IFrame) => {
           console.log('✅ Enhanced WebSocket connected!');
-          this.isConnected = true;
+          this.connected = true;
+          this.reconnectAttempts = 0; // Reset reconnect attempts on successful connection
+          this.clearReconnectTimer();
           this.callbacks.onConnectionChange?.(true);
           this.callbacks.onConnectionStatusChange?.(true); // Compatibility alias
           this.subscribeToChannels(userId);
@@ -78,17 +91,19 @@ class EnhancedWebSocketService {
         
         onStompError: (frame: IFrame) => {
           console.error('❌ WebSocket error:', frame);
-          this.isConnected = false;
+          this.connected = false;
           this.callbacks.onConnectionChange?.(false);
           this.callbacks.onConnectionStatusChange?.(false); // Compatibility alias
+          this.scheduleReconnect(userId);
           resolve(false);
         },
         
         onDisconnect: () => {
           console.log('🔌 WebSocket disconnected');
-          this.isConnected = false;
+          this.connected = false;
           this.callbacks.onConnectionChange?.(false);
           this.callbacks.onConnectionStatusChange?.(false); // Compatibility alias
+          this.scheduleReconnect(userId);
         }
       });
 
@@ -136,7 +151,7 @@ class EnhancedWebSocketService {
    * Subscribe to session-specific channels
    */
   subscribeToSession(sessionId: string) {
-    if (!this.client || !this.isConnected) {
+    if (!this.client || !this.connected) {
       console.warn('❌ Cannot subscribe to session - not connected');
       return;
     }
@@ -163,7 +178,7 @@ class EnhancedWebSocketService {
    * Send chat message
    */
   sendChatMessage(sessionId: string, content: string) {
-    if (!this.client || !this.isConnected) {
+    if (!this.client || !this.connected) {
       console.warn('❌ Cannot send message - not connected');
       return false;
     }
@@ -184,7 +199,7 @@ class EnhancedWebSocketService {
    * Send typing indicator
    */
   sendTypingIndicator(sessionId: string, isTyping: boolean) {
-    if (!this.client || !this.isConnected) return;
+    if (!this.client || !this.connected) return;
 
     this.client.publish({
       destination: '/app/chat/typing',
@@ -274,15 +289,52 @@ class EnhancedWebSocketService {
   }
 
   /**
+   * Schedule reconnection with exponential backoff
+   */
+  private scheduleReconnect(userId: string) {
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.warn('❌ Max reconnection attempts reached, giving up');
+      return;
+    }
+
+    this.clearReconnectTimer();
+    this.reconnectAttempts++;
+    
+    // Exponential backoff: 5s, 10s, 20s, 40s, etc. (max 60s)
+    const delay = Math.min(5000 * Math.pow(2, this.reconnectAttempts - 1), 60000);
+    
+    console.log(`🔄 Scheduling reconnect attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts} in ${delay}ms`);
+    
+    this.reconnectTimer = setTimeout(() => {
+      console.log(`🔗 Reconnect attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
+      this.connect(userId).catch(error => {
+        console.error('❌ Reconnect failed:', error);
+      });
+    }, delay);
+  }
+
+  /**
+   * Clear reconnection timer
+   */
+  private clearReconnectTimer() {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+  }
+
+  /**
    * Disconnect
    */
   disconnect() {
     console.log('🔌 Disconnecting enhanced WebSocket service...');
+    this.clearReconnectTimer();
+    this.reconnectAttempts = 0;
     if (this.client) {
       this.client.deactivate();
       this.client = null;
     }
-    this.isConnected = false;
+    this.connected = false;
     this.callbacks.onConnectionChange?.(false);
     this.callbacks.onConnectionStatusChange?.(false);
   }
@@ -310,7 +362,18 @@ class EnhancedWebSocketService {
    * Connection status
    */
   isConnected(): boolean {
-    return this.isConnected;
+    return this.connected && this.client?.connected === true;
+  }
+  
+  /**
+   * Get connection info
+   */
+  getConnectionInfo() {
+    return {
+      connected: this.connected && this.client?.connected === true,
+      client: !!this.client,
+      stompConnected: this.client?.connected || false
+    };
   }
 
   /**

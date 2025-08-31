@@ -22,6 +22,7 @@ export const webSocketService = {
     return enhancedWebSocketService.setCallbacks(callbacks);
   },
   isWebSocketConnected: () => enhancedWebSocketService.isConnected(),
+  isConnected: () => enhancedWebSocketService.isConnected(),
   getConnectionInfo: () => enhancedWebSocketService.getConnectionInfo(),
   
   // Additional enhanced methods

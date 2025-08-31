@@ -115,6 +115,15 @@ export function useRealTimeNotifications() {
           error: connected ? null : prev.error,
         }));
       },
+      onConnectionStatusChange: (connected: boolean) => {
+        console.log('🔌 WebSocket connection status (legacy):', connected);
+        setConnectionStatus(prev => ({
+          ...prev,
+          connected,
+          connecting: false,
+          error: connected ? null : prev.error,
+        }));
+      },
 
       onNotification: (notification: NotificationMessage) => {
         console.log('📨 Received notification:', notification);
@@ -136,6 +145,28 @@ export function useRealTimeNotifications() {
       webSocketService.setCallbacks({});
     };
   }, [fetchAlerts, fetchUnreadCount, refreshMonitoring]);
+
+  // Periodic connection status sync to fix stuck "connecting" state
+  useEffect(() => {
+    const syncConnectionStatus = () => {
+      const actualStatus = webSocketService.isConnected();
+      setConnectionStatus(prev => {
+        if (prev.connecting && actualStatus) {
+          console.log('🔧 Fixed stuck connecting state - WebSocket is actually connected');
+          return {
+            ...prev,
+            connected: true,
+            connecting: false,
+            error: null
+          };
+        }
+        return prev;
+      });
+    };
+
+    const interval = setInterval(syncConnectionStatus, 10000); // Check every 10 seconds (matches STOMP heartbeat)
+    return () => clearInterval(interval);
+  }, []);
 
   // Auto-connect when conditions are met
   useEffect(() => {
