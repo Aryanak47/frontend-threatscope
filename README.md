@@ -18,7 +18,7 @@ A professional OSINT and breach monitoring platform frontend built with Next.js 
 - **Advanced Search**: Multi-type search with real-time suggestions
 - **Data Visualization**: Interactive charts and analytics
 - **Export Capabilities**: CSV, Excel, PDF, and JSON exports
-- **Security First**: End-to-end encryption, ephemeral sessions
+- **Security First**: End-to-end encryption, secure authentication
 - **Enterprise Ready**: Role-based access, audit logs, compliance
 
 ## 🛠️ Tech Stack

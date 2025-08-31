@@ -256,7 +256,7 @@ export default function DemoPage() {
             <Shield className="h-12 w-12 text-green-600 mx-auto mb-4" />
             <h3 className="text-xl font-semibold mb-2">Zero Retention</h3>
             <p className="text-muted-foreground">
-              Your searches are ephemeral and never stored
+              Your searches are secure and encrypted
             </p>
           </Card>
         </div>

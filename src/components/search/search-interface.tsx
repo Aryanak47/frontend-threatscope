@@ -121,7 +121,7 @@ export function SearchInterface({
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder={placeholder}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 bg-slate-900/90 border border-slate-600 rounded-lg text-white font-semibold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500/50 focus:bg-slate-800 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={isSearching}
                   />
                 </div>

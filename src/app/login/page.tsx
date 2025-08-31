@@ -287,7 +287,7 @@ export default function LoginPage() {
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Your searches are ephemeral and encrypted. We never store your queries or compromise your privacy.
+                  Your searches are secure and encrypted. We protect your queries and never compromise your privacy.
                 </p>
               </Card>
 

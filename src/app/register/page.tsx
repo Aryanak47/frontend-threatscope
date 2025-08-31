@@ -635,7 +635,7 @@ export default function RegisterPage() {
         {/* Trust Indicators */}
         <div className="mt-16 text-center">
           <p className="text-sm text-muted-foreground mb-6">
-            Trusted by 10,000+ security professionals worldwide
+            Trusted by security professionals worldwide
           </p>
           <div className="flex flex-wrap justify-center items-center gap-6 opacity-60">
             <div className="text-lg font-semibold">Fortune 500</div>
