@@ -3,7 +3,9 @@
 A professional OSINT and breach monitoring platform frontend built with Next.js 14, TypeScript, and Tailwind CSS.
 
 
-<img width="1920" height="4397" alt="Firefox_Screenshot_2025-08-28T17-29-33 026Z" src="https://github.com/user-attachments/assets/0ca33e24-49e3-40bd-bd22-b423d7ce0fc5" />
+
+https://github.com/user-attachments/assets/74ff4cea-935f-4e7d-a06e-7eab6e19d9eb
+
 
 <img width="1918" height="1214" alt="Firefox_Screenshot_2025-08-28T17-32-41 464Z" src="https://github.com/user-attachments/assets/f0422103-e2cc-4854-8cde-4a60e7c35c45" />
 
