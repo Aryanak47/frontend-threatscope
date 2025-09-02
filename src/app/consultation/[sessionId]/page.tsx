@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
@@ -490,7 +489,7 @@ function ConsultationSessionContent() {
         {/* Left Column - Session Details */}
         <div className="lg:col-span-1 space-y-6">
           {/* Session Info */}
-          <Card className="p-6">
+          <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 hover:border-slate-600/50 transition-all">
             <h3 className="font-semibold mb-4 flex items-center">
               <FileText className="h-5 w-5 mr-2" />
               Session Details
@@ -498,29 +497,29 @@ function ConsultationSessionContent() {
             
             <div className="space-y-4">
               {/* Plan Info */}
-              <div className="p-3 bg-blue-50 rounded-lg">
+              <div className="p-3 bg-slate-700/30 rounded-lg border border-slate-600/50">
                 <div className="flex items-center space-x-2 mb-2">
                   <Crown className="h-4 w-4 text-blue-600" />
-                  <span className="font-medium text-blue-900">{currentSession.plan?.displayName}</span>
+                  <span className="font-medium text-slate-300">{currentSession.plan?.displayName}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-blue-700">Duration: {currentSession.plan?.durationDisplay}</span>
-                  <span className="font-semibold text-blue-900">{currentSession.plan?.formattedPrice}</span>
+                  <span className="text-slate-400">Duration: {currentSession.plan?.durationDisplay}</span>
+                  <span className="font-semibold text-slate-300">{currentSession.plan?.formattedPrice}</span>
                 </div>
               </div>
               
               {/* Expert Info */}
               {currentSession.expert && (
-                <div className="p-3 bg-green-50 rounded-lg">
+                <div className="p-3 bg-slate-700/30 rounded-lg border border-slate-600/50">
                   <div className="flex items-center space-x-2 mb-2">
                     <User className="h-4 w-4 text-green-600" />
-                    <span className="font-medium text-green-900">{currentSession.expert.name}</span>
+                    <span className="font-medium text-slate-300">{currentSession.expert.name}</span>
                   </div>
-                  <p className="text-sm text-green-700">{currentSession.expert.specialization}</p>
+                  <p className="text-sm text-slate-400">{currentSession.expert.specialization}</p>
                   {currentSession.expert.averageRating && (
                     <div className="flex items-center space-x-1 mt-1">
                       <Star className="h-3 w-3 text-yellow-500 fill-current" />
-                      <span className="text-xs text-green-700">
+                      <span className="text-xs text-slate-400">
                         {currentSession.expert.averageRating.toFixed(1)} ({currentSession.expert.completedSessions} sessions)
                       </span>
                     </div>
@@ -550,31 +549,31 @@ function ConsultationSessionContent() {
               
               {/* Payment Status */}
               <div className={`p-3 rounded-lg ${
-                currentSession.paymentStatus === 'PAID' ? 'bg-green-50' :
-                currentSession.paymentStatus === 'PENDING' ? 'bg-yellow-50 border border-yellow-200' :
-                'bg-red-50'
+                currentSession.paymentStatus === 'PAID' ? 'bg-slate-700/30 border border-slate-600/50' :
+                currentSession.paymentStatus === 'PENDING' ? 'bg-slate-700/30 border border-slate-600/50' :
+                'bg-slate-700/30 border border-slate-600/50'
               }`}>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Payment Status</span>
+                  <span className="text-sm text-slate-400">Payment Status</span>
                   <Badge className={
-                    currentSession.paymentStatus === 'PAID' ? 'bg-green-100 text-green-800' :
-                    currentSession.paymentStatus === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-red-100 text-red-800'
+                    currentSession.paymentStatus === 'PAID' ? 'bg-slate-700/30 text-slate-300 border-slate-600/50' :
+                    currentSession.paymentStatus === 'PENDING' ? 'bg-slate-700/30 text-slate-300 border-slate-600/50' :
+                    'bg-slate-700/30 text-slate-300 border-slate-600/50'
                   }>
                     {currentSession.paymentStatus}
                   </Badge>
                 </div>
                 {currentSession.paymentStatus === 'PENDING' && currentSession.status === 'ASSIGNED' && (
-                  <p className="text-xs text-yellow-700 mt-1">
+                  <p className="text-xs text-slate-400 mt-1">
                     💳 Payment required to start consultation with your assigned security expert
                   </p>
                 )}
               </div>
             </div>
-          </Card>
+          </div>
           
           {/* Session Actions */}
-          <Card className="p-6">
+          <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 hover:border-slate-600/50 transition-all">
             <h3 className="font-semibold mb-4">Actions</h3>
             <div className="space-y-3">
               {/* Payment Button */}
@@ -630,11 +629,11 @@ function ConsultationSessionContent() {
                 </Button>
               )}
             </div>
-          </Card>
+          </div>
           
           {/* Alert Context */}
           {currentSession.triggeringAlert && (
-            <Card className="p-6">
+            <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 hover:border-slate-600/50 transition-all">
               <h3 className="font-semibold mb-4 flex items-center">
                 <AlertTriangle className="h-5 w-5 mr-2 text-red-500" />
                 Related Alert
@@ -651,7 +650,7 @@ function ConsultationSessionContent() {
                   </span>
                 </div>
               </div>
-            </Card>
+            </div>
           )}
         </div>
         
@@ -704,12 +703,12 @@ function ConsultationSessionContent() {
               realtimeChatMessages={realtimeChatMessages}
             />
           ) : (
-            <Card className="p-6 h-[600px] flex items-center justify-center">
+            <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 h-[600px] flex items-center justify-center">
               <div className="text-center">
                 <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
                 <p>Loading chat...</p>
               </div>
-            </Card>
+            </div>
           )}
         </div>
       </div>
@@ -717,7 +716,7 @@ function ConsultationSessionContent() {
       {/* Rating Modal */}
       {showRatingModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="p-6 max-w-md w-full mx-4">
+          <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold mb-4">Rate Your Session</h3>
             
             {/* Star Rating */}
@@ -763,13 +762,13 @@ function ConsultationSessionContent() {
                 Submit Rating
               </Button>
             </div>
-          </Card>
+          </div>
         </div>
       )}
       
       {/* Session Summary */}
       {currentSession.status === 'COMPLETED' && currentSession.expertSummary && (
-        <Card className="p-6">
+        <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6">
           <h3 className="font-semibold mb-4 flex items-center">
             <FileText className="h-5 w-5 mr-2" />
             Session Summary
@@ -799,7 +798,7 @@ function ConsultationSessionContent() {
               )}
             </div>
           )}
-        </Card>
+        </div>
       )}
     </div>
   )

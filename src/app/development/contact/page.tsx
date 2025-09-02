@@ -135,11 +135,11 @@ ${formData.name}
               <div className="flex items-center space-x-3 group">
                 <Link href="/" className="flex items-center space-x-3">
                   <div className="relative">
-                    <Shield className="h-10 w-10 text-gradient-intelligence transition-transform group-hover:scale-110" />
+                    <Shield className="h-10 w-10 text-blue-400 transition-transform group-hover:scale-110" />
                     <div className="absolute inset-0 glow-blue rounded-full opacity-50 group-hover:opacity-75 transition-opacity" />
                   </div>
                   <div>
-                    <span className="text-2xl font-black text-gradient-animated">ThreatScope</span>
+                    <span className="text-2xl font-black text-white">ThreatScope</span>
                     <div className="text-xs text-blue-400 opacity-75 font-mono tracking-wider">SECURE</div>
                   </div>
                 </Link>
@@ -174,7 +174,7 @@ ${formData.name}
                       <span className="text-white">Welcome, {user?.firstName}</span>
                     </div>
                     <NotificationCenter />
-                    <Button variant="outline" className="btn-intelligence border-blue-500/50 hover:border-blue-400" asChild>
+                    <Button variant="outline" className="border-blue-400/50 hover:border-blue-400 text-blue-400 hover:text-white hover:bg-blue-500/20 border-blue-500/50 hover:border-blue-400" asChild>
                       <Link href="/dashboard">
                         <Settings className="mr-2 h-4 w-4" />
                         Dashboard
@@ -186,12 +186,12 @@ ${formData.name}
                   </>
                 ) : (
                   <>
-                    <Button variant="outline" className="btn-intelligence border-blue-500/50 hover:border-blue-400" asChild>
+                    <Button variant="outline" className="border-blue-400/50 hover:border-blue-400 text-blue-400 hover:text-white hover:bg-blue-500/20 border-blue-500/50 hover:border-blue-400" asChild>
                       <Link href="/login">
                         Login
                       </Link>
                     </Button>
-                    <Button className="btn-threat shadow-lg shadow-red-500/25" asChild>
+                    <Button className="bg-blue-500 hover:bg-blue-600 text-white shadow-lg shadow-blue-500/25" asChild>
                       <Link href="/register">
                         Get Started
                       </Link>
@@ -220,9 +220,8 @@ ${formData.name}
               <span className="text-sm font-semibold text-purple-400 tracking-wider uppercase">Get Your Quote</span>
             </div>
             
-            <h1 className="text-4xl md:text-5xl font-black mb-6">
-              <span className="text-white">Let's Build Your </span>
-              <span className="text-gradient-cyber">Next Project</span>
+            <h1 className="text-4xl md:text-5xl font-black mb-6 text-white">
+              Let's Build Your Next Project
             </h1>
             
             <p className="text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
@@ -397,7 +396,7 @@ ${formData.name}
                   <div className="pt-4">
                     <Button 
                       type="submit" 
-                      className="w-full btn-threat shadow-xl shadow-red-500/25" 
+                      className="w-full bg-blue-500 hover:bg-blue-600 text-white shadow-xl shadow-blue-500/25" 
                       size="lg"
                       disabled={isSubmitting}
                     >

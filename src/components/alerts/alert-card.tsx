@@ -1,6 +1,5 @@
 'use client'
 
-import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { PlanSelectionModal } from '@/components/consultation/plan-selection-modal'
@@ -16,7 +15,12 @@ import {
   Copy,
   CheckCircle,
   MessageSquare,
-  Users
+  Users,
+  Clock,
+  Info,
+  Zap,
+  Lock,
+  Activity
 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'react-hot-toast'
@@ -144,22 +148,42 @@ export function AlertCard({ alert, onMarkRead, onViewDetails }: AlertCardProps) 
   
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'CRITICAL': return 'bg-red-500'
-      case 'HIGH': return 'bg-orange-500' 
-      case 'MEDIUM': return 'bg-yellow-500'
-      case 'LOW': return 'bg-blue-500'
-      default: return 'bg-gray-500'
+      case 'CRITICAL': return 'bg-red-500 border-red-500/50'
+      case 'HIGH': return 'bg-orange-500 border-orange-500/50' 
+      case 'MEDIUM': return 'bg-yellow-500 border-yellow-500/50'
+      case 'LOW': return 'bg-blue-500 border-blue-500/50'
+      default: return 'bg-slate-500 border-slate-500/50'
+    }
+  }
+  
+  const getSeverityGlow = (severity: string) => {
+    switch (severity) {
+      case 'CRITICAL': return 'shadow-red-500/20'
+      case 'HIGH': return 'shadow-orange-500/20'
+      case 'MEDIUM': return 'shadow-yellow-500/20'
+      case 'LOW': return 'shadow-blue-500/20'
+      default: return 'shadow-slate-500/20'
     }
   }
   
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'NEW': return 'bg-red-100 text-red-800'
-      case 'VIEWED': return 'bg-blue-100 text-blue-800'
-      case 'ACKNOWLEDGED': return 'bg-green-100 text-green-800'
-      case 'RESOLVED': return 'bg-green-100 text-green-800'
-      case 'DISMISSED': return 'bg-gray-100 text-gray-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'NEW': return 'bg-red-500/10 text-red-400 border-red-500/30'
+      case 'VIEWED': return 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+      case 'ACKNOWLEDGED': return 'bg-green-500/10 text-green-400 border-green-500/30'
+      case 'RESOLVED': return 'bg-green-500/10 text-green-400 border-green-500/30'
+      case 'DISMISSED': return 'bg-slate-500/10 text-slate-400 border-slate-500/30'
+      default: return 'bg-slate-500/10 text-slate-400 border-slate-500/30'
+    }
+  }
+  
+  const getSeverityIcon = (severity: string) => {
+    switch (severity) {
+      case 'CRITICAL': return <AlertTriangle className="h-5 w-5 text-red-400" />
+      case 'HIGH': return <Zap className="h-5 w-5 text-orange-400" />
+      case 'MEDIUM': return <Info className="h-5 w-5 text-yellow-400" />
+      case 'LOW': return <Activity className="h-5 w-5 text-blue-400" />
+      default: return <Shield className="h-5 w-5 text-slate-400" />
     }
   }
   
@@ -174,98 +198,145 @@ export function AlertCard({ alert, onMarkRead, onViewDetails }: AlertCardProps) 
   }
   
   return (
-    <Card className="p-6 hover:shadow-lg transition-shadow">
+    <div className={`relative rounded-xl border-2 bg-slate-900/50 backdrop-blur-sm p-6 shadow-2xl transition-all duration-300 hover:shadow-3xl ${getSeverityColor(alert.severity)} ${getSeverityGlow(alert.severity)}`}>
+      {/* Severity Indicator Bar */}
+      <div className={`absolute top-0 left-0 right-0 h-1 rounded-t-xl ${getSeverityColor(alert.severity).split(' ')[0]}`} />
+      
       {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center space-x-3">
-          <div className={`w-3 h-3 rounded-full ${getSeverityColor(alert.severity)}`} />
+      <div className="flex items-start justify-between mb-6">
+        <div className="flex items-center space-x-4">
+          <div className={`relative p-3 rounded-xl bg-slate-800/50 border ${getSeverityColor(alert.severity).split(' ')[1]} shadow-lg`}>
+            {getSeverityIcon(alert.severity)}
+            {alert.severity === 'CRITICAL' && (
+              <div className="absolute -top-1 -right-1">
+                <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+                <div className="absolute inset-0 w-3 h-3 bg-red-500 rounded-full animate-ping" />
+              </div>
+            )}
+          </div>
           <div>
-            <h3 className="font-semibold text-gray-900 text-lg">
-              🚨 Security Breach Detected
-            </h3>
-            <div className="flex items-center space-x-2 mt-1">
-              <Badge variant="outline" className={getStatusColor(alert.status)}>
+            <div className="flex items-center space-x-2 mb-2">
+              <h3 className="text-xl font-bold text-slate-100">
+                Security Breach Detected
+              </h3>
+              {alert.severity === 'CRITICAL' && (
+                <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-400 bg-red-500/10 border border-red-500/30 rounded-full animate-pulse">
+                  URGENT
+                </span>
+              )}
+            </div>
+            <div className="flex items-center space-x-3">
+              <Badge variant="outline" className={`border ${getStatusColor(alert.status)}`}>
                 {alert.status}
               </Badge>
-              <Badge variant="outline" className={`${getSeverityColor(alert.severity)} text-white`}>
-                {alert.severity}
+              <Badge variant="outline" className={`border font-semibold ${getSeverityColor(alert.severity)} text-white`}>
+                {alert.severity} RISK
               </Badge>
             </div>
           </div>
         </div>
-        <div className="text-sm text-gray-500">
-          {formatDate(alert.createdAt)}
+        <div className="text-right">
+          <div className="flex items-center space-x-2 text-slate-400 mb-1">
+            <Clock className="h-4 w-4" />
+            <span className="text-sm font-medium">
+              {formatDate(alert.createdAt)}
+            </span>
+          </div>
+          <div className="text-xs text-slate-500 uppercase tracking-wide">
+            Alert ID: {String(alert.id).slice(-6)}
+          </div>
         </div>
       </div>
       
       {/* Main Info */}
       <div className="space-y-4">
-        {/* Target Asset */}
+        {/* Critical Asset Alert */}
         {combinedInfo.email && (
-          <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
-            <div className="flex items-center space-x-2">
-              <Shield className="h-5 w-5 text-red-600" />
-              <div>
-                <p className="font-medium text-red-900">Compromised Account</p>
-                <p className="text-red-700">{combinedInfo.email}</p>
+          <div className="relative p-4 bg-red-500/5 border border-red-500/20 rounded-xl mb-6">
+            <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-red-500 to-orange-500" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-red-500/10 rounded-lg border border-red-500/30">
+                  <Lock className="h-5 w-5 text-red-400" />
+                </div>
+                <div>
+                  <p className="font-semibold text-red-400 mb-1">COMPROMISED ACCOUNT</p>
+                  <p className="text-slate-200 font-mono text-lg">{combinedInfo.email}</p>
+                </div>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => copyToClipboard(combinedInfo.email, 'Email')}
+                className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => copyToClipboard(combinedInfo.email, 'Email')}
-            >
-              <Copy className="h-4 w-4" />
-            </Button>
           </div>
         )}
         
-        {/* Breach Details Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Source */}
+        {/* Threat Intelligence Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           {combinedInfo.source && combinedInfo.source !== 'Unknown' && (
-            <div className="flex items-center space-x-2">
-              <Globe className="h-4 w-4 text-gray-400" />
-              <span className="text-sm text-gray-600">Source:</span>
-              <span className="text-sm font-medium">{combinedInfo.source}</span>
+            <div className="p-3 bg-slate-800/30 border border-slate-700/50 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <Globe className="h-5 w-5 text-blue-400" />
+                <div>
+                  <p className="text-xs text-slate-400 uppercase tracking-wide mb-1">BREACH SOURCE</p>
+                  <p className="text-slate-200 font-medium">{combinedInfo.source}</p>
+                </div>
+              </div>
             </div>
           )}
           
-          {/* Date */}
           {combinedInfo.breachDate && combinedInfo.breachDate !== 'null' && (
-            <div className="flex items-center space-x-2">
-              <Calendar className="h-4 w-4 text-gray-400" />
-              <span className="text-sm text-gray-600">Date:</span>
-              <span className="text-sm font-medium">{formatDate(combinedInfo.breachDate)}</span>
+            <div className="p-3 bg-slate-800/30 border border-slate-700/50 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <Calendar className="h-5 w-5 text-purple-400" />
+                <div>
+                  <p className="text-xs text-slate-400 uppercase tracking-wide mb-1">BREACH DATE</p>
+                  <p className="text-slate-200 font-medium">{formatDate(combinedInfo.breachDate)}</p>
+                </div>
+              </div>
             </div>
           )}
           
-          {/* Domain */}
           {combinedInfo.domain && (
-            <div className="flex items-center space-x-2">
-              <ExternalLink className="h-4 w-4 text-gray-400" />
-              <span className="text-sm text-gray-600">Domain:</span>
-              <span className="text-sm font-medium">{combinedInfo.domain}</span>
+            <div className="p-3 bg-slate-800/30 border border-slate-700/50 rounded-lg md:col-span-2">
+              <div className="flex items-center space-x-3">
+                <ExternalLink className="h-5 w-5 text-green-400" />
+                <div>
+                  <p className="text-xs text-slate-400 uppercase tracking-wide mb-1">AFFECTED DOMAIN</p>
+                  <p className="text-slate-200 font-medium">{combinedInfo.domain}</p>
+                </div>
+              </div>
             </div>
           )}
         </div>
         
-        {/* Password Section */}
+        {/* Critical Password Exposure */}
         {combinedInfo.password && (
-          <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <div className="relative p-4 bg-amber-500/5 border border-amber-500/20 rounded-xl mb-6">
+            <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-amber-500 to-red-500" />
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Key className="h-5 w-5 text-yellow-600" />
-                <span className="font-medium text-yellow-900">Password Exposed:</span>
-                <code className="bg-yellow-100 px-2 py-1 rounded text-sm">
-                  {showPassword ? combinedInfo.password : maskPassword(combinedInfo.password)}
-                </code>
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-amber-500/10 rounded-lg border border-amber-500/30">
+                  <Key className="h-5 w-5 text-amber-400" />
+                </div>
+                <div>
+                  <p className="font-semibold text-amber-400 mb-1">PASSWORD COMPROMISED</p>
+                  <code className="bg-slate-800/50 border border-slate-700/50 px-3 py-2 rounded-lg text-slate-200 font-mono">
+                    {showPassword ? combinedInfo.password : maskPassword(combinedInfo.password)}
+                  </code>
+                </div>
               </div>
               <div className="flex items-center space-x-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setShowPassword(!showPassword)}
+                  className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
@@ -273,6 +344,7 @@ export function AlertCard({ alert, onMarkRead, onViewDetails }: AlertCardProps) 
                   variant="outline"
                   size="sm"
                   onClick={() => copyToClipboard(combinedInfo.password, 'Password')}
+                  className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
                 >
                   <Copy className="h-4 w-4" />
                 </Button>
@@ -281,53 +353,78 @@ export function AlertCard({ alert, onMarkRead, onViewDetails }: AlertCardProps) 
           </div>
         )}
         
-        {/* Security Recommendations */}
-        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <h4 className="font-semibold text-blue-900 mb-2 flex items-center">
-            <CheckCircle className="h-4 w-4 mr-2" />
-            Immediate Actions Required
-          </h4>
-          <ul className="text-sm text-blue-800 space-y-1">
-            <li>• Change password immediately for this account</li>
-            <li>• Enable two-factor authentication (2FA)</li>
-            <li>• Check for unauthorized account activity</li>
-            <li>• Use unique passwords for each service</li>
-          </ul>
+        {/* Critical Response Actions */}
+        <div className="p-4 bg-blue-500/5 border border-blue-500/20 rounded-xl mb-6">
+          <div className="flex items-center space-x-3 mb-4">
+            <div className="p-2 bg-blue-500/10 rounded-lg border border-blue-500/30">
+              <Shield className="h-5 w-5 text-blue-400" />
+            </div>
+            <h4 className="font-semibold text-blue-400 text-lg">
+              IMMEDIATE RESPONSE REQUIRED
+            </h4>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="flex items-center space-x-3 p-2 rounded-lg bg-slate-800/20">
+              <div className="w-2 h-2 bg-red-500 rounded-full" />
+              <span className="text-slate-200 text-sm font-medium">Change password immediately</span>
+            </div>
+            <div className="flex items-center space-x-3 p-2 rounded-lg bg-slate-800/20">
+              <div className="w-2 h-2 bg-red-500 rounded-full" />
+              <span className="text-slate-200 text-sm font-medium">Enable 2FA authentication</span>
+            </div>
+            <div className="flex items-center space-x-3 p-2 rounded-lg bg-slate-800/20">
+              <div className="w-2 h-2 bg-amber-500 rounded-full" />
+              <span className="text-slate-200 text-sm font-medium">Review account activity</span>
+            </div>
+            <div className="flex items-center space-x-3 p-2 rounded-lg bg-slate-800/20">
+              <div className="w-2 h-2 bg-amber-500 rounded-full" />
+              <span className="text-slate-200 text-sm font-medium">Use unique passwords</span>
+            </div>
+          </div>
         </div>
 
-        {/* Take Action Section */}
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+        {/* Expert Response Team */}
+        <div className="relative p-6 bg-gradient-to-r from-green-500/10 to-blue-500/10 border border-green-500/20 rounded-xl">
+          <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-green-500 to-blue-500" />
           <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-semibold text-green-900 mb-1 flex items-center">
-                <Users className="h-4 w-4 mr-2" />
-                Need Expert Help?
-              </h4>
-              <p className="text-sm text-green-800">
-                Get personalized guidance from cybersecurity experts to respond to this threat
-              </p>
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-green-500/10 rounded-xl border border-green-500/30">
+                <Users className="h-6 w-6 text-green-400" />
+              </div>
+              <div>
+                <h4 className="font-bold text-green-400 text-lg mb-1">
+                  EXPERT INCIDENT RESPONSE
+                </h4>
+                <p className="text-slate-300">
+                  Get immediate guidance from certified cybersecurity experts
+                </p>
+                <p className="text-slate-400 text-sm mt-1">
+                  • Threat containment • Recovery planning • Security hardening
+                </p>
+              </div>
             </div>
             <Button
               onClick={() => setShowPlanModal(true)}
-              className="bg-green-600 hover:bg-green-700 text-white"
+              className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
             >
-              <MessageSquare className="h-4 w-4 mr-2" />
-              Take Action
+              <MessageSquare className="h-5 w-5 mr-2" />
+              START RESPONSE
             </Button>
           </div>
         </div>
       </div>
       
-      {/* Actions */}
-      <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
-        <div className="flex items-center space-x-2">
+      {/* Action Footer */}
+      <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-700/50">
+        <div className="flex items-center space-x-3">
           {alert.status === 'NEW' && onMarkRead && (
             <Button
               size="sm"
               variant="outline"
               onClick={() => onMarkRead(alert.id)}
+              className="border-slate-600/50 text-slate-300 hover:bg-slate-700/50"
             >
-              <Eye className="h-4 w-4 mr-1" />
+              <Eye className="h-4 w-4 mr-2" />
               Mark Read
             </Button>
           )}
@@ -336,29 +433,45 @@ export function AlertCard({ alert, onMarkRead, onViewDetails }: AlertCardProps) 
             size="sm"
             variant="outline"
             onClick={() => setShowRawData(!showRawData)}
+            className="border-slate-600/50 text-slate-300 hover:bg-slate-700/50"
           >
-            {showRawData ? 'Hide' : 'Show'} Raw Data
+            <Activity className="h-4 w-4 mr-2" />
+            {showRawData ? 'Hide' : 'Show'} Forensics
           </Button>
         </div>
         
         {onViewDetails && (
-          <Button size="sm" onClick={() => onViewDetails(alert.id)}>
-            View Details
+          <Button 
+            size="sm" 
+            onClick={() => onViewDetails(alert.id)}
+            className="bg-slate-700 hover:bg-slate-600 text-slate-200"
+          >
+            <ExternalLink className="h-4 w-4 mr-2" />
+            Full Analysis
           </Button>
         )}
       </div>
       
-      {/* Raw Data (Collapsible) */}
+      {/* Forensic Data (Collapsible) */}
       {showRawData && (
-        <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-          <h5 className="font-semibold text-gray-700 mb-2">Raw Alert Data:</h5>
-          <pre className="text-xs text-gray-600 whitespace-pre-wrap overflow-auto max-h-40">
-            {JSON.stringify({ 
-              title: alert.title,
-              description: alert.description,
-              breachData: alert.breachData 
-            }, null, 2)}
-          </pre>
+        <div className="mt-4 p-4 bg-slate-900/50 border border-slate-700/50 rounded-lg">
+          <div className="flex items-center space-x-2 mb-3">
+            <Activity className="h-4 w-4 text-slate-400" />
+            <h5 className="font-semibold text-slate-300">Forensic Data & Telemetry:</h5>
+          </div>
+          <div className="bg-slate-950/50 rounded-lg p-3 border border-slate-800">
+            <pre className="text-xs text-slate-400 whitespace-pre-wrap overflow-auto max-h-40 font-mono">
+              {JSON.stringify({ 
+                alert_id: alert.id,
+                title: alert.title,
+                description: alert.description,
+                breach_data: alert.breachData,
+                timestamp: alert.createdAt,
+                severity_level: alert.severity,
+                detection_source: "ThreatScope Intel"
+              }, null, 2)}
+            </pre>
+          </div>
         </div>
       )}
 
@@ -370,6 +483,6 @@ export function AlertCard({ alert, onMarkRead, onViewDetails }: AlertCardProps) 
         alertTitle={alert.title}
         onSuccess={handleConsultationSuccess}
       />
-    </Card>
+    </div>
   )
 }

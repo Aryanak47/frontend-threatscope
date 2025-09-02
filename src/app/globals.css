@@ -679,3 +679,244 @@
     background-size: 60px 60px;
   }
 }
+
+/* Enhanced scroll-based animations inspired by modern landing pages */
+@keyframes matrix-rain {
+  0% { 
+    transform: translateY(-100vh);
+    opacity: 1;
+  }
+  100% { 
+    transform: translateY(100vh);
+    opacity: 0;
+  }
+}
+
+@keyframes circuit-pulse {
+  0%, 100% { 
+    opacity: 0.1;
+    stroke-dashoffset: 0;
+  }
+  50% { 
+    opacity: 0.4;
+    stroke-dashoffset: 10;
+  }
+}
+
+@keyframes parallax-float {
+  0%, 100% { 
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% { 
+    transform: translateY(-30px) rotate(5deg);
+  }
+}
+
+/* Scroll reveal animation utility classes */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(50px) scale(0.95);
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.scroll-reveal.revealed {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.scroll-reveal-left {
+  opacity: 0;
+  transform: translateX(-50px);
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.scroll-reveal-left.revealed {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.scroll-reveal-right {
+  opacity: 0;
+  transform: translateX(50px);
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.scroll-reveal-right.revealed {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Enhanced background patterns with scroll interaction */
+.cyber-network {
+  background-image: 
+    radial-gradient(circle at 1px 1px, rgba(59, 130, 246, 0.3) 1px, transparent 0);
+  background-size: 50px 50px;
+  animation: gradient-shift 20s ease-in-out infinite;
+}
+
+.tech-grid-animated {
+  background-image: 
+    linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px);
+  background-size: 40px 40px;
+  animation: grid-move 15s linear infinite;
+}
+
+/* Improved glass effect for landing page elements */
+.glass-hero {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 8px 32px 0 rgba(31, 38, 135, 0.37),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+}
+
+.glass-nav {
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(25px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Parallax content layers */
+.parallax-layer {
+  will-change: transform;
+  backface-visibility: hidden;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+.parallax-slow {
+  transform: translateZ(0);
+  transition: transform 0.1s ease-out;
+}
+
+.parallax-medium {
+  transform: translateZ(0);
+  transition: transform 0.05s ease-out;
+}
+
+.parallax-fast {
+  transform: translateZ(0);
+  transition: transform 0.02s ease-out;
+}
+
+/* Enhanced glow effects for scroll interaction */
+.glow-interactive {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glow-interactive:hover {
+  filter: drop-shadow(0 0 20px currentColor);
+  transform: scale(1.05) translateZ(10px);
+}
+
+/* Scroll-triggered background color transitions */
+.bg-scroll-fade {
+  transition: background-color 0.5s ease-out;
+}
+
+/* Enhanced radial gradient utilities for cybersecurity theme */
+.bg-gradient-cyber {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(59, 130, 246, 0.15) 0%,
+    rgba(139, 92, 246, 0.10) 45%,
+    transparent 70%
+  );
+}
+
+.bg-gradient-threat {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(239, 68, 68, 0.15) 0%,
+    rgba(220, 38, 38, 0.10) 45%,
+    transparent 70%
+  );
+}
+
+.bg-gradient-shield {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(16, 185, 129, 0.15) 0%,
+    rgba(5, 150, 105, 0.10) 45%,
+    transparent 70%
+  );
+}
+
+/* Smooth scroll behavior enhancements */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  .smooth-transform {
+    transition: transform 0.15s ease-out;
+  }
+  
+  .smooth-parallax {
+    transition: transform 0.1s ease-out;
+  }
+}
+
+/* Performance optimizations for scroll animations */
+.scroll-optimized {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Additional cybersecurity-themed animations */
+@keyframes data-stream {
+  0% { 
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  10% { 
+    opacity: 1;
+  }
+  90% { 
+    opacity: 1;
+  }
+  100% { 
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes security-scan {
+  0%, 100% { 
+    transform: translateX(-100%);
+    opacity: 0.6;
+  }
+  50% { 
+    transform: translateX(0%);
+    opacity: 1;
+  }
+}
+
+@keyframes threat-pulse {
+  0%, 100% { 
+    box-shadow: 0 0 5px rgba(239, 68, 68, 0.3);
+  }
+  50% { 
+    box-shadow: 0 0 25px rgba(239, 68, 68, 0.6), 0 0 50px rgba(239, 68, 68, 0.3);
+  }
+}
+
+/* Enhanced utility classes for modern scroll effects */
+.section-fade-in {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.section-fade-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.stagger-1 { transition-delay: 0.1s; }
+.stagger-2 { transition-delay: 0.2s; }
+.stagger-3 { transition-delay: 0.3s; }
+.stagger-4 { transition-delay: 0.4s; }

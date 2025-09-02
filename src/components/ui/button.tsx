@@ -16,8 +16,8 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         
         // Enhanced cybersecurity variants
-        security: "bg-gradient-to-r from-red-600 to-red-500 text-white hover:from-red-700 hover:to-red-600 shadow-lg hover:shadow-red-500/25 border border-red-500/50 hover:border-red-400/70",
-        intelligence: "bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-700 hover:to-blue-600 shadow-lg hover:shadow-blue-500/25 border border-blue-500/50 hover:border-blue-400/70",
+        security: "bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-700 hover:to-blue-600 shadow-lg hover:shadow-blue-500/25 border border-blue-500/50 hover:border-blue-400/70",
+        intelligence: "bg-gradient-to-r from-green-600 to-green-500 text-white hover:from-green-700 hover:to-green-600 shadow-lg hover:shadow-green-500/25 border border-green-500/50 hover:border-green-400/70",
         
         // New dark theme variants
         cyber: "bg-gradient-to-r from-purple-600 to-purple-500 text-white hover:from-purple-700 hover:to-purple-600 shadow-lg hover:shadow-purple-500/25 border border-purple-500/50 hover:border-purple-400/70",

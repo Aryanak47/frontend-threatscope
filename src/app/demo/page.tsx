@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import { useSearchStore } from '@/stores/search'
 import { SearchType, SearchResult } from '@/types'
 import toast from 'react-hot-toast'
@@ -150,9 +149,9 @@ export default function DemoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       {/* Header */}
-      <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+      <header className="border-b border-slate-700/50 bg-slate-900/95 backdrop-blur supports-[backdrop-filter]:bg-slate-900/60 sticky top-0 z-50">
         <div className="container flex h-16 items-center max-w-7xl mx-auto px-6">
           <div className="flex items-center space-x-4">
             <Button variant="ghost" size="sm" asChild>
@@ -161,32 +160,34 @@ export default function DemoPage() {
                 Back to Home
               </Link>
             </Button>
-            <div className="h-6 w-px bg-border" />
+            <div className="h-6 w-px bg-slate-700/50" />
             <div className="flex items-center space-x-2">
-              <Shield className="h-6 w-6 text-security-600" />
-              <span className="text-lg font-semibold">ThreatScope Demo</span>
+              <Shield className="h-6 w-6 text-red-600" />
+              <span className="text-lg font-semibold text-slate-100">ThreatScope Demo</span>
             </div>
           </div>
           
           <div className="ml-auto flex items-center space-x-4">
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-muted-foreground">Mode:</span>
+              <span className="text-sm text-slate-400">Mode:</span>
               <Button 
-                variant={isDemo ? "security" : "outline"} 
+                variant={isDemo ? "default" : "outline"} 
                 size="sm"
                 onClick={() => setIsDemo(true)}
+                className={isDemo ? "bg-red-600 hover:bg-red-700" : ""}
               >
                 Demo
               </Button>
               <Button 
-                variant={!isDemo ? "security" : "outline"} 
+                variant={!isDemo ? "default" : "outline"} 
                 size="sm"
                 onClick={() => setIsDemo(false)}
+                className={!isDemo ? "bg-red-600 hover:bg-red-700" : ""}
               >
                 Live Search
               </Button>
             </div>
-            <Button variant="security" asChild>
+            <Button className="bg-red-600 hover:bg-red-700" asChild>
               <Link href="/register">Start Free Trial</Link>
             </Button>
           </div>
@@ -196,10 +197,10 @@ export default function DemoPage() {
       <div className="container max-w-6xl mx-auto px-6 py-12">
         {/* Demo Introduction */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-slate-100">
             Interactive Platform Demo
           </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
+          <p className="text-xl text-slate-400 max-w-3xl mx-auto mb-8">
             Experience the power of ThreatScope with our interactive demo. 
             See how easy it is to search billions of records and uncover threats.
           </p>
@@ -236,42 +237,42 @@ export default function DemoPage() {
 
         {/* Demo Features */}
         <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
-          <Card className="p-6 text-center">
-            <Database className="h-12 w-12 text-security-600 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">14B+ Records</h3>
-            <p className="text-muted-foreground">
+          <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 text-center hover:border-slate-600/50 transition-all">
+            <Database className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold mb-2 text-slate-200">14B+ Records</h3>
+            <p className="text-slate-400">
               Search across billions of breach records from 500+ sources
             </p>
-          </Card>
+          </div>
           
-          <Card className="p-6 text-center">
-            <Clock className="h-12 w-12 text-intelligence-600 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">&lt;200ms Response</h3>
-            <p className="text-muted-foreground">
+          <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 text-center hover:border-slate-600/50 transition-all">
+            <Clock className="h-12 w-12 text-blue-500 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold mb-2 text-slate-200">&lt;200ms Response</h3>
+            <p className="text-slate-400">
               Lightning-fast search results with advanced indexing
             </p>
-          </Card>
+          </div>
           
-          <Card className="p-6 text-center">
-            <Shield className="h-12 w-12 text-green-600 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Zero Retention</h3>
-            <p className="text-muted-foreground">
+          <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 text-center hover:border-slate-600/50 transition-all">
+            <Shield className="h-12 w-12 text-green-500 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold mb-2 text-slate-200">Zero Retention</h3>
+            <p className="text-slate-400">
               Your searches are secure and encrypted
             </p>
-          </Card>
+          </div>
         </div>
 
         {/* CTA Section */}
         <div className="mt-16 text-center">
-          <h2 className="text-3xl font-bold mb-4">
+          <h2 className="text-3xl font-bold mb-4 text-slate-200">
             Ready to Start Your Investigation?
           </h2>
-          <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+          <p className="text-lg text-slate-400 mb-8 max-w-2xl mx-auto">
             Get full access to ThreatScope's comprehensive OSINT platform. 
             Start your free trial today and protect your digital assets.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="security" asChild>
+            <Button size="lg" className="bg-red-600 hover:bg-red-700" asChild>
               <Link href="/register">
                 Start Free Trial
                 <Shield className="ml-2 h-5 w-5" />

@@ -40,11 +40,11 @@ export function Footer() {
             {/* Logo */}
             <div className="flex items-center space-x-3 group">
               <div className="relative">
-                <Shield className="h-8 w-8 text-gradient-intelligence transition-transform group-hover:scale-110 duration-300" />
+                <Shield className="h-8 w-8 text-blue-400 transition-transform group-hover:scale-110 duration-300" />
                 <div className="absolute inset-0 glow-blue rounded-full opacity-0 group-hover:opacity-50 transition-opacity duration-300" />
               </div>
               <div>
-                <span className="text-2xl font-black text-gradient-animated">ThreatScope</span>
+                <span className="text-2xl font-black text-white">ThreatScope</span>
                 <div className="text-xs text-blue-400 opacity-75 font-mono tracking-wider">SECURE</div>
               </div>
             </div>
@@ -52,26 +52,11 @@ export function Footer() {
             {/* Description */}
             <p className="text-slate-300 leading-relaxed max-w-md">
               Cybersecurity intelligence platform with custom development services. 
-              <span className="text-gradient-intelligence font-semibold">Hunt threats</span>, {" "}
-              <span className="text-gradient-shield font-semibold">monitor assets</span>, and {" "}
-              <span className="text-gradient-threat font-semibold">stay secure</span>.
+              <span className="text-white font-semibold">Hunt threats</span>, {" "}
+              <span className="text-white font-semibold">monitor assets</span>, and {" "}
+              <span className="text-white font-semibold">stay secure</span>.
             </p>
             
-            {/* Security Badges */}
-            <div className="flex flex-wrap gap-3">
-              <div className="flex items-center space-x-2 glass-card px-3 py-2 rounded-lg hover:glow-green transition-all duration-300">
-                <Lock className="h-4 w-4 text-green-400" />
-                <span className="text-xs text-green-400 font-semibold">SOC 2 Certified</span>
-              </div>
-              <div className="flex items-center space-x-2 glass-card px-3 py-2 rounded-lg hover:glow-blue transition-all duration-300">
-                <Eye className="h-4 w-4 text-blue-400" />
-                <span className="text-xs text-blue-400 font-semibold">Zero Logs</span>
-              </div>
-              <div className="flex items-center space-x-2 glass-card px-3 py-2 rounded-lg hover:glow-purple transition-all duration-300">
-                <Shield className="h-4 w-4 text-purple-400" />
-                <span className="text-xs text-purple-400 font-semibold">GDPR Ready</span>
-              </div>
-            </div>
             
             {/* Social Links */}
             <div className="flex space-x-4">
@@ -99,27 +84,27 @@ export function Footer() {
             <ul className="space-y-3">
               <li>
                 <Link href="/features" className="text-slate-400 hover:text-white transition-colors duration-300 flex items-center group">
-                  <span className="group-hover:text-gradient-intelligence transition-all duration-300">Features</span>
+                  <span className="group-hover:text-white transition-all duration-300">Features</span>
                 </Link>
               </li>
               <li>
                 <Link href="/pricing" className="text-slate-400 hover:text-white transition-colors duration-300 flex items-center group">
-                  <span className="group-hover:text-gradient-intelligence transition-all duration-300">Pricing</span>
+                  <span className="group-hover:text-white transition-all duration-300">Pricing</span>
                 </Link>
               </li>
               <li>
                 <Link href="/api" className="text-slate-400 hover:text-white transition-colors duration-300 flex items-center group">
-                  <span className="group-hover:text-gradient-intelligence transition-all duration-300">API Access</span>
+                  <span className="group-hover:text-white transition-all duration-300">API Access</span>
                 </Link>
               </li>
               <li>
                 <Link href="/integrations" className="text-slate-400 hover:text-white transition-colors duration-300 flex items-center group">
-                  <span className="group-hover:text-gradient-intelligence transition-all duration-300">Integrations</span>
+                  <span className="group-hover:text-white transition-all duration-300">Integrations</span>
                 </Link>
               </li>
               <li>
                 <Link href="/changelog" className="text-slate-400 hover:text-white transition-colors duration-300 flex items-center group">
-                  <span className="group-hover:text-gradient-intelligence transition-all duration-300">Updates</span>
+                  <span className="group-hover:text-white transition-all duration-300">Updates</span>
                   <div className="w-2 h-2 bg-green-400 rounded-full ml-2 animate-pulse" />
                 </Link>
               </li>
@@ -135,27 +120,27 @@ export function Footer() {
             <ul className="space-y-3">
               <li>
                 <Link href="/docs" className="text-slate-400 hover:text-white transition-colors duration-300 flex items-center group">
-                  <span className="group-hover:text-gradient-threat transition-all duration-300">Documentation</span>
+                  <span className="group-hover:text-white transition-all duration-300">Documentation</span>
                 </Link>
               </li>
               <li>
                 <Link href="/guides" className="text-slate-400 hover:text-white transition-colors duration-300 flex items-center group">
-                  <span className="group-hover:text-gradient-threat transition-all duration-300">OSINT Guides</span>
+                  <span className="group-hover:text-white transition-all duration-300">OSINT Guides</span>
                 </Link>
               </li>
               <li>
                 <Link href="/blog" className="text-slate-400 hover:text-white transition-colors duration-300 flex items-center group">
-                  <span className="group-hover:text-gradient-threat transition-all duration-300">Threat Intel Blog</span>
+                  <span className="group-hover:text-white transition-all duration-300">Threat Intel Blog</span>
                 </Link>
               </li>
               <li>
                 <Link href="/support" className="text-slate-400 hover:text-white transition-colors duration-300 flex items-center group">
-                  <span className="group-hover:text-gradient-threat transition-all duration-300">24/7 Support</span>
+                  <span className="group-hover:text-white transition-all duration-300">24/7 Support</span>
                 </Link>
               </li>
               <li>
                 <Link href="/status" className="text-slate-400 hover:text-white transition-colors duration-300 flex items-center group">
-                  <span className="group-hover:text-gradient-threat transition-all duration-300">System Status</span>
+                  <span className="group-hover:text-white transition-all duration-300">System Status</span>
                   <Activity className="h-3 w-3 ml-2 text-green-400 animate-pulse" />
                 </Link>
               </li>
@@ -171,28 +156,17 @@ export function Footer() {
             <ul className="space-y-3">
               <li>
                 <Link href="/about" className="text-slate-400 hover:text-white transition-colors duration-300 flex items-center group">
-                  <span className="group-hover:text-gradient-shield transition-all duration-300">About Us</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/careers" className="text-slate-400 hover:text-white transition-colors duration-300 flex items-center group">
-                  <span className="group-hover:text-gradient-shield transition-all duration-300">Careers</span>
-                  <div className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded-full ml-2 font-semibold">Hiring</div>
+                  <span className="group-hover:text-white transition-all duration-300">About Us</span>
                 </Link>
               </li>
               <li>
                 <Link href="/contact" className="text-slate-400 hover:text-white transition-colors duration-300 flex items-center group">
-                  <span className="group-hover:text-gradient-shield transition-all duration-300">Contact</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/press" className="text-slate-400 hover:text-white transition-colors duration-300 flex items-center group">
-                  <span className="group-hover:text-gradient-shield transition-all duration-300">Press Kit</span>
+                  <span className="group-hover:text-white transition-all duration-300">Contact</span>
                 </Link>
               </li>
               <li>
                 <Link href="/security" className="text-slate-400 hover:text-white transition-colors duration-300 flex items-center group">
-                  <span className="group-hover:text-gradient-shield transition-all duration-300">Security</span>
+                  <span className="group-hover:text-white transition-all duration-300">Security</span>
                   <Lock className="h-3 w-3 ml-2 text-green-400" />
                 </Link>
               </li>
@@ -228,7 +202,7 @@ export function Footer() {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center space-x-4 mb-4 md:mb-0">
               <p className="text-sm text-slate-400">
-                © 2025 <span className="text-gradient-cyber font-semibold">ThreatScope</span>. All rights reserved.
+                © 2025 <span className="text-white font-semibold">ThreatScope</span>. All rights reserved.
               </p>
               <div className="hidden md:flex items-center space-x-2">
                 <div className="w-1 h-1 bg-slate-600 rounded-full" />
@@ -237,13 +211,13 @@ export function Footer() {
             </div>
             
             <div className="flex items-center space-x-6">
-              <Link href="/privacy" className="text-sm text-slate-400 hover:text-white transition-colors duration-300 hover:text-gradient-intelligence">
+              <Link href="/privacy" className="text-sm text-slate-400 hover:text-white transition-colors duration-300">
                 Privacy Policy
               </Link>
-              <Link href="/terms" className="text-sm text-slate-400 hover:text-white transition-colors duration-300 hover:text-gradient-intelligence">
+              <Link href="/terms" className="text-sm text-slate-400 hover:text-white transition-colors duration-300">
                 Terms of Service
               </Link>
-              <Link href="/cookies" className="text-sm text-slate-400 hover:text-white transition-colors duration-300 hover:text-gradient-intelligence">
+              <Link href="/cookies" className="text-sm text-slate-400 hover:text-white transition-colors duration-300">
                 Cookie Policy
               </Link>
             </div>

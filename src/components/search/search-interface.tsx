@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { SearchType } from '@/types'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import { useAuthStore } from '@/stores/auth'
 import { 
   Search, 
@@ -84,13 +83,13 @@ export function SearchInterface({
     <div className="space-y-6">
       {/* Simple status display without usage store calls */}
       {!isAuthenticated && (
-        <Card className="p-4 border-yellow-200 bg-yellow-50 dark:bg-yellow-950 dark:border-yellow-800">
+        <div className="p-4 border border-amber-500/30 bg-amber-500/10 rounded-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <AlertTriangle className="h-5 w-5 text-yellow-600" />
+              <AlertTriangle className="h-5 w-5 text-amber-400" />
               <div>
-                <h3 className="font-semibold text-yellow-800 dark:text-yellow-200">Anonymous Usage</h3>
-                <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                <h3 className="font-semibold text-amber-300">Anonymous Usage</h3>
+                <p className="text-sm text-amber-300">
                   Limited features - sign up for full access
                 </p>
               </div>
@@ -102,11 +101,11 @@ export function SearchInterface({
               </Link>
             </Button>
           </div>
-        </Card>
+        </div>
       )}
 
       {/* Search Interface */}
-      <Card className="p-6">
+      <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6">
         <div className="space-y-6">
           {/* Search Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -168,7 +167,7 @@ export function SearchInterface({
                       className={`p-3 border rounded-lg transition-colors text-center disabled:opacity-50 disabled:cursor-not-allowed ${
                         selectedType === type.value
                           ? 'border-red-500 bg-red-50 dark:bg-red-950'
-                          : 'border-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800'
+                          : 'border-slate-600/50 bg-slate-800/30 hover:bg-slate-700/50'
                       }`}
                     >
                       <Icon className="h-5 w-5 mx-auto mb-1" />
@@ -191,14 +190,14 @@ export function SearchInterface({
                     <button
                       key={type.value}
                       onClick={() => handleQuickSearch(type.example, type.value as SearchType)}
-                      className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="p-3 border border-slate-600/50 bg-slate-800/30 rounded-lg hover:bg-slate-700/50 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
                       disabled={isSearching}
                     >
                       <div className="flex items-center space-x-2 mb-1">
-                        <Icon className="h-4 w-4 text-gray-500" />
-                        <span className="text-sm font-medium">{type.label}</span>
+                        <Icon className="h-4 w-4 text-slate-400" />
+                        <span className="text-sm font-medium text-slate-200">{type.label}</span>
                       </div>
-                      <div className="text-xs text-gray-500 font-mono">
+                      <div className="text-xs text-slate-400 font-mono">
                         {type.example}
                       </div>
                     </button>
@@ -209,26 +208,26 @@ export function SearchInterface({
           )}
 
           {/* Search Statistics */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-slate-700/50">
             <div className="text-center">
               <div className="text-2xl font-bold text-red-600">14.2B+</div>
-              <div className="text-xs text-gray-500">Email Records</div>
+              <div className="text-xs text-slate-400">Email Records</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-red-600">8.1B+</div>
-              <div className="text-xs text-gray-500">Username Records</div>
+              <div className="text-xs text-slate-400">Username Records</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-red-600">2.5B+</div>
-              <div className="text-xs text-gray-500">Domain Records</div>
+              <div className="text-xs text-slate-400">Domain Records</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-red-600">500+</div>
-              <div className="text-xs text-gray-500">Data Sources</div>
+              <div className="text-xs text-slate-400">Data Sources</div>
             </div>
           </div>
         </div>
-      </Card>
+      </div>
     </div>
   )
 }

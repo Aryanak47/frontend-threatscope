@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import ShootingStarsVideo from '@/components/ui/shooting-stars-video'
 import { 
   Search, 
   Mail, 
@@ -111,17 +112,13 @@ export function SearchSection() {
     <section className="relative py-32 px-6 lg:px-8 overflow-hidden">
       {/* Background Effects */}
       <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950" />
-        <div className="absolute inset-0 network-pattern opacity-15" />
-        
-        {/* Scanning lines */}
-        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-blue-400 to-transparent animate-pulse" />
-        <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-red-400 to-transparent animate-pulse" style={{animationDelay: '1s'}} />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-900/70 to-slate-950/80" />
+        <ShootingStarsVideo />
       </div>
       
       {/* Floating elements */}
-      <div className="absolute top-20 left-20 w-20 h-20 glow-blue rounded-full opacity-10 float-slow" />
-      <div className="absolute bottom-20 right-20 w-24 h-24 glow-red rounded-full opacity-10 float-medium" />
+      <div className="absolute top-10 left-10 w-24 h-24 glow-blue rounded-full opacity-3 float-slow" />
+      <div className="absolute bottom-10 right-10 w-28 h-28 glow-green rounded-full opacity-3 float-medium" />
       
       <div className="relative z-10 max-w-5xl mx-auto">
         {/* Section Header */}
@@ -133,13 +130,13 @@ export function SearchSection() {
           
           <h2 className="heading-lg mb-6">
             <span className="text-white">Search </span>
-            <span className="text-gradient-threat">14+ Billion</span>
+            <span className="text-white">14+ Billion</span>
             <span className="text-white"> Records</span>
           </h2>
           
           <p className="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed">
             Advanced threat hunting across the world's largest collection of breach data, stealer logs, and dark web intelligence. 
-            <span className="text-gradient-intelligence font-semibold">Start your investigation now.</span>
+            <span className="text-white font-semibold">Start your investigation now.</span>
           </p>
         </div>
 
@@ -214,7 +211,7 @@ export function SearchSection() {
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyPress={handleKeyPress}
                   key={searchType.value}
-                  className="w-full px-6 py-4 bg-slate-800/80 border border-white/30 rounded-xl text-white font-semibold placeholder:text-slate-400 focus:outline-none focus:border-blue-400/70 focus:bg-slate-800/90 focus:glow-blue transition-all duration-300 font-mono shadow-inner"
+                  className="w-full px-6 py-4 bg-slate-800/80 border border-white/30 rounded-xl text-white font-semibold placeholder:text-slate-400 focus:outline-none focus:border-blue-400 focus:bg-slate-800/90 focus:ring-2 focus:ring-blue-400/20 transition-all duration-300 font-mono shadow-inner"
                   disabled={isSearching}
                 />
                 
@@ -249,9 +246,9 @@ export function SearchSection() {
               onClick={handleSearch}
               disabled={!query.trim() || isSearching}
               size="lg"
-              className="btn-threat lg:px-10 h-16 shadow-2xl shadow-red-500/30 relative group overflow-hidden"
+              className="bg-blue-500 hover:bg-blue-600 text-white lg:px-10 h-16 shadow-2xl shadow-blue-500/30 relative group overflow-hidden"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <div className="relative z-10 flex items-center">
                 {isSearching ? (
                   <>
@@ -289,7 +286,7 @@ export function SearchSection() {
                 <button
                   key={example}
                   onClick={() => setQuery(example)}
-                  className="px-4 py-3 glass-card rounded-lg hover:glow-blue transition-all duration-300 group text-left border border-white/10 hover:border-blue-400/30"
+                  className="px-4 py-3 glass-card rounded-lg hover:ring-2 hover:ring-blue-400/30 transition-all duration-300 group text-left border border-white/10 hover:border-blue-400/30"
                   style={{
                     animationDelay: `${index * 0.1}s`,
                     animation: 'fade-in-up 0.5s ease-out both'
@@ -315,11 +312,6 @@ export function SearchSection() {
               </div>
               <div className="text-slate-500">•</div>
               <div className="flex items-center space-x-2 text-blue-400">
-                <Eye className="h-4 w-4" />
-                <span className="font-semibold">Zero Logs</span>
-              </div>
-              <div className="text-slate-500">•</div>
-              <div className="flex items-center space-x-2 text-purple-400">
                 <Shield className="h-4 w-4" />
                 <span className="font-semibold">Anonymous Search</span>
               </div>
@@ -327,71 +319,74 @@ export function SearchSection() {
           </div>
         </div>
 
-        {/* Enhanced Real-time Stats */}
-        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="stats-card group">
-            <div className="relative">
-              <Database className="h-10 w-10 text-gradient-threat mb-4 group-hover:scale-110 transition-transform duration-300" />
-              <div className="text-3xl font-black text-gradient-threat mb-2 group-hover:text-glow transition-all duration-300">14.2B+</div>
-              <div className="text-slate-300 font-semibold mb-1">Breach Records</div>
-              <div className="text-xs text-slate-400 font-mono uppercase tracking-wider">Updated Real-time</div>
-              
-              {/* Live update indicator */}
-              <div className="absolute top-4 right-4">
-                <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse" />
-              </div>
-            </div>
-          </div>
+        {/* Enhanced Real-time Stats with Animation */}
+        <div className="relative mt-16">
           
-          <div className="stats-card group">
-            <div className="relative">
-              <Globe className="h-10 w-10 text-gradient-intelligence mb-4 group-hover:scale-110 transition-transform duration-300" />
-              <div className="text-3xl font-black text-gradient-intelligence mb-2 group-hover:text-glow transition-all duration-300">500+</div>
-              <div className="text-slate-300 font-semibold mb-1">Data Sources</div>
-              <div className="text-xs text-slate-400 font-mono uppercase tracking-wider">Dark Web + Surface</div>
-              
-              {/* Live update indicator */}
-              <div className="absolute top-4 right-4">
-                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
+          <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="stats-card group">
+              <div className="relative">
+                <Database className="h-10 w-10 text-red-400 mb-4 group-hover:scale-110 transition-transform duration-300" />
+                <div className="text-3xl font-black text-white mb-2 group-hover:text-glow transition-all duration-300">14.2B+</div>
+                <div className="text-slate-300 font-semibold mb-1">Breach Records</div>
+                <div className="text-xs text-slate-400 font-mono uppercase tracking-wider">Updated Real-time</div>
+                
+                {/* Live update indicator */}
+                <div className="absolute top-4 right-4">
+                  <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse" />
+                </div>
               </div>
             </div>
-          </div>
-          
-          <div className="stats-card group">
-            <div className="relative">
-              <Zap className="h-10 w-10 text-gradient-shield mb-4 group-hover:scale-110 transition-transform duration-300" />
-              <div className="text-3xl font-black text-gradient-shield mb-2 group-hover:text-glow transition-all duration-300">&lt;200ms</div>
-              <div className="text-slate-300 font-semibold mb-1">Query Response</div>
-              <div className="text-xs text-slate-400 font-mono uppercase tracking-wider">Lightning Fast</div>
-              
-              {/* Live update indicator */}
-              <div className="absolute top-4 right-4">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Call to Action */}
-        <div className="mt-16 text-center">
-          <div className="glass-card rounded-2xl p-8 border border-white/10 relative group overflow-hidden max-w-3xl mx-auto">
-            {/* Background animation */}
-            <div className="absolute inset-0 bg-gradient-to-r from-red-600/5 via-blue-600/5 to-purple-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
             
-            <div className="relative z-10">
-              <h3 className="text-2xl font-bold text-white mb-4">
-                Need Help Getting Started?
-              </h3>
-              <p className="text-slate-300 mb-6">
-                Our cybersecurity experts are standing by to assist with your threat hunting and digital investigations.
-              </p>
+            <div className="stats-card group">
+              <div className="relative">
+                <Globe className="h-10 w-10 text-blue-400 mb-4 group-hover:scale-110 transition-transform duration-300" />
+                <div className="text-3xl font-black text-white mb-2 group-hover:text-glow transition-all duration-300">500+</div>
+                <div className="text-slate-300 font-semibold mb-1">Data Sources</div>
+                <div className="text-xs text-slate-400 font-mono uppercase tracking-wider">Dark Web + Surface</div>
+                
+                {/* Live update indicator */}
+                <div className="absolute top-4 right-4">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
+                </div>
+              </div>
+            </div>
+            
+            <div className="stats-card group">
+              <div className="relative">
+                <Zap className="h-10 w-10 text-green-400 mb-4 group-hover:scale-110 transition-transform duration-300" />
+                <div className="text-3xl font-black text-white mb-2 group-hover:text-glow transition-all duration-300">&lt;200ms</div>
+                <div className="text-slate-300 font-semibold mb-1">Query Response</div>
+                <div className="text-xs text-slate-400 font-mono uppercase tracking-wider">Lightning Fast</div>
+                
+                {/* Live update indicator */}
+                <div className="absolute top-4 right-4">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Call to Action */}
+          <div className="mt-16 text-center">
+            <div className="glass-card rounded-2xl p-8 border border-white/10 relative group overflow-hidden max-w-3xl mx-auto">
+              {/* Background animation */}
+              <div className="absolute inset-0 bg-gradient-to-r from-red-600/5 via-blue-600/5 to-purple-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
               
-              <Button className="btn-intelligence shadow-xl shadow-blue-500/25" asChild>
-              <Link href="/consultation">
-              <Users className="mr-2 h-5 w-5" />
-              Talk to an Expert
-              </Link>
-              </Button>
+              <div className="relative z-10">
+                <h3 className="text-2xl font-bold text-white mb-4">
+                  Need Help Getting Started?
+                </h3>
+                <p className="text-slate-300 mb-6">
+                  Our cybersecurity experts are standing by to assist with your threat hunting and digital investigations.
+                </p>
+                
+                <Button className="bg-blue-500 hover:bg-blue-600 text-white shadow-xl shadow-blue-500/25" asChild>
+                <Link href="/consultation">
+                <Users className="mr-2 h-5 w-5" />
+                Talk to an Expert
+                </Link>
+                </Button>
+              </div>
             </div>
           </div>
         </div>

@@ -1,6 +1,9 @@
 'use client';
 
 import Link from 'next/link'
+import { useEffect, useRef, useState } from "react"
+import { gsap } from "gsap"
+import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { useAuthStore } from '@/stores/auth'
@@ -23,6 +26,8 @@ import {
   Settings,
   LogOut
 } from 'lucide-react'
+
+gsap.registerPlugin(ScrollTrigger)
 
 const services = [
   {
@@ -138,11 +143,11 @@ export default function DevelopmentServicesPage() {
               <div className="flex items-center space-x-3 group">
                 <Link href="/" className="flex items-center space-x-3">
                   <div className="relative">
-                    <Shield className="h-10 w-10 text-gradient-intelligence transition-transform group-hover:scale-110" />
+                    <Shield className="h-10 w-10 text-blue-400 transition-transform group-hover:scale-110" />
                     <div className="absolute inset-0 glow-blue rounded-full opacity-50 group-hover:opacity-75 transition-opacity" />
                   </div>
                   <div>
-                    <span className="text-2xl font-black text-gradient-animated">ThreatScope</span>
+                    <span className="text-2xl font-black text-white">ThreatScope</span>
                     <div className="text-xs text-blue-400 opacity-75 font-mono tracking-wider">SECURE</div>
                   </div>
                 </Link>
@@ -178,7 +183,7 @@ export default function DevelopmentServicesPage() {
                       <span className="text-white">Welcome, {user?.firstName}</span>
                     </div>
                     <NotificationCenter />
-                    <Button variant="outline" className="btn-intelligence border-blue-500/50 hover:border-blue-400" asChild>
+                    <Button variant="outline" className="border-blue-400/50 hover:border-blue-400 text-blue-400 hover:text-white hover:bg-blue-500/20" asChild>
                       <Link href="/dashboard">
                         <Settings className="mr-2 h-4 w-4" />
                         Dashboard
@@ -190,12 +195,12 @@ export default function DevelopmentServicesPage() {
                   </>
                 ) : (
                   <>
-                    <Button variant="outline" className="btn-intelligence border-blue-500/50 hover:border-blue-400" asChild>
+                    <Button variant="outline" className="border-blue-400/50 hover:border-blue-400 text-blue-400 hover:text-white hover:bg-blue-500/20" asChild>
                       <Link href="/login">
                         Login
                       </Link>
                     </Button>
-                    <Button className="btn-threat shadow-lg shadow-red-500/25" asChild>
+                    <Button className="bg-blue-500 hover:bg-blue-600 text-white shadow-lg shadow-blue-500/25" asChild>
                       <Link href="/register">
                         Get Started
                       </Link>
@@ -226,11 +231,10 @@ export default function DevelopmentServicesPage() {
             <span className="text-sm font-semibold text-purple-400 tracking-wider uppercase">Development Services</span>
           </div>
           
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-black mb-8">
-            <span className="text-white">Rapid </span>
-            <span className="text-gradient-cyber">Development</span>
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-black mb-8 text-white">
+            Rapid Development
             <br />
-            <span className="text-gradient-animated">Solutions</span>
+            <span className="text-slate-300">Solutions</span>
           </h1>
           
           {/* Motto/Quote */}
@@ -240,9 +244,7 @@ export default function DevelopmentServicesPage() {
               <div className="relative z-10">
                 <div className="text-6xl text-purple-400/30 font-black mb-2">"</div>
                 <h2 className="text-2xl md:text-3xl font-bold text-white leading-tight">
-                  <span className="text-gradient-cyber">Fast</span>, {" "}
-                  <span className="text-gradient-threat">Affordable</span>, {" "}
-                  <span className="text-gradient-intelligence">Exceptional</span>
+                  Fast, Affordable, Exceptional
                   <br />
                   <span className="text-slate-300 text-xl">— Pick All Three</span>
                 </h2>
@@ -253,14 +255,14 @@ export default function DevelopmentServicesPage() {
           
           <p className="text-lg md:text-xl text-slate-300 mb-12 max-w-4xl mx-auto leading-relaxed">
             Transform your ideas into reality with our efficient development services. 
-            <span className="text-gradient-intelligence font-semibold">Web applications</span>, {" "}
-            <span className="text-gradient-shield font-semibold">mobile apps</span>, {" "}
-            <span className="text-gradient-cyber font-semibold">AI agents</span>, and {" "}
-            <span className="text-gradient-threat font-semibold">complete MVPs</span> delivered on time and on budget.
+            <span className="text-white font-semibold">Web applications</span>, {" "}
+            <span className="text-white font-semibold">mobile apps</span>, {" "}
+            <span className="text-white font-semibold">AI agents</span>, and {" "}
+            <span className="text-white font-semibold">complete MVPs</span> delivered on time and on budget.
           </p>
           
           <div className="flex justify-center items-center mb-16">
-            <Button className="btn-threat shadow-xl shadow-red-500/25" size="lg" asChild>
+            <Button className="bg-blue-500 hover:bg-blue-600 text-white shadow-xl shadow-blue-500/25" size="lg" asChild>
               <Link href="/development/contact">
                 <Calendar className="mr-2 h-5 w-5" />
                 Get Quote
@@ -298,7 +300,7 @@ export default function DevelopmentServicesPage() {
         <div className="relative z-10 max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-              Our <span className="text-gradient-cyber">Development Services</span>
+              Our Development Services
             </h2>
             <p className="text-lg text-slate-300 max-w-3xl mx-auto">
               From simple web applications to complex AI-powered solutions, we deliver high-quality products at lightning speed.
@@ -325,11 +327,11 @@ export default function DevelopmentServicesPage() {
                 {/* Icon and Title */}
                 <div className="flex items-center mb-6">
                   <div className={`relative p-4 rounded-2xl glass-card group-hover:${service.glowClass} transition-all duration-500`}>
-                    <service.icon className={`h-8 w-8 ${service.gradient} group-hover:scale-110 transition-transform duration-300`} />
+                    <service.icon className="h-8 w-8 text-white group-hover:scale-110 transition-transform duration-300" />
                   </div>
                   
                   <div className="ml-4">
-                    <h3 className="text-xl font-bold text-white mb-1 group-hover:text-gradient-animated transition-all duration-300">
+                    <h3 className="text-xl font-bold text-white mb-1 transition-all duration-300">
                       {service.title}
                     </h3>
                     <div className="w-12 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full opacity-60 group-hover:opacity-100 group-hover:w-16 transition-all duration-500" />
@@ -364,7 +366,7 @@ export default function DevelopmentServicesPage() {
         <div className="relative z-10 max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-              Our <span className="text-gradient-threat">Development Process</span>
+              Our Development Process
             </h2>
             <p className="text-lg text-slate-300 max-w-3xl mx-auto">
               Streamlined workflow designed for maximum efficiency and quality delivery.
@@ -383,7 +385,7 @@ export default function DevelopmentServicesPage() {
               >
                 <div className="glass-card p-6 rounded-xl border border-white/10 text-center relative overflow-hidden">
                   {/* Step Number */}
-                  <div className="text-6xl font-black text-gradient-cyber opacity-20 mb-4">
+                  <div className="text-6xl font-black text-slate-600 opacity-40 mb-4">
                     {step.step}
                   </div>
                   
@@ -417,7 +419,7 @@ export default function DevelopmentServicesPage() {
             
             <div className="relative z-10">
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-                Ready to Build Your <span className="text-gradient-cyber">Next Project</span>?
+                Ready to Build Your Next Project?
               </h2>
               <div className="mb-6">
                 <div className="inline-flex items-center px-4 py-2 rounded-full bg-green-500/10 border border-green-500/20 mb-4">
@@ -430,13 +432,13 @@ export default function DevelopmentServicesPage() {
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-                <Button className="btn-threat shadow-xl shadow-red-500/25" size="lg" asChild>
+                <Button className="bg-blue-500 hover:bg-blue-600 text-white shadow-xl shadow-blue-500/25" size="lg" asChild>
                   <Link href="/development/contact">
                     <Calendar className="mr-2 h-5 w-5" />
                     Schedule Consultation
                   </Link>
                 </Button>
-                <Button className="btn-intelligence shadow-xl shadow-blue-500/25" variant="outline" size="lg" asChild>
+                <Button className="bg-green-500 hover:bg-green-600 text-white shadow-xl shadow-blue-500/25" variant="outline" size="lg" asChild>
                   <Link href="/development/contact">
                     <ArrowRight className="mr-2 h-5 w-5" />
                     Get Quote

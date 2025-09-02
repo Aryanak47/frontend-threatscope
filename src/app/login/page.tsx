@@ -124,7 +124,7 @@ export default function LoginPage() {
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
-                      className="w-full pl-10 pr-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-security-500 focus:border-transparent"
+                      className="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-slate-600 text-white placeholder:text-slate-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all duration-200"
                       placeholder="john@company.com"
                       required
                     />
@@ -143,7 +143,7 @@ export default function LoginPage() {
                       name="password"
                       value={formData.password}
                       onChange={handleInputChange}
-                      className="w-full pl-10 pr-12 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-security-500 focus:border-transparent"
+                      className="w-full pl-10 pr-12 py-3 bg-slate-800/50 border border-slate-600 text-white placeholder:text-slate-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all duration-200"
                       placeholder="Enter your password"
                       required
                     />
@@ -310,19 +310,19 @@ export default function LoginPage() {
             {/* Quick Stats */}
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center p-4 border border-border rounded-lg">
-                <div className="text-2xl font-bold text-security-600">99.9%</div>
+                <div className="text-2xl font-bold text-blue-600">99.9%</div>
                 <div className="text-sm text-muted-foreground">Uptime SLA</div>
               </div>
               <div className="text-center p-4 border border-border rounded-lg">
-                <div className="text-2xl font-bold text-intelligence-600">24/7</div>
+                <div className="text-2xl font-bold text-blue-600">24/7</div>
                 <div className="text-sm text-muted-foreground">Support</div>
               </div>
               <div className="text-center p-4 border border-border rounded-lg">
-                <div className="text-2xl font-bold text-green-600">SOC 2</div>
-                <div className="text-sm text-muted-foreground">Compliant</div>
+                <div className="text-2xl font-bold text-green-600">Secure</div>
+                <div className="text-sm text-muted-foreground">Platform</div>
               </div>
               <div className="text-center p-4 border border-border rounded-lg">
-                <div className="text-2xl font-bold text-purple-600">API</div>
+                <div className="text-2xl font-bold text-blue-600">API</div>
                 <div className="text-sm text-muted-foreground">Access</div>
               </div>
             </div>

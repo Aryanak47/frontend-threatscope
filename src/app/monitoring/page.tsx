@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { MainLayout } from '@/components/layout/main-layout'
 import { useAuthStore } from '@/stores/auth'
@@ -181,16 +180,16 @@ export default function MonitoringPage() {
     return (
       <MainLayout>
         <div className="container max-w-4xl mx-auto px-6 py-12">
-          <Card className="p-12 text-center">
+          <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-12 text-center">
             <Shield className="h-16 w-16 mx-auto mb-6 text-gray-400" />
             <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
-            <p className="text-gray-600 mb-8">
+            <p className="text-slate-400 mb-8">
               Please sign in to access monitoring and alert features.
             </p>
             <Button asChild>
               <a href="/login">Sign In</a>
             </Button>
-          </Card>
+          </div>
         </div>
       </MainLayout>
     )
@@ -206,13 +205,13 @@ export default function MonitoringPage() {
               <Shield className="h-8 w-8 text-blue-600" />
               Monitoring & Alerts
             </h1>
-            <p className="text-gray-600 mt-2">
+            <p className="text-slate-400 mt-2">
               Monitor your digital assets and get real-time alerts for new threats
             </p>
           </div>
           <Button 
             onClick={() => !canCreateMonitor() ? handleUpgradeClick() : setShowCreateModal(true)}
-            className={!canCreateMonitor() ? "bg-amber-600 hover:bg-amber-700" : "bg-blue-600 hover:bg-blue-700"}
+            variant={!canCreateMonitor() ? "outline" : "security"}
             disabled={isLoadingSubscription}
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -222,67 +221,75 @@ export default function MonitoringPage() {
 
         {/* Dashboard Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Active Monitors</p>
-                <p className="text-2xl font-bold text-blue-600">{dashboardData.activeItems}</p>
+          <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 hover:border-slate-600/50 transition-all">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-slate-700/30 rounded-xl">
+                <Activity className="h-6 w-6 text-slate-300" />
               </div>
-              <Activity className="h-8 w-8 text-blue-600" />
+              <div>
+                <p className="text-sm font-medium text-slate-400">Active Monitors</p>
+                <p className="text-2xl font-bold text-slate-100">{dashboardData.activeItems}</p>
+                <p className="text-xs text-slate-500 mt-1">
+                  {dashboardData.totalItems} total monitors
+                </p>
+              </div>
             </div>
-            <p className="text-xs text-gray-500 mt-2">
-              {dashboardData.totalItems} total monitors
-            </p>
-          </Card>
+          </div>
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Unread Alerts</p>
-                <p className="text-2xl font-bold text-red-600">{dashboardData.unreadAlerts}</p>
+          <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 hover:border-slate-600/50 transition-all">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-slate-700/30 rounded-xl">
+                <AlertTriangle className="h-6 w-6 text-slate-300" />
               </div>
-              <AlertTriangle className="h-8 w-8 text-red-600" />
+              <div>
+                <p className="text-sm font-medium text-slate-400">Unread Alerts</p>
+                <p className="text-2xl font-bold text-slate-100">{dashboardData.unreadAlerts}</p>
+                <p className="text-xs text-slate-500 mt-1">
+                  {dashboardData.totalAlerts} total alerts
+                </p>
+              </div>
             </div>
-            <p className="text-xs text-gray-500 mt-2">
-              {dashboardData.totalAlerts} total alerts
-            </p>
-          </Card>
+          </div>
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">This Week</p>
-                <p className="text-2xl font-bold text-green-600">{isLoadingDashboard ? '-' : '0'}</p>
+          <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 hover:border-slate-600/50 transition-all">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-slate-700/30 rounded-xl">
+                <TrendingUp className="h-6 w-6 text-slate-300" />
               </div>
-              <TrendingUp className="h-8 w-8 text-green-600" />
+              <div>
+                <p className="text-sm font-medium text-slate-400">This Week</p>
+                <p className="text-2xl font-bold text-slate-100">{isLoadingDashboard ? '-' : '0'}</p>
+                <p className="text-xs text-slate-500 mt-1">New alerts</p>
+              </div>
             </div>
-            <p className="text-xs text-gray-500 mt-2">New alerts</p>
-          </Card>
+          </div>
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Response Time</p>
-                <p className="text-2xl font-bold text-purple-600">&lt;1m</p>
+          <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 hover:border-slate-600/50 transition-all">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-slate-700/30 rounded-xl">
+                <Clock className="h-6 w-6 text-slate-300" />
               </div>
-              <Clock className="h-8 w-8 text-purple-600" />
+              <div>
+                <p className="text-sm font-medium text-slate-400">Response Time</p>
+                <p className="text-2xl font-bold text-slate-100">&lt;1m</p>
+                <p className="text-xs text-slate-500 mt-1">Average alert time</p>
+              </div>
             </div>
-            <p className="text-xs text-gray-500 mt-2">Average alert time</p>
-          </Card>
+          </div>
         </div>
 
         {/* Search and Filters */}
-        <Card className="p-6 mb-6">
+        <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 mb-6">
           <div className="flex items-center space-x-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
                   placeholder="Search monitoring items..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 bg-slate-700/30 border border-slate-600/50 text-slate-200 placeholder:text-slate-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all duration-200"
                 />
               </div>
             </div>
@@ -291,14 +298,14 @@ export default function MonitoringPage() {
               Filter
             </Button>
           </div>
-        </Card>
+        </div>
 
         {/* Monitoring Items List */}
-        <Card className="p-6">
+        <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold">Your Monitors</h3>
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-slate-400">
                 {items.length} monitor{items.length !== 1 ? 's' : ''}
               </span>
             </div>
@@ -308,22 +315,23 @@ export default function MonitoringPage() {
           {subscriptionError ? (
             /* Subscription error - show fallback */
             <div className="text-center py-12">
-              <div className="bg-red-100 rounded-full p-4 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+              <div className="bg-slate-800/50 rounded-full p-4 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
                 <AlertTriangle className="h-10 w-10 text-red-600" />
               </div>
-              <h4 className="text-xl font-semibold mb-3 text-red-800">Connection Error</h4>
-              <p className="text-gray-600 mb-6 max-w-md mx-auto">
+              <h4 className="text-xl font-semibold mb-3 text-slate-200">Connection Error</h4>
+              <p className="text-slate-400 mb-6 max-w-md mx-auto">
                 {subscriptionError}
               </p>
               
               <div className="space-y-3">
                 <Button 
                   onClick={() => fetchSubscriptionDetails(items.length, 0)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-8"
+                  variant="security"
+                  className="px-8"
                 >
                   Retry Connection
                 </Button>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-slate-400">
                   Make sure your backend is running on http://localhost:8080
                 </div>
               </div>
@@ -332,23 +340,23 @@ export default function MonitoringPage() {
             /* Loading subscription details */
             <div className="text-center py-12">
               <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-              <p className="text-gray-600">Loading subscription details...</p>
+              <p className="text-slate-400">Loading subscription details...</p>
             </div>
           ) : !canCreateMonitor() ? (
             /* Free Plan or No Monitors Allowed */
             <div className="text-center py-12">
-              <div className="bg-amber-100 rounded-full p-4 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+              <div className="bg-slate-800/50 rounded-full p-4 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
                 <Shield className="h-10 w-10 text-amber-600" />
               </div>
-              <h4 className="text-xl font-semibold mb-3 text-amber-800">Monitoring Requires Upgrade</h4>
-              <p className="text-gray-600 mb-6 max-w-md mx-auto">
+              <h4 className="text-xl font-semibold mb-3 text-slate-200">Monitoring Requires Upgrade</h4>
+              <p className="text-slate-400 mb-6 max-w-md mx-auto">
                 Monitor your digital assets and get real-time alerts for security threats. 
                 Upgrade to a paid plan to unlock monitoring features.
               </p>
               
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 max-w-md mx-auto">
-                <h5 className="font-semibold text-amber-800 mb-2">Current Plan ({getPlanDisplayName()}):</h5>
-                <ul className="text-sm text-amber-700 space-y-1">
+              <div className="bg-slate-700/30 border border-slate-600/50 rounded-lg p-4 mb-6 max-w-md mx-auto">
+                <h5 className="font-semibold text-slate-200 mb-2">Current Plan ({getPlanDisplayName()}):</h5>
+                <ul className="text-sm text-slate-300 space-y-1">
                   <li>✅ {subscriptionDetails?.planLimits?.dailySearches || 25} searches per day</li>
                   <li>✅ Basic threat intelligence access</li>
                   <li>❌ {subscriptionDetails?.planLimits?.maxMonitoringItems || 0} monitoring items</li>
@@ -360,11 +368,12 @@ export default function MonitoringPage() {
               <div className="space-y-3">
                 <Button 
                   onClick={handleUpgradeClick}
-                  className="bg-amber-600 hover:bg-amber-700 text-white px-8"
+                  variant="outline"
+                  className="px-8 border-slate-600/50 text-slate-300 hover:bg-slate-700/50"
                 >
                   Upgrade to Basic Plan
                 </Button>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-slate-400">
                   Starting at $9.99/month • 25 monitors • Email alerts
                 </div>
               </div>
@@ -373,24 +382,24 @@ export default function MonitoringPage() {
             /* Loading monitoring items */
             <div className="text-center py-12">
               <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-              <p className="text-gray-600">Loading your monitors...</p>
+              <p className="text-slate-400">Loading your monitors...</p>
             </div>
           ) : items.length === 0 ? (
             /* No monitoring items yet */
             <div className="text-center py-12">
-              <div className="bg-green-100 rounded-full p-4 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+              <div className="bg-slate-800/50 rounded-full p-4 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
                 <Shield className="h-10 w-10 text-green-600" />
               </div>
-              <h4 className="text-xl font-semibold mb-3 text-green-800">
+              <h4 className="text-xl font-semibold mb-3 text-slate-200">
                 Welcome to {getPlanDisplayName()} Monitoring!
               </h4>
-              <p className="text-gray-600 mb-6 max-w-md mx-auto">
+              <p className="text-slate-400 mb-6 max-w-md mx-auto">
                 You have access to monitoring features. Create your first monitor to start tracking threats.
               </p>
               
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 max-w-md mx-auto">
-                <h5 className="font-semibold text-green-800 mb-2">Your {getPlanDisplayName()} Includes:</h5>
-                <ul className="text-sm text-green-700 space-y-1">
+              <div className="bg-slate-700/30 border border-slate-600/50 rounded-lg p-4 mb-6 max-w-md mx-auto">
+                <h5 className="font-semibold text-slate-200 mb-2">Your {getPlanDisplayName()} Includes:</h5>
+                <ul className="text-sm text-slate-300 space-y-1">
                   <li>✅ {subscriptionDetails?.planLimits?.dailySearches || 'Unlimited'} searches per day</li>
                   <li>✅ {subscriptionDetails?.planLimits?.maxMonitoringItems || 0} monitoring items</li>
                   <li>{subscriptionDetails?.planLimits?.hasRealTimeMonitoring ? '✅' : '❌'} Real-time monitoring</li>
@@ -402,7 +411,8 @@ export default function MonitoringPage() {
               
               <Button 
                 onClick={() => setShowCreateModal(true)}
-                className="bg-green-600 hover:bg-green-700 text-white px-8"
+                variant="intelligence"
+                className="px-8"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Create Your First Monitor
@@ -412,7 +422,7 @@ export default function MonitoringPage() {
             /* Show monitoring items list */
             <div className="space-y-4">
               {items.map((item) => (
-                <div key={item.id} className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors">
+                <div key={item.id} className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-4 hover:border-slate-600/50 transition-all">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3">
@@ -423,20 +433,20 @@ export default function MonitoringPage() {
                           {item.monitorType === 'KEYWORD' && <Hash className="h-5 w-5 text-orange-600" />}
                         </div>
                         <div>
-                          <h4 className="font-medium text-gray-900">{item.monitorName}</h4>
-                          <p className="text-sm text-gray-600">{item.targetValue}</p>
+                          <h4 className="font-medium text-slate-200">{item.monitorName}</h4>
+                          <p className="text-sm text-slate-400">{item.targetValue}</p>
                           {item.description && (
-                            <p className="text-sm text-gray-500 mt-1">{item.description}</p>
+                            <p className="text-sm text-slate-400 mt-1">{item.description}</p>
                           )}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-4">
                       <div className="text-right">
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-sm font-medium text-slate-200">
                           {item.frequency}
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-slate-400">
                           {item.alertCount} alerts
                         </p>
                       </div>
@@ -457,7 +467,7 @@ export default function MonitoringPage() {
                   </div>
                   
                   <div className="mt-3 flex items-center justify-between">
-                    <div className="flex items-center space-x-4 text-sm text-gray-500">
+                    <div className="flex items-center space-x-4 text-sm text-slate-400">
                       <span>Created: {new Date(item.createdAt).toLocaleDateString()}</span>
                       {item.lastChecked && (
                         <span>Last checked: {new Date(item.lastChecked).toLocaleDateString()}</span>
@@ -479,43 +489,43 @@ export default function MonitoringPage() {
               ))}
             </div>
           )}
-        </Card>
+        </div>
 
         {/* Getting Started Guide */}
-        <Card className="p-6 mt-8">
+        <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 mt-8">
           <h3 className="text-lg font-semibold mb-4">Getting Started with Monitoring</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center">
-              <div className="bg-blue-100 rounded-full p-3 w-12 h-12 mx-auto mb-3">
+              <div className="bg-slate-700/30 rounded-full p-3 w-12 h-12 mx-auto mb-3">
                 <Plus className="h-6 w-6 text-blue-600" />
               </div>
               <h4 className="font-semibold mb-2">1. Add Monitors</h4>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-slate-400">
                 Set up monitoring for emails, domains, usernames, or IP addresses you want to track.
               </p>
             </div>
             
             <div className="text-center">
-              <div className="bg-green-100 rounded-full p-3 w-12 h-12 mx-auto mb-3">
+              <div className="bg-slate-700/30 rounded-full p-3 w-12 h-12 mx-auto mb-3">
                 <Bell className="h-6 w-6 text-green-600" />
               </div>
               <h4 className="font-semibold mb-2">2. Configure Alerts</h4>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-slate-400">
                 Choose how you want to be notified: email, in-app notifications, or webhooks.
               </p>
             </div>
             
             <div className="text-center">
-              <div className="bg-purple-100 rounded-full p-3 w-12 h-12 mx-auto mb-3">
+              <div className="bg-slate-700/30 rounded-full p-3 w-12 h-12 mx-auto mb-3">
                 <TrendingUp className="h-6 w-6 text-purple-600" />
               </div>
               <h4 className="font-semibold mb-2">3. Track & Respond</h4>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-slate-400">
                 Monitor your alerts, investigate threats, and take action to protect your assets.
               </p>
             </div>
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* Create/Edit Modal - Only show for users who can create monitors */}

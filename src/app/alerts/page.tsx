@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { MainLayout } from '@/components/layout/main-layout'
 import { useAuthStore } from '@/stores/auth'
@@ -106,16 +105,16 @@ export default function AlertsPage() {
     return (
       <MainLayout>
         <div className="container max-w-4xl mx-auto px-6 py-12">
-          <Card className="p-12 text-center">
-            <AlertTriangle className="h-16 w-16 mx-auto mb-6 text-gray-400" />
+          <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-12 text-center">
+            <AlertTriangle className="h-16 w-16 mx-auto mb-6 text-slate-400" />
             <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
-            <p className="text-gray-600 mb-8">
+            <p className="text-slate-400 mb-8">
               Please sign in to access alerts and monitoring features.
             </p>
-            <Button asChild>
+            <Button asChild variant="security">
               <a href="/login">Sign In</a>
             </Button>
-          </Card>
+          </div>
         </div>
       </MainLayout>
     )
@@ -131,7 +130,7 @@ export default function AlertsPage() {
               <AlertTriangle className="h-8 w-8 text-red-600" />
               Security Alerts
             </h1>
-            <p className="text-gray-600 mt-2">
+            <p className="text-slate-400 mt-2">
               Monitor and respond to security threats and breach notifications
             </p>
           </div>
@@ -139,70 +138,80 @@ export default function AlertsPage() {
 
         {/* Statistics Overview */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Alerts</p>
-                <p className="text-2xl font-bold">{statistics.total}</p>
+          <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 hover:border-slate-600/50 transition-all">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-slate-700/30 rounded-xl">
+                <AlertTriangle className="h-6 w-6 text-slate-300" />
               </div>
-              <AlertTriangle className="h-8 w-8 text-gray-600" />
+              <div>
+                <p className="text-sm font-medium text-slate-400">Total Alerts</p>
+                <p className="text-2xl font-bold text-slate-100">{statistics.total}</p>
+              </div>
             </div>
-          </Card>
+          </div>
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Unread</p>
-                <p className="text-2xl font-bold text-red-600">{statistics.unread}</p>
+          <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 hover:border-slate-600/50 transition-all">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-slate-700/30 rounded-xl">
+                <Bell className="h-6 w-6 text-slate-300" />
               </div>
-              <Bell className="h-8 w-8 text-red-600" />
+              <div>
+                <p className="text-sm font-medium text-slate-400">Unread</p>
+                <p className="text-2xl font-bold text-slate-100">{statistics.unread}</p>
+              </div>
             </div>
-          </Card>
+          </div>
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Critical</p>
-                <p className="text-2xl font-bold text-red-600">{statistics.critical}</p>
+          <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 hover:border-slate-600/50 transition-all">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-slate-700/30 rounded-xl">
+                <ArrowUp className="h-6 w-6 text-slate-300" />
               </div>
-              <ArrowUp className="h-8 w-8 text-red-600" />
+              <div>
+                <p className="text-sm font-medium text-slate-400">Critical</p>
+                <p className="text-2xl font-bold text-slate-100">{statistics.critical}</p>
+              </div>
             </div>
-          </Card>
+          </div>
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">High Priority</p>
-                <p className="text-2xl font-bold text-orange-600">{statistics.high}</p>
+          <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 hover:border-slate-600/50 transition-all">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-slate-700/30 rounded-xl">
+                <Flag className="h-6 w-6 text-slate-300" />
               </div>
-              <Flag className="h-8 w-8 text-orange-600" />
+              <div>
+                <p className="text-sm font-medium text-slate-400">High Priority</p>
+                <p className="text-2xl font-bold text-slate-100">{statistics.high}</p>
+              </div>
             </div>
-          </Card>
+          </div>
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Recent</p>
-                <p className="text-2xl font-bold text-green-600">{statistics.recent}</p>
+          <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 hover:border-slate-600/50 transition-all">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-slate-700/30 rounded-xl">
+                <Clock className="h-6 w-6 text-slate-300" />
               </div>
-              <Clock className="h-8 w-8 text-green-600" />
+              <div>
+                <p className="text-sm font-medium text-slate-400">Recent</p>
+                <p className="text-2xl font-bold text-slate-100">{statistics.recent}</p>
+              </div>
             </div>
-          </Card>
+          </div>
         </div>
 
         {/* Search and Filters */}
-        <Card className="p-6 mb-6">
+        <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-4 flex-1">
               <div className="flex-1">
                 <div className="relative">
-                  <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
                   <input
                     type="text"
                     placeholder="Search alerts..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-2 bg-slate-700/30 border border-slate-600/50 text-slate-200 placeholder:text-slate-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all duration-200"
                   />
                 </div>
               </div>
@@ -219,10 +228,10 @@ export default function AlertsPage() {
 
           {/* Filter Controls */}
           {showFilters && (
-            <div className="flex items-center space-x-4 pt-4 border-t border-gray-200">
+            <div className="flex items-center space-x-4 pt-4 border-t border-slate-600/50">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                <label className="block text-sm font-medium text-slate-300 mb-1">Status</label>
+                <select className="bg-slate-700/30 border border-slate-600/50 text-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400">
                   <option value="">All Status</option>
                   <option value="UNREAD">Unread</option>
                   <option value="READ">Read</option>
@@ -232,8 +241,8 @@ export default function AlertsPage() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Severity</label>
-                <select className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                <label className="block text-sm font-medium text-slate-300 mb-1">Severity</label>
+                <select className="bg-slate-700/30 border border-slate-600/50 text-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400">
                   <option value="">All Severity</option>
                   <option value="CRITICAL">Critical</option>
                   <option value="HIGH">High</option>
@@ -243,29 +252,29 @@ export default function AlertsPage() {
               </div>
             </div>
           )}
-        </Card>
+        </div>
 
         {/* Alerts List */}
-        <Card className="p-6">
+        <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6">
           {isLoadingSubscription ? (
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading subscription details...</p>
+              <p className="text-slate-400">Loading subscription details...</p>
             </div>
           ) : isFreePlan() ? (
             <div className="text-center py-12">
-              <div className="bg-amber-100 rounded-full p-4 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+              <div className="bg-slate-800/50 rounded-full p-4 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
                 <AlertTriangle className="h-10 w-10 text-amber-600" />
               </div>
               <h4 className="text-xl font-semibold mb-3 text-amber-800">Alerts Require Monitoring</h4>
-              <p className="text-gray-600 mb-6 max-w-md mx-auto">
+              <p className="text-slate-400 mb-6 max-w-md mx-auto">
                 Security alerts are generated from monitoring items. 
                 Upgrade to a paid plan to set up monitoring and receive alerts.
               </p>
               
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 max-w-md mx-auto">
-                <h5 className="font-semibold text-amber-800 mb-2">With Monitoring You Get:</h5>
-                <ul className="text-sm text-amber-700 space-y-1">
+              <div className="bg-slate-700/30 border border-slate-600/50 rounded-lg p-4 mb-6 max-w-md mx-auto">
+                <h5 className="font-semibold text-slate-200 mb-2">With Monitoring You Get:</h5>
+                <ul className="text-sm text-slate-300 space-y-1">
                   <li>✅ Real-time threat monitoring</li>
                   <li>✅ Email & in-app alerts</li>
                   <li>✅ Multiple monitoring types</li>
@@ -277,11 +286,12 @@ export default function AlertsPage() {
               <div className="space-y-3">
                 <Button 
                   onClick={handleUpgradeClick}
-                  className="bg-amber-600 hover:bg-amber-700 text-white px-8"
+                  variant="outline"
+                  className="px-8 border-slate-600/50 text-slate-300 hover:bg-slate-700/50"
                 >
                   Upgrade to Enable Alerts
                 </Button>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-slate-400">
                   Basic Plan: $9.99/month • 5 monitors • Email alerts
                 </div>
               </div>
@@ -289,27 +299,27 @@ export default function AlertsPage() {
           ) : alertsLoading ? (
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading alerts...</p>
+              <p className="text-slate-400">Loading alerts...</p>
             </div>
           ) : alertsError ? (
             <div className="text-center py-12">
               <AlertTriangle className="h-16 w-16 mx-auto mb-4 text-red-400" />
               <h4 className="text-lg font-semibold mb-2 text-red-600">Error Loading Alerts</h4>
-              <p className="text-gray-600 mb-4">{alertsError}</p>
-              <Button onClick={() => fetchAlerts()}>Try Again</Button>
+              <p className="text-slate-400 mb-4">{alertsError}</p>
+              <Button onClick={() => fetchAlerts()} variant="security">Try Again</Button>
             </div>
           ) : alerts.length === 0 ? (
             <div className="text-center py-12">
               <Shield className="h-16 w-16 mx-auto mb-4 text-green-400" />
               <h4 className="text-lg font-semibold mb-2">No Security Alerts</h4>
-              <p className="text-gray-600 mb-6">
+              <p className="text-slate-400 mb-6">
                 Great news! No security alerts have been detected for your monitoring items.
               </p>
               <div className="space-y-4">
-                <Button asChild>
+                <Button asChild variant="security">
                   <a href="/monitoring">View Monitoring Items</a>
                 </Button>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-slate-400">
                   <p>✅ {statistics.total === 0 ? 'No alerts found' : `${statistics.total} total alerts`}</p>
                   <p>✅ Backend monitoring active</p>
                   <p>✅ Real-time breach detection enabled</p>
@@ -328,15 +338,15 @@ export default function AlertsPage() {
               ))}
             </div>
           )}
-        </Card>
+        </div>
 
         {/* Help Section */}
-        <Card className="p-6 mt-8">
+        <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 mt-8">
           <h3 className="text-lg font-semibold mb-4">Alert Management Guide</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h4 className="font-semibold mb-2">Alert Actions</h4>
-              <ul className="text-sm text-gray-600 space-y-1">
+              <ul className="text-sm text-slate-400 space-y-1">
                 <li>• <strong>Mark Read:</strong> Acknowledge you've seen the alert</li>
                 <li>• <strong>Archive:</strong> Hide resolved or irrelevant alerts</li>
                 <li>• <strong>False Positive:</strong> Mark alerts that aren't real threats</li>
@@ -347,7 +357,7 @@ export default function AlertsPage() {
             
             <div>
               <h4 className="font-semibold mb-2">Severity Levels</h4>
-              <ul className="text-sm text-gray-600 space-y-1">
+              <ul className="text-sm text-slate-400 space-y-1">
                 <li>• <span className="text-red-600 font-medium">Critical:</span> Immediate action required</li>
                 <li>• <span className="text-orange-600 font-medium">High:</span> Urgent attention needed</li>
                 <li>• <span className="text-yellow-600 font-medium">Medium:</span> Review within 24 hours</li>
@@ -355,7 +365,7 @@ export default function AlertsPage() {
               </ul>
             </div>
           </div>
-        </Card>
+        </div>
       </div>
     </MainLayout>
   )

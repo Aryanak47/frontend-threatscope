@@ -316,7 +316,7 @@ export default function RegisterPage() {
                         name="firstName"
                         value={formData.firstName}
                         onChange={handleInputChange}
-                        className="w-full pl-10 pr-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-security-500 focus:border-transparent"
+                        className="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-slate-600 text-white placeholder:text-slate-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all duration-200"
                         placeholder="John"
                         required
                       />
@@ -333,7 +333,7 @@ export default function RegisterPage() {
                         name="lastName"
                         value={formData.lastName}
                         onChange={handleInputChange}
-                        className="w-full pl-10 pr-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-security-500 focus:border-transparent"
+                        className="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-slate-600 text-white placeholder:text-slate-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all duration-200"
                         placeholder="Doe"
                         required
                       />
@@ -353,7 +353,7 @@ export default function RegisterPage() {
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
-                      className="w-full pl-10 pr-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-security-500 focus:border-transparent"
+                      className="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-slate-600 text-white placeholder:text-slate-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all duration-200"
                       placeholder="john@company.com"
                       required
                     />
@@ -372,7 +372,7 @@ export default function RegisterPage() {
                       name="phoneNumber"
                       value={formData.phoneNumber}
                       onChange={handleInputChange}
-                      className="w-full pl-10 pr-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-security-500 focus:border-transparent"
+                      className="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-slate-600 text-white placeholder:text-slate-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all duration-200"
                       placeholder="+1234567890"
                       required
                     />
@@ -392,7 +392,7 @@ export default function RegisterPage() {
                         name="company"
                         value={formData.company}
                         onChange={handleInputChange}
-                        className="w-full pl-10 pr-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-security-500 focus:border-transparent"
+                        className="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-slate-600 text-white placeholder:text-slate-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all duration-200"
                         placeholder="Company Inc."
                       />
                     </div>
@@ -408,7 +408,7 @@ export default function RegisterPage() {
                         name="jobTitle"
                         value={formData.jobTitle}
                         onChange={handleInputChange}
-                        className="w-full pl-10 pr-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-security-500 focus:border-transparent"
+                        className="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-slate-600 text-white placeholder:text-slate-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all duration-200"
                         placeholder="Security Analyst"
                       />
                     </div>
@@ -427,7 +427,7 @@ export default function RegisterPage() {
                       name="password"
                       value={formData.password}
                       onChange={handleInputChange}
-                      className="w-full pl-10 pr-12 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-security-500 focus:border-transparent"
+                      className="w-full pl-10 pr-12 py-3 bg-slate-800/50 border border-slate-600 text-white placeholder:text-slate-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all duration-200"
                       placeholder="Min 8 chars, include A-Z, a-z, 0-9, special char"
                       required
                     />
@@ -463,7 +463,7 @@ export default function RegisterPage() {
                       name="confirmPassword"
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
-                      className="w-full pl-10 pr-12 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-security-500 focus:border-transparent"
+                      className="w-full pl-10 pr-12 py-3 bg-slate-800/50 border border-slate-600 text-white placeholder:text-slate-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all duration-200"
                       placeholder="Confirm your password"
                       required
                     />
@@ -618,10 +618,6 @@ export default function RegisterPage() {
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="h-4 w-4 text-green-600" />
                   <span>Zero data retention policy</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                  <span>SOC 2 Type II compliant</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="h-4 w-4 text-green-600" />

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, div, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useAuthStore } from '@/stores/auth'
@@ -127,16 +127,16 @@ export default function AdminDashboardContent() {
 
   const getHealthColor = (health: string) => {
     switch (health) {
-      case 'excellent': return 'text-green-600 bg-green-100'
-      case 'good': return 'text-blue-600 bg-blue-100'
-      case 'warning': return 'text-yellow-600 bg-yellow-100'
-      case 'critical': return 'text-red-600 bg-red-100'
-      default: return 'text-gray-600 bg-gray-100'
+      case 'excellent': return 'text-slate-300 bg-slate-700/30'
+      case 'good': return 'text-slate-300 bg-slate-700/30'
+      case 'warning': return 'text-slate-300 bg-slate-700/30'
+      case 'critical': return 'text-slate-300 bg-slate-700/30'
+      default: return 'text-slate-400 bg-slate-700/30'
     }
   }
 
   const getStatusColor = (status: string) => {
-    return status === 'online' ? 'text-green-600' : 'text-red-600'
+    return status === 'online' ? 'text-slate-500' : 'text-slate-300'
   }
 
   if (loading) {
@@ -152,20 +152,20 @@ export default function AdminDashboardContent() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+    <div className="min-h-screen p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Admin Header */}
-        <div className="bg-white rounded-lg shadow-sm border p-6">
+        <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="p-3 bg-red-100 rounded-lg">
-                <Shield className="h-8 w-8 text-red-600" />
+              <div className="p-3 bg-slate-700/30 rounded-lg">
+                <Shield className="h-8 w-8 text-slate-300" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">
+                <h1 className="text-3xl font-bold text-slate-100">
                   🛡️ ThreatScope Admin Dashboard
                 </h1>
-                <p className="text-gray-600 mt-1">
+                <p className="text-slate-400 mt-1">
                   Welcome back, {user?.firstName}! System administration and monitoring.
                 </p>
               </div>
@@ -201,124 +201,120 @@ export default function AdminDashboardContent() {
         {/* System Overview Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Total Users */}
-          <Card className="bg-white shadow-sm border-l-4 border-l-blue-500">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-blue-100 rounded-lg">
-                  <Users className="h-6 w-6 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Users</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats?.totalUsers || 0}</p>
-                  <p className="text-xs text-green-600">{stats?.activeUsers || 0} active today</p>
-                </div>
+          <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 hover:border-slate-600/50 transition-all">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-slate-700/30 rounded-xl">
+                <Users className="h-6 w-6 text-slate-300" />
               </div>
-            </CardContent>
-          </Card>
+              <div>
+                <p className="text-sm font-medium text-slate-400">Total Users</p>
+                <p className="text-2xl font-bold text-slate-100">{stats?.totalUsers || 0}</p>
+                <p className="text-xs text-slate-500">{stats?.activeUsers || 0} active today</p>
+              </div>
+            </div>
+          </div>
 
           {/* Consultation Sessions */}
-          <Card className="bg-white shadow-sm border-l-4 border-l-green-500">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-green-100 rounded-lg">
-                  <MessageSquare className="h-6 w-6 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Consultations</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats?.totalSessions || 0}</p>
-                  <p className="text-xs text-green-600">{stats?.activeSessions || 0} active now</p>
-                </div>
+          <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 hover:border-slate-600/50 transition-all">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-slate-700/30 rounded-xl">
+                <MessageSquare className="h-6 w-6 text-slate-300" />
               </div>
-            </CardContent>
-          </Card>
+              <div>
+                <p className="text-sm font-medium text-slate-400">Consultations</p>
+                <p className="text-2xl font-bold text-slate-100">{stats?.totalSessions || 0}</p>
+                <p className="text-xs text-slate-500">{stats?.activeSessions || 0} active now</p>
+              </div>
+            </div>
+          </div>
 
           {/* Total Searches */}
-          <Card className="bg-white shadow-sm border-l-4 border-l-purple-500">
-            <CardContent className="p-6">
+          <Card className="rounded-xl border border-slate-700/50 bg-slate-800/30 hover:border-slate-600/50 transition-all">
+            <div className="p-6">
               <div className="flex items-center space-x-4">
-                <div className="p-3 bg-purple-100 rounded-lg">
-                  <BarChart3 className="h-6 w-6 text-purple-600" />
+                <div className="p-3 bg-slate-700/30 rounded-lg">
+                  <BarChart3 className="h-6 w-6 text-slate-300" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Searches</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats?.totalSearches || 0}</p>
-                  <p className="text-xs text-purple-600">{stats?.todaySearches || 0} today</p>
+                  <p className="text-sm font-medium text-slate-400">Total Searches</p>
+                  <p className="text-2xl font-bold text-slate-100">{stats?.totalSearches || 0}</p>
+                  <p className="text-xs text-slate-300">{stats?.todaySearches || 0} today</p>
                 </div>
               </div>
-            </CardContent>
+            </div>
           </Card>
 
           {/* Security Alerts */}
-          <Card className="bg-white shadow-sm border-l-4 border-l-red-500">
-            <CardContent className="p-6">
+          <Card className="rounded-xl border border-slate-700/50 bg-slate-800/30 hover:border-slate-600/50 transition-all">
+            <div className="p-6">
               <div className="flex items-center space-x-4">
-                <div className="p-3 bg-red-100 rounded-lg">
-                  <AlertTriangle className="h-6 w-6 text-red-600" />
+                <div className="p-3 bg-slate-700/30 rounded-lg">
+                  <AlertTriangle className="h-6 w-6 text-slate-300" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Security Alerts</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats?.totalAlerts || 0}</p>
-                  <p className="text-xs text-red-600">{stats?.unreadAlerts || 0} unread</p>
+                  <p className="text-sm font-medium text-slate-400">Security Alerts</p>
+                  <p className="text-2xl font-bold text-slate-100">{stats?.totalAlerts || 0}</p>
+                  <p className="text-xs text-slate-300">{stats?.unreadAlerts || 0} unread</p>
                 </div>
               </div>
-            </CardContent>
+            </div>
           </Card>
         </div>
 
         {/* System Status & Quick Actions */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* System Status */}
-          <Card className="bg-white shadow-sm">
+          <Card className="rounded-xl border border-slate-700/50 bg-slate-800/30">
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Database className="h-5 w-5 mr-2" />
                 System Status
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <div>
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg border border-slate-600/50">
                   <div className="flex items-center space-x-3">
                     <Globe className="h-5 w-5 text-blue-600" />
-                    <span className="font-medium">Elasticsearch</span>
+                    <span className="font-medium text-slate-200">Elasticsearch</span>
                   </div>
                   <Badge className={`${getStatusColor(stats?.dataSourceStatus.elasticsearch || 'online')} bg-transparent`}>
                     {stats?.dataSourceStatus.elasticsearch || 'Online'}
                   </Badge>
                 </div>
                 
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg border border-slate-600/50">
                   <div className="flex items-center space-x-3">
-                    <Database className="h-5 w-5 text-green-600" />
-                    <span className="font-medium">Database</span>
+                    <Database className="h-5 w-5 text-slate-500" />
+                    <span className="font-medium text-slate-200">Database</span>
                   </div>
                   <Badge className={`${getStatusColor(stats?.dataSourceStatus.database || 'online')} bg-transparent`}>
                     {stats?.dataSourceStatus.database || 'Online'}
                   </Badge>
                 </div>
                 
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg border border-slate-600/50">
                   <div className="flex items-center space-x-3">
-                    <Activity className="h-5 w-5 text-purple-600" />
-                    <span className="font-medium">Monitoring</span>
+                    <Activity className="h-5 w-5 text-slate-300" />
+                    <span className="font-medium text-slate-200">Monitoring</span>
                   </div>
                   <Badge className={`${getStatusColor(stats?.dataSourceStatus.monitoring || 'online')} bg-transparent`}>
                     {stats?.dataSourceStatus.monitoring || 'Online'}
                   </Badge>
                 </div>
               </div>
-            </CardContent>
+            </div>
           </Card>
 
           {/* Quick Admin Actions */}
-          <Card className="bg-white shadow-sm">
+          <Card className="rounded-xl border border-slate-700/50 bg-slate-800/30">
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Settings className="h-5 w-5 mr-2" />
                 Quick Actions
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <div>
               <div className="grid grid-cols-1 gap-4">
                 <Link href="/admin/consultation">
                   <Button className="w-full" variant="outline">
@@ -327,18 +323,18 @@ export default function AdminDashboardContent() {
                   </Button>
                 </Link>
                 
-                <div className="p-3 bg-gray-50 rounded-lg text-center">
-                  <p className="text-sm text-gray-600">Additional admin features will be available when backend services are connected</p>
+                <div className="p-3 bg-slate-700/30 rounded-lg text-center border border-slate-600/50">
+                  <p className="text-sm text-slate-400">Additional admin features will be available when backend services are connected</p>
                 </div>
               </div>
-            </CardContent>
+            </div>
           </Card>
         </div>
 
         {/* System Status Notice */}
         {(!stats || stats.systemHealth === 'warning') && (
           <Card className="bg-amber-50 border-amber-200">
-            <CardContent className="p-6">
+            <div className="p-6">
               <div className="flex items-center space-x-4">
                 <div className="p-3 bg-amber-100 rounded-lg">
                   <AlertTriangle className="h-6 w-6 text-amber-600" />
@@ -359,31 +355,31 @@ export default function AdminDashboardContent() {
                   Refresh
                 </Button>
               </div>
-            </CardContent>
+            </div>
           </Card>
         )}
 
         {/* Admin Footer */}
-        <Card className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-          <CardContent className="p-6">
+        <Card className="rounded-xl border border-slate-700/50 bg-slate-800/30">
+          <div className="p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <Crown className="h-8 w-8" />
                 <div>
                   <h3 className="text-lg font-semibold">Administrator Access</h3>
-                  <p className="text-blue-100">You have full system administration privileges</p>
+                  <p className="text-slate-300">You have full system administration privileges</p>
                 </div>
               </div>
               
               <div className="flex items-center space-x-4">
                 <div className="text-right">
-                  <p className="text-sm text-blue-100">ThreatScope Admin</p>
-                  <p className="text-lg font-semibold">v1.0</p>
+                  <p className="text-sm text-slate-300">ThreatScope Admin</p>
+                  <p className="text-lg font-semibold text-slate-200">v1.0</p>
                 </div>
                 <Lock className="h-6 w-6" />
               </div>
             </div>
-          </CardContent>
+          </div>
         </Card>
       </div>
     </div>

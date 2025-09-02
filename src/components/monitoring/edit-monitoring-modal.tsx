@@ -179,13 +179,13 @@ export function EditMonitoringModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-slate-900 border border-slate-700/50 rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
             <MonitorIcon className="h-6 w-6 text-blue-600" />
             <div>
               <h3 className="text-xl font-semibold">Edit Monitor</h3>
-              <p className="text-sm text-gray-600">{monitoringItem.targetValue}</p>
+              <p className="text-sm text-slate-400">{monitoringItem.targetValue}</p>
             </div>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose}>
@@ -196,7 +196,7 @@ export function EditMonitoringModal({
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Monitor Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-300 mb-2">
               Monitor Name *
             </label>
             <input
@@ -204,8 +204,8 @@ export function EditMonitoringModal({
               value={formData.monitorName}
               onChange={(e) => setFormData(prev => ({ ...prev, monitorName: e.target.value }))}
               placeholder="e.g., CEO Email Monitor"
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.monitorName ? 'border-red-500' : 'border-gray-300'
+              className={`w-full px-3 py-2 bg-slate-800/50 border rounded-lg text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all ${
+                errors.monitorName ? 'border-red-500' : 'border-slate-600/50'
               }`}
             />
             {errors.monitorName && (
@@ -215,7 +215,7 @@ export function EditMonitoringModal({
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-300 mb-2">
               Description (Optional)
             </label>
             <textarea
@@ -223,13 +223,13 @@ export function EditMonitoringModal({
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
               placeholder="Additional notes about this monitor..."
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-slate-800/50 border border-slate-600/50 rounded-lg text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all"
             />
           </div>
 
           {/* Frequency */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-300 mb-2">
               Check Frequency *
             </label>
             
@@ -257,7 +257,7 @@ export function EditMonitoringModal({
                       ? freq.value === 'REAL_TIME' 
                         ? 'border-blue-500 bg-gradient-to-r from-blue-50 to-indigo-50 ring-2 ring-blue-200'
                         : 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                      : 'border-slate-600/50 bg-slate-800/30 hover:bg-slate-700/50 hover:border-slate-500/50'
                   }`}
                 >
                   {/* Recommended Badge for Real-time */}
@@ -285,12 +285,12 @@ export function EditMonitoringModal({
                           </span>
                         )}
                       </div>
-                      <div className="text-sm text-gray-600 mb-2">{freq.description}</div>
+                      <div className="text-sm text-slate-400 mb-2">{freq.description}</div>
                       
                       {/* Benefits */}
                       <div className="space-y-1">
                         {freq.benefits?.map((benefit, index) => (
-                          <div key={index} className="flex items-center space-x-2 text-xs text-gray-500">
+                          <div key={index} className="flex items-center space-x-2 text-xs text-slate-400">
                             <span className="text-green-500">✓</span>
                             <span>{benefit}</span>
                           </div>
@@ -312,7 +312,7 @@ export function EditMonitoringModal({
 
           {/* Settings */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-300 mb-2">
               Monitor Settings
             </label>
             <div className="space-y-3">
@@ -321,7 +321,7 @@ export function EditMonitoringModal({
                   type="checkbox"
                   checked={formData.isActive}
                   onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
-                  className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                  className="h-4 w-4 text-blue-600 border-slate-600/50 rounded bg-slate-800/50"
                 />
                 <span className="text-sm">Monitor is active</span>
               </label>
@@ -331,16 +331,16 @@ export function EditMonitoringModal({
                   type="checkbox"
                   checked={formData.emailAlerts}
                   onChange={(e) => setFormData(prev => ({ ...prev, emailAlerts: e.target.checked }))}
-                  className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                  className="h-4 w-4 text-blue-600 border-slate-600/50 rounded bg-slate-800/50"
                 />
-                <Mail className="h-4 w-4 text-gray-500" />
-                <span className="text-sm">Email Notifications</span>
+                <Mail className="h-4 w-4 text-slate-400" />
+                <span className="text-sm text-slate-200">Email Notifications</span>
               </label>
             </div>
           </div>
 
           {/* Submit Buttons */}
-          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+          <div className="flex justify-end space-x-3 pt-4 border-t border-slate-700/50">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>

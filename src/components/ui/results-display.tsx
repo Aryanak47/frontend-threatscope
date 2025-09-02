@@ -1,6 +1,5 @@
 import React from 'react'
 import { SearchResult, SourceDetailedMetrics } from '@/types'
-import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { apiClient } from '@/lib/api'
 import { 
@@ -222,51 +221,51 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
 
   if (isLoading) {
     return (
-      <Card className={`p-6 ${className}`}>
+      <div className={`rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 ${className}`}>
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-security-600" />
-            <p className="text-muted-foreground">Searching through billions of records...</p>
-            <p className="text-sm text-muted-foreground mt-2">This may take a few moments</p>
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-red-500" />
+            <p className="text-slate-300">Searching through billions of records...</p>
+            <p className="text-sm text-slate-400 mt-2">This may take a few moments</p>
           </div>
         </div>
-      </Card>
+      </div>
     )
   }
 
   if (!results || results.length === 0) {
     return (
-      <Card className={`p-6 ${className}`}>
+      <div className={`rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 ${className}`}>
         <div className="text-center py-12">
-          <Search className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <h3 className="text-lg font-semibold mb-2">No Results Found</h3>
-          <p className="text-muted-foreground mb-4">
+          <Search className="h-12 w-12 mx-auto mb-4 text-slate-400" />
+          <h3 className="text-lg font-semibold mb-2 text-slate-200">No Results Found</h3>
+          <p className="text-slate-300 mb-4">
             No breaches found for "{searchQuery}". 
           </p>
-          <div className="text-sm text-muted-foreground space-y-1">
+          <div className="text-sm text-slate-400 space-y-1">
             <p>• Try a different search term or check your spelling</p>
             <p>• Use wildcard search for broader results</p>
             <p>• Check if the query format matches the selected search type</p>
           </div>
         </div>
-      </Card>
+      </div>
     )
   }
 
   return (
-    <Card className={`p-6 ${className}`}>
+    <div className={`rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 ${className}`}>
       {/* Results Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <h3 className="text-xl font-semibold">Search Results</h3>
+            <h3 className="text-xl font-semibold text-slate-200">Search Results</h3>
             {isDemo && (
               <span className="px-2 py-1 text-xs bg-blue-100 text-blue-600 rounded-full dark:bg-blue-900 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                 Demo Data
               </span>
             )}
           </div>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <div className="flex items-center gap-4 text-sm text-slate-400">
             <span>
               Found {totalResults || results.length} result{(totalResults || results.length) !== 1 ? 's' : ''} for "{searchQuery}"
             </span>
@@ -320,7 +319,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
           return (
             <div 
               key={result.id}
-              className="border border-border rounded-lg p-6 hover:bg-muted/50 transition-colors"
+              className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 hover:border-slate-600/50 transition-all"
             >
               {/* Result Header with Enhanced Info */}
               <div className="flex items-center justify-between mb-4">
@@ -386,7 +385,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
 
               {/* Breach Description */}
               {result.breachDescription && (
-                <p className="text-sm text-muted-foreground mb-4 p-3 bg-muted/30 rounded-lg">
+                <p className="text-sm text-slate-400 mb-4 p-3 bg-slate-700/30 rounded-lg">
                   <Info className="h-4 w-4 inline mr-2" />
                   {result.breachDescription}
                 </p>
@@ -395,11 +394,11 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
               {/* Enhanced Information Grid */}
               <div className="space-y-3 mb-4">
                 {/* Email/Login Row */}
-                <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
-                  <User className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                <div className="flex items-start gap-3 p-3 bg-slate-700/30 rounded-lg">
+                  <User className="h-4 w-4 text-slate-400 mt-0.5 flex-shrink-0" />
                   <div className="min-w-0 flex-1">
-                    <span className="text-sm font-medium text-muted-foreground block mb-1">Email/Login</span>
-                    <div className="font-medium text-sm break-all" title={email}>
+                    <span className="text-sm font-medium text-slate-400 block mb-1">Email/Login</span>
+                    <div className="font-medium text-sm break-all text-slate-200" title={email}>
                       {email || 'N/A'}
                     </div>
                   </div>
@@ -424,27 +423,27 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                 {/* Domain, Password, and Verification Row */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {domain && (
-                    <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
-                      <Globe className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                    <div className="flex items-start gap-3 p-3 bg-slate-700/30 rounded-lg">
+                      <Globe className="h-4 w-4 text-slate-400 mt-0.5 flex-shrink-0" />
                       <div className="min-w-0 flex-1">
-                        <span className="text-sm font-medium text-muted-foreground block mb-1">Domain</span>
-                        <div className="font-medium text-sm break-all">{domain}</div>
+                        <span className="text-sm font-medium text-slate-400 block mb-1">Domain</span>
+                        <div className="font-medium text-sm break-all text-slate-200">{domain}</div>
                       </div>
                     </div>
                   )}
                   
                   <div className={`flex items-start gap-3 p-3 rounded-lg border ${
-                    hasPassword ? 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800' : 'bg-muted/30'
+                    hasPassword ? 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800' : 'bg-slate-700/30 border-slate-600/50'
                   }`}>
                     <Key className={`h-4 w-4 mt-0.5 flex-shrink-0 ${
-                      hasPassword ? 'text-red-600' : 'text-muted-foreground'
+                      hasPassword ? 'text-red-600' : 'text-slate-400'
                     }`} />
                     <div className="min-w-0 flex-1">
                       <span className={`text-sm font-medium block mb-1 ${
-                        hasPassword ? 'text-red-800 dark:text-red-200' : 'text-muted-foreground'
+                        hasPassword ? 'text-red-800 dark:text-red-200' : 'text-slate-400'
                       }`}>Password</span>
                       <div className="font-medium text-sm">
-                        <span className={hasPassword ? 'text-red-900 dark:text-red-100 font-bold' : 'text-red-600'}>
+                        <span className={hasPassword ? 'text-red-900 dark:text-red-100 font-bold' : 'text-slate-300'}>
                           {hasPassword ? 'Yes' : 'No'}
                         </span>
                       </div>
@@ -458,12 +457,12 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
 
                   {/* Verification Status */}
                   {result.isVerified !== undefined && (
-                    <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
-                      <Shield className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                    <div className="flex items-start gap-3 p-3 bg-slate-700/30 rounded-lg">
+                      <Shield className="h-4 w-4 text-slate-400 mt-0.5 flex-shrink-0" />
                       <div className="min-w-0 flex-1">
-                        <span className="text-sm font-medium text-muted-foreground block mb-1">Verification</span>
+                        <span className="text-sm font-medium text-slate-400 block mb-1">Verification</span>
                         <div className="font-medium text-sm">
-                          <span className={result.isVerified ? 'text-green-600' : 'text-yellow-600'}>
+                          <span className={result.isVerified ? 'text-green-400' : 'text-yellow-400'}>
                             {result.isVerified ? 'Verified' : 'Unverified'}
                           </span>
                         </div>
@@ -528,11 +527,11 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                 )}
 
                 {/* Data Fields Row */}
-                <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
-                  <Database className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                <div className="flex items-start gap-3 p-3 bg-slate-700/30 rounded-lg">
+                  <Database className="h-4 w-4 text-slate-400 mt-0.5 flex-shrink-0" />
                   <div className="min-w-0 flex-1">
-                    <span className="text-sm font-medium text-muted-foreground block mb-1">Data Fields</span>
-                    <div className="font-medium text-sm">
+                    <span className="text-sm font-medium text-slate-400 block mb-1">Data Fields</span>
+                    <div className="font-medium text-sm text-slate-200">
                       {availableFields.length} field{availableFields.length !== 1 ? 's' : ''}
                     </div>
                   </div>
@@ -541,20 +540,20 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
 
               {/* Available Data Types - Improved layout */}
               <div className="mb-4">
-                <span className="text-sm font-medium text-muted-foreground block mb-3">
+                <span className="text-sm font-medium text-slate-400 block mb-3">
                   Available Data Fields
                 </span>
                 <div className="flex flex-wrap gap-2">
                   {availableFields.map((field, i) => (
                     <span 
                       key={i}
-                      className="inline-flex items-center px-3 py-1.5 text-sm bg-muted text-muted-foreground rounded-full border hover:bg-muted/80 transition-colors"
+                      className="inline-flex items-center px-3 py-1.5 text-sm bg-slate-700/30 text-slate-300 rounded-full border border-slate-600/50 hover:bg-slate-600/40 transition-colors"
                     >
                       {field}
                     </span>
                   ))}
                   {availableFields.length === 0 && (
-                    <span className="text-sm text-muted-foreground italic">
+                    <span className="text-sm text-slate-400 italic">
                       No data fields available
                     </span>
                   )}
@@ -563,10 +562,10 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
 
               {/* Detailed Data (Expandable) - Improved layout */}
               {isExpanded && (
-                <div className="mt-4 p-4 bg-muted/30 rounded-lg border">
+                <div className="mt-4 p-4 bg-slate-700/30 rounded-lg border border-slate-600/50">
                   <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-sm font-medium">Breach Data Details</h4>
-                    <div className="text-xs text-muted-foreground">
+                    <h4 className="text-sm font-medium text-slate-200">Breach Data Details</h4>
+                    <div className="text-xs text-slate-400">
                       Click eye icon to reveal sensitive data
                     </div>
                   </div>
@@ -574,13 +573,13 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                   <div className="space-y-3 max-h-80 overflow-y-auto">
                     {/* Display actual data fields */}
                     {email && (
-                      <div className="p-3 bg-background rounded-lg border">
+                      <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-600/50">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0 flex-1">
-                            <span className="text-xs font-medium text-muted-foreground block mb-1">
+                            <span className="text-xs font-medium text-slate-400 block mb-1">
                               Email/Login
                             </span>
-                            <span className="text-sm font-mono break-all select-all">{email}</span>
+                            <span className="text-sm font-mono break-all select-all text-slate-200">{email}</span>
                           </div>
                           <Button
                             variant="ghost"
@@ -633,13 +632,13 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                     )}
 
                     {url && (
-                      <div className="p-3 bg-background rounded-lg border">
+                      <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-600/50">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0 flex-1">
-                            <span className="text-xs font-medium text-muted-foreground block mb-1">
+                            <span className="text-xs font-medium text-slate-400 block mb-1">
                               URL
                             </span>
-                            <span className="text-sm font-mono break-all select-all">{url}</span>
+                            <span className="text-sm font-mono break-all select-all text-slate-200">{url}</span>
                           </div>
                           <Button
                             variant="ghost"
@@ -654,13 +653,13 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                     )}
 
                     {result.data?.metadata && (
-                      <div className="p-3 bg-background rounded-lg border">
+                      <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-600/50">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0 flex-1">
-                            <span className="text-xs font-medium text-muted-foreground block mb-1">
+                            <span className="text-xs font-medium text-slate-400 block mb-1">
                               Metadata
                             </span>
-                            <span className="text-sm font-mono break-all select-all">
+                            <span className="text-sm font-mono break-all select-all text-slate-200">
                               {result.data.metadata}
                             </span>
                           </div>
@@ -679,9 +678,9 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                   
                   {/* Detailed Metrics Section - NEW */}
                   {!isDemo && metricsCache.has(result.source) && (
-                    <div className="mt-4 pt-3 border-t border-border">
-                      <h5 className="text-sm font-medium mb-3 flex items-center">
-                        <Database className="h-4 w-4 mr-2" />
+                    <div className="mt-4 pt-3 border-t border-slate-600/50">
+                      <h5 className="text-sm font-medium text-slate-200 mb-3 flex items-center">
+                        <Database className="h-4 w-4 mr-2 text-slate-400" />
                         Source Metrics
                       </h5>
                       {(() => {
@@ -689,22 +688,22 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                         return (
                           <div className="space-y-3">
                             {/* Total Records */}
-                            <div className="p-3 bg-background rounded-lg border">
-                              <div className="text-xs font-medium text-muted-foreground mb-1">
+                            <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-600/50">
+                              <div className="text-xs font-medium text-slate-400 mb-1">
                                 Total Records in Source
                               </div>
-                              <div className="text-sm font-mono">
+                              <div className="text-sm font-mono text-slate-200">
                                 {metrics.totalRecordsAffected?.toLocaleString() || 'N/A'}
                               </div>
                             </div>
 
                             {/* Password Stats */}
                             {metrics.passwordStats && (
-                              <div className="p-3 bg-background rounded-lg border">
-                                <div className="text-xs font-medium text-muted-foreground mb-1">
+                              <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-600/50">
+                                <div className="text-xs font-medium text-slate-400 mb-1">
                                   Password Statistics
                                 </div>
-                                <div className="text-sm space-y-1">
+                                <div className="text-sm text-slate-200 space-y-1">
                                   <div>With Password: {metrics.passwordStats.withPassword?.toLocaleString() || 'N/A'}</div>
                                   <div>Without Password: {metrics.passwordStats.withoutPassword?.toLocaleString() || 'N/A'}</div>
                                   <div>Strong Passwords: {metrics.passwordStats.strongPasswords?.toLocaleString() || 'N/A'}</div>
@@ -715,13 +714,13 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
 
                             {/* Quality Assessment */}
                             {metrics.qualityAssessment && (
-                              <div className="p-3 bg-background rounded-lg border">
-                                <div className="text-xs font-medium text-muted-foreground mb-1">
+                              <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-600/50">
+                                <div className="text-xs font-medium text-slate-400 mb-1">
                                   Data Quality Score
                                 </div>
-                                <div className="text-sm">
+                                <div className="text-sm text-slate-200">
                                   <div className="font-mono text-lg">{metrics.qualityAssessment.score?.toFixed(1)}%</div>
-                                  <div className="text-xs text-muted-foreground mt-1">
+                                  <div className="text-xs text-slate-400 mt-1">
                                     {metrics.qualityAssessment.details}
                                   </div>
                                 </div>
@@ -730,11 +729,11 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
 
                             {/* Top Domains */}
                             {metrics.domainDistribution && Object.keys(metrics.domainDistribution).length > 0 && (
-                              <div className="p-3 bg-background rounded-lg border">
-                                <div className="text-xs font-medium text-muted-foreground mb-1">
+                              <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-600/50">
+                                <div className="text-xs font-medium text-slate-400 mb-1">
                                   Top Affected Domains
                                 </div>
-                                <div className="text-sm space-y-1">
+                                <div className="text-sm text-slate-200 space-y-1">
                                   {Object.entries(metrics.domainDistribution).slice(0, 3).map(([domain, count]) => (
                                     <div key={domain} className="flex justify-between">
                                       <span>{domain}</span>
@@ -751,16 +750,16 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                   )}
                   
                   {!isDemo && (
-                    <div className="mt-4 pt-3 border-t border-border">
-                      <p className="text-xs text-muted-foreground">
+                    <div className="mt-4 pt-3 border-t border-slate-600/50">
+                      <p className="text-xs text-slate-400">
                         * This data comes from real breach records in our database.
                       </p>
                     </div>
                   )}
                   
                   {isDemo && (
-                    <div className="mt-4 pt-3 border-t border-border">
-                      <p className="text-xs text-muted-foreground">
+                    <div className="mt-4 pt-3 border-t border-slate-600/50">
+                      <p className="text-xs text-slate-400">
                         * This is sample demo data. Actual results contain real breach data from our database.
                       </p>
                     </div>
@@ -794,7 +793,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
           </div>
         </div>
       )}
-    </Card>
+    </div>
   )
 }
 

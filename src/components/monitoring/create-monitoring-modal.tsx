@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import { 
   Mail, 
   Globe, 
@@ -53,29 +52,29 @@ function DuplicateConflictDialog({
   
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+      <div className="bg-slate-900 border border-slate-700/50 rounded-xl p-6 w-full max-w-md">
         <div className="flex items-center space-x-3 mb-4">
           <AlertTriangle className="h-6 w-6 text-amber-500" />
-          <h3 className="text-lg font-semibold text-gray-900">Duplicate Monitor Detected</h3>
+          <h3 className="text-lg font-semibold text-slate-100">Duplicate Monitor Detected</h3>
         </div>
         
         <div className="space-y-4">
-          <p className="text-gray-600">
+          <p className="text-slate-300">
             {duplicateError.message}
           </p>
           
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
             <div className="text-sm">
-              <div className="font-medium text-amber-800">Target:</div>
-              <div className="text-amber-700">{duplicateError.targetValue}</div>
+              <div className="font-medium text-amber-400">Target:</div>
+              <div className="text-amber-300">{duplicateError.targetValue}</div>
             </div>
             <div className="text-sm mt-2">
-              <div className="font-medium text-amber-800">Type:</div>
-              <div className="text-amber-700">{duplicateError.monitorType}</div>
+              <div className="font-medium text-amber-400">Type:</div>
+              <div className="text-amber-300">{duplicateError.monitorType}</div>
             </div>
           </div>
           
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-slate-400">
             {duplicateError.suggestion}
           </p>
         </div>
@@ -361,9 +360,9 @@ export function CreateMonitoringModal({ isOpen, onClose, onSubmit, userPlan = 'F
     <>
     {/* Main Modal */}
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-    <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div className="bg-slate-900 border border-slate-700/50 rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
     <div className="flex items-center justify-between mb-6">
-    <h3 className="text-xl font-semibold">Add New Monitor</h3>
+    <h3 className="text-xl font-semibold text-slate-100">Add New Monitor</h3>
     <Button variant="ghost" size="sm" onClick={onClose}>
       <X className="h-4 w-4" />
     </Button>
@@ -372,7 +371,7 @@ export function CreateMonitoringModal({ isOpen, onClose, onSubmit, userPlan = 'F
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Monitor Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-300 mb-2">
               Monitor Name *
             </label>
             <input
@@ -380,8 +379,8 @@ export function CreateMonitoringModal({ isOpen, onClose, onSubmit, userPlan = 'F
               value={formData.monitorName}
               onChange={(e) => setFormData(prev => ({ ...prev, monitorName: e.target.value }))}
               placeholder="e.g., CEO Email Monitor"
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.monitorName ? 'border-red-500' : 'border-gray-300'
+              className={`w-full px-3 py-2 bg-slate-800/50 border rounded-lg text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all ${
+                errors.monitorName ? 'border-red-500' : 'border-slate-600/50'
               }`}
             />
             {errors.monitorName && (
@@ -391,7 +390,7 @@ export function CreateMonitoringModal({ isOpen, onClose, onSubmit, userPlan = 'F
 
           {/* Monitor Type */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-300 mb-2">
               Monitor Type *
             </label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -408,15 +407,15 @@ export function CreateMonitoringModal({ isOpen, onClose, onSubmit, userPlan = 'F
                     }))}
                     className={`p-4 border rounded-lg text-left transition-colors ${
                       formData.monitorType === type.value
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:bg-gray-50'
+                        ? 'border-blue-500 bg-blue-500/10'
+                        : 'border-slate-600/50 bg-slate-800/30 hover:bg-slate-700/50'
                     }`}
                   >
                     <div className="flex items-center space-x-3">
                       <Icon className="h-5 w-5 text-blue-600" />
                       <div>
-                        <div className="font-medium">{type.label}</div>
-                        <div className="text-xs text-gray-500">{type.description}</div>
+                        <div className="font-medium text-slate-200">{type.label}</div>
+                        <div className="text-xs text-slate-400">{type.description}</div>
                       </div>
                     </div>
                   </button>
@@ -427,7 +426,7 @@ export function CreateMonitoringModal({ isOpen, onClose, onSubmit, userPlan = 'F
 
           {/* Target Value */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-300 mb-2">
               {selectedMonitorType?.label} to Monitor *
             </label>
             <input
@@ -435,8 +434,8 @@ export function CreateMonitoringModal({ isOpen, onClose, onSubmit, userPlan = 'F
               value={formData.targetValue}
               onChange={(e) => setFormData(prev => ({ ...prev, targetValue: e.target.value }))}
               placeholder={selectedMonitorType?.placeholder}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.targetValue ? 'border-red-500' : 'border-gray-300'
+              className={`w-full px-3 py-2 bg-slate-800/50 border rounded-lg text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all ${
+                errors.targetValue ? 'border-red-500' : 'border-slate-600/50'
               }`}
             />
             {errors.targetValue && (
@@ -446,7 +445,7 @@ export function CreateMonitoringModal({ isOpen, onClose, onSubmit, userPlan = 'F
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-300 mb-2">
               Description (Optional)
             </label>
             <textarea
@@ -454,24 +453,24 @@ export function CreateMonitoringModal({ isOpen, onClose, onSubmit, userPlan = 'F
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
               placeholder="Additional notes about this monitor..."
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-slate-800/50 border border-slate-600/50 rounded-lg text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all"
             />
           </div>
 
           {/* Frequency */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-300 mb-2">
               Check Frequency *
             </label>
             
             {/* Real-time Promotion Banner for Premium Users */}
             {(userPlan === 'PROFESSIONAL' || userPlan === 'ENTERPRISE') && (
-              <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
+              <div className="mb-4 p-3 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 border border-blue-500/30 rounded-lg">
                 <div className="flex items-center space-x-2 mb-2">
                   <span className="text-lg">🚀</span>
-                  <span className="font-semibold text-blue-800">Real-time Monitoring Available!</span>
+                  <span className="font-semibold text-blue-400">Real-time Monitoring Available!</span>
                 </div>
-                <p className="text-sm text-blue-700">
+                <p className="text-sm text-blue-300">
                   Get instant alerts the moment threats are detected. Perfect for critical assets and maximum protection.
                 </p>
               </div>
@@ -486,9 +485,9 @@ export function CreateMonitoringModal({ isOpen, onClose, onSubmit, userPlan = 'F
                   className={`p-4 border rounded-lg text-left transition-all relative ${
                     formData.frequency === freq.value
                       ? freq.value === 'REAL_TIME' 
-                        ? 'border-blue-500 bg-gradient-to-r from-blue-50 to-indigo-50 ring-2 ring-blue-200'
-                        : 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                        ? 'border-blue-500 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 ring-2 ring-blue-500/20'
+                        : 'border-blue-500 bg-blue-500/10'
+                      : 'border-slate-600/50 bg-slate-800/30 hover:bg-slate-700/50 hover:border-slate-500/50'
                   }`}
                 >
                   {/* Recommended Badge for Real-time */}
@@ -509,19 +508,19 @@ export function CreateMonitoringModal({ isOpen, onClose, onSubmit, userPlan = 'F
                     <span className="text-2xl">{freq.icon}</span>
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-1">
-                        <span className="font-medium text-lg">{freq.label}</span>
+                        <span className="font-medium text-lg text-slate-200">{freq.label}</span>
                         {freq.value === 'REAL_TIME' && (
                           <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-medium">
                             INSTANT
                           </span>
                         )}
                       </div>
-                      <div className="text-sm text-gray-600 mb-2">{freq.description}</div>
+                      <div className="text-sm text-slate-400 mb-2">{freq.description}</div>
                       
                       {/* Benefits */}
                       <div className="space-y-1">
                         {freq.benefits?.map((benefit, index) => (
-                          <div key={index} className="flex items-center space-x-2 text-xs text-gray-500">
+                          <div key={index} className="flex items-center space-x-2 text-xs text-slate-400">
                             <span className="text-green-500">✓</span>
                             <span>{benefit}</span>
                           </div>
@@ -530,7 +529,7 @@ export function CreateMonitoringModal({ isOpen, onClose, onSubmit, userPlan = 'F
                       
                       {/* Premium Notice */}
                       {freq.requiresPremium && (userPlan === 'FREE' || userPlan === 'BASIC') && (
-                        <div className="mt-2 text-xs text-amber-600 font-medium">
+                        <div className="mt-2 text-xs text-amber-400 font-medium">
                           🔒 Requires {userPlan === 'FREE' ? 'Basic' : 'Professional'} plan or higher
                         </div>
                       )}
@@ -542,17 +541,17 @@ export function CreateMonitoringModal({ isOpen, onClose, onSubmit, userPlan = 'F
             
             {/* Upgrade Notice */}
             {(userPlan === 'FREE' || userPlan === 'BASIC') && (
-              <div className="mt-4 p-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg">
+              <div className="mt-4 p-3 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-lg">
                 <div className="flex items-center space-x-2 mb-2">
                   <span className="text-lg">🎆</span>
-                  <span className="font-semibold text-amber-800">
+                  <span className="font-semibold text-amber-400">
                     Upgrade for Real-time Protection
                   </span>
                 </div>
-                <p className="text-sm text-amber-700 mb-2">
+                <p className="text-sm text-amber-300 mb-2">
                   Get instant threat alerts and maximum security coverage with real-time monitoring.
                 </p>
-                <div className="text-xs text-amber-600">
+                <div className="text-xs text-amber-400">
                   • Professional Plan: Real-time + Hourly monitoring
                   {userPlan === 'FREE' && <><br/>• Basic Plan: Daily + Weekly monitoring</>}
                 </div>
@@ -562,7 +561,7 @@ export function CreateMonitoringModal({ isOpen, onClose, onSubmit, userPlan = 'F
 
           {/* Notification Settings */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-300 mb-2">
               Notification Methods *
             </label>
             <div className="space-y-3">
@@ -574,7 +573,7 @@ export function CreateMonitoringModal({ isOpen, onClose, onSubmit, userPlan = 'F
                   className="h-4 w-4 text-blue-600 border-gray-300 rounded"
                 />
                 <Mail className="h-4 w-4 text-gray-500" />
-                <span className="text-sm">Email Notifications</span>
+                <span className="text-sm text-slate-200">Email Notifications</span>
               </label>
 
               <label className="flex items-center space-x-3 opacity-50 cursor-not-allowed">
@@ -585,7 +584,7 @@ export function CreateMonitoringModal({ isOpen, onClose, onSubmit, userPlan = 'F
                   className="h-4 w-4 text-blue-600 border-gray-300 rounded cursor-not-allowed"
                 />
                 <Webhook className="h-4 w-4 text-gray-400" />
-                <span className="text-sm text-gray-400">Webhook Notifications</span>
+                <span className="text-sm text-slate-400">Webhook Notifications</span>
                 <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full ml-2">
                   Coming Soon
                 </span>
@@ -597,7 +596,7 @@ export function CreateMonitoringModal({ isOpen, onClose, onSubmit, userPlan = 'F
           </div>
 
           {/* Submit Buttons */}
-          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+          <div className="flex justify-end space-x-3 pt-4 border-t border-slate-700/50">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>

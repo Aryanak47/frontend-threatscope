@@ -99,7 +99,7 @@ function DashboardContent() {
     switch (plan) {
       case 'FREE': return 'text-gray-600'
       case 'BASIC': return 'text-blue-600'
-      case 'PROFESSIONAL': return 'text-purple-600'
+      case 'PROFESSIONAL': return 'text-green-600'
       case 'ENTERPRISE': return 'text-amber-600'
       default: return 'text-gray-600'
     }
@@ -131,17 +131,17 @@ function DashboardContent() {
                   {getPlanType()}
                 </p>
               </div>
-              <div className={`p-3 rounded-lg ${
-                getPlanType() === 'FREE' ? 'bg-gray-100 dark:bg-gray-800' :
-                getPlanType() === 'BASIC' ? 'bg-blue-100 dark:bg-blue-900' :
-                getPlanType() === 'PROFESSIONAL' ? 'bg-purple-100 dark:bg-purple-900' :
-                'bg-amber-100 dark:bg-amber-900'
+              <div className={`p-3 rounded-lg border ${
+                getPlanType() === 'FREE' ? 'bg-slate-500/10 border-slate-500/20' :
+                getPlanType() === 'BASIC' ? 'bg-blue-500/10 border-blue-500/20' :
+                getPlanType() === 'PROFESSIONAL' ? 'bg-green-500/10 border-green-500/20' :
+                'bg-amber-500/10 border-amber-500/20'
               }`}>
                 {
-                  getPlanType() === 'FREE' ? <Shield className="h-6 w-6 text-gray-600" /> :
-                  getPlanType() === 'BASIC' ? <Zap className="h-6 w-6 text-blue-600" /> :
-                  getPlanType() === 'PROFESSIONAL' ? <BarChart3 className="h-6 w-6 text-purple-600" /> :
-                  <Crown className="h-6 w-6 text-amber-600" />
+                  getPlanType() === 'FREE' ? <Shield className="h-6 w-6 text-slate-400" /> :
+                  getPlanType() === 'BASIC' ? <Zap className="h-6 w-6 text-blue-400" /> :
+                  getPlanType() === 'PROFESSIONAL' ? <BarChart3 className="h-6 w-6 text-green-400" /> :
+                  <Crown className="h-6 w-6 text-amber-400" />
                 }
               </div>
               
@@ -151,7 +151,7 @@ function DashboardContent() {
                   asChild 
                   size="sm" 
                   variant="outline"
-                  className="border-blue-300 text-blue-600 hover:bg-blue-50"
+                  className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10 hover:border-blue-400/40"
                 >
                   <Link href="/pricing">
                     <Crown className="h-4 w-4 mr-1" />
@@ -166,35 +166,46 @@ function DashboardContent() {
         {/* Plan Benefits */}
         {getPlanType() !== 'FREE' && (
           <div className="mb-8">
-            <Card className="p-6 border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800">
-              <div className="text-center mb-4">
-                <h3 className="text-lg font-semibold text-green-800 dark:text-green-200 mb-2">
-                  🎉 {getPlanType()} Plan Active
-                </h3>
-                <p className="text-green-700 dark:text-green-300 text-sm">
+            <div className="relative overflow-hidden rounded-xl border border-slate-700/50 bg-slate-800/30 p-6">
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center space-x-2 bg-slate-700/30 border border-slate-600/30 rounded-full px-4 py-2 mb-3">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  <h3 className="text-lg font-semibold text-slate-200">
+                    {getPlanType()} Plan Active
+                  </h3>
+                </div>
+                <p className="text-slate-400 text-sm">
                   You're enjoying premium features and enhanced limits!
                 </p>
               </div>
               
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                <div className="text-green-700 dark:text-green-300">
-                  <Shield className="h-5 w-5 mx-auto mb-1" />
-                  <p className="text-xs font-medium">Enhanced Security</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center p-3 rounded-lg bg-slate-700/20 border border-slate-600/30 hover:border-slate-500/50 transition-all">
+                  <div className="w-10 h-10 mx-auto mb-2 rounded-lg bg-slate-700/30 flex items-center justify-center">
+                    <Shield className="h-5 w-5 text-slate-300" />
+                  </div>
+                  <p className="text-xs font-medium text-slate-300">Enhanced Security</p>
                 </div>
-                <div className="text-green-700 dark:text-green-300">
-                  <Bell className="h-5 w-5 mx-auto mb-1" />
-                  <p className="text-xs font-medium">Email Alerts</p>
+                <div className="text-center p-3 rounded-lg bg-slate-700/20 border border-slate-600/30 hover:border-slate-500/50 transition-all">
+                  <div className="w-10 h-10 mx-auto mb-2 rounded-lg bg-slate-700/30 flex items-center justify-center">
+                    <Bell className="h-5 w-5 text-slate-300" />
+                  </div>
+                  <p className="text-xs font-medium text-slate-300">Email Alerts</p>
                 </div>
-                <div className="text-green-700 dark:text-green-300">
-                  <BarChart3 className="h-5 w-5 mx-auto mb-1" />
-                  <p className="text-xs font-medium">Advanced Analytics</p>
+                <div className="text-center p-3 rounded-lg bg-slate-700/20 border border-slate-600/30 hover:border-slate-500/50 transition-all">
+                  <div className="w-10 h-10 mx-auto mb-2 rounded-lg bg-slate-700/30 flex items-center justify-center">
+                    <BarChart3 className="h-5 w-5 text-slate-300" />
+                  </div>
+                  <p className="text-xs font-medium text-slate-300">Advanced Analytics</p>
                 </div>
-                <div className="text-green-700 dark:text-green-300">
-                  <Download className="h-5 w-5 mx-auto mb-1" />
-                  <p className="text-xs font-medium">Export Features</p>
+                <div className="text-center p-3 rounded-lg bg-slate-700/20 border border-slate-600/30 hover:border-slate-500/50 transition-all">
+                  <div className="w-10 h-10 mx-auto mb-2 rounded-lg bg-slate-700/30 flex items-center justify-center">
+                    <Download className="h-5 w-5 text-slate-300" />
+                  </div>
+                  <p className="text-xs font-medium text-slate-300">Export Features</p>
                 </div>
               </div>
-            </Card>
+            </div>
           </div>
         )}
         
@@ -206,183 +217,183 @@ function DashboardContent() {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Today's Searches */}
-          <Card className="p-6">
+          <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 hover:border-slate-600/50 transition-all">
             <div className="flex items-center space-x-4">
-              <div className="p-3 bg-red-50 dark:bg-red-950 rounded-lg">
-                <Search className="h-6 w-6 text-red-600" />
+              <div className="p-3 bg-slate-700/30 rounded-xl">
+                <Search className="h-6 w-6 text-slate-300" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Today's Searches</p>
-                <p className="text-2xl font-bold">
+                <p className="text-sm font-medium text-slate-400">Today's Searches</p>
+                <p className="text-2xl font-bold text-slate-100">
                   {isLoadingToday ? (
-                    <Loader2 className="h-6 w-6 animate-spin" />
+                    <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
                   ) : (
                     todayUsage?.totalSearches || 0
                   )}
                 </p>
               </div>
             </div>
-          </Card>
+          </div>
 
           {/* Total Searches */}
-          <Card className="p-6">
+          <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 hover:border-slate-600/50 transition-all">
             <div className="flex items-center space-x-4">
-              <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                <BarChart3 className="h-6 w-6 text-blue-600" />
+              <div className="p-3 bg-slate-700/30 rounded-xl">
+                <BarChart3 className="h-6 w-6 text-slate-300" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Searches</p>
-                <p className="text-2xl font-bold">
+                <p className="text-sm font-medium text-slate-400">Total Searches</p>
+                <p className="text-2xl font-bold text-slate-100">
                   {isLoadingStats ? (
-                    <Loader2 className="h-6 w-6 animate-spin" />
+                    <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
                   ) : (
                     usageStats?.totalSearches || 5
                   )}
                 </p>
               </div>
             </div>
-          </Card>
+          </div>
 
           {/* Exports */}
-          <Card className="p-6">
+          <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 hover:border-slate-600/50 transition-all">
             <div className="flex items-center space-x-4">
-              <div className="p-3 bg-green-50 dark:bg-green-950 rounded-lg">
-                <Download className="h-6 w-6 text-green-600" />
+              <div className="p-3 bg-slate-700/30 rounded-xl">
+                <Download className="h-6 w-6 text-slate-300" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Exports</p>
-                <p className="text-2xl font-bold">
+                <p className="text-sm font-medium text-slate-400">Total Exports</p>
+                <p className="text-2xl font-bold text-slate-100">
                   {isLoadingStats ? (
-                    <Loader2 className="h-6 w-6 animate-spin" />
+                    <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
                   ) : (
                     usageStats?.totalExports || 0
                   )}
                 </p>
               </div>
             </div>
-          </Card>
+          </div>
 
           {/* Active Days */}
-          <Card className="p-6">
+          <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 hover:border-slate-600/50 transition-all">
             <div className="flex items-center space-x-4">
-              <div className="p-3 bg-purple-50 dark:bg-purple-950 rounded-lg">
-                <Calendar className="h-6 w-6 text-purple-600" />
+              <div className="p-3 bg-slate-700/30 rounded-xl">
+                <Calendar className="h-6 w-6 text-slate-300" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Active Days</p>
-                <p className="text-2xl font-bold">
+                <p className="text-sm font-medium text-slate-400">Active Days</p>
+                <p className="text-2xl font-bold text-slate-100">
                   {isLoadingStats ? (
-                    <Loader2 className="h-6 w-6 animate-spin" />
+                    <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
                   ) : (
                     usageStats?.activeDays || 1
                   )}
                 </p>
               </div>
             </div>
-          </Card>
+          </div>
         </div>
 
         {/* Main Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Search */}
-          <Card className="p-6">
+          <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-8 hover:border-slate-600/50 transition-all">
             <div className="text-center">
-              <div className="p-4 bg-red-50 dark:bg-red-950 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                <Search className="h-8 w-8 text-red-600" />
+              <div className="p-4 bg-slate-700/30 rounded-full w-16 h-16 mx-auto mb-6 flex items-center justify-center">
+                <Search className="h-8 w-8 text-slate-300" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Start Searching</h3>
-              <p className="text-sm text-muted-foreground mb-4">
+              <h3 className="text-lg font-semibold mb-2 text-slate-200">Start Searching</h3>
+              <p className="text-sm text-slate-400 mb-6">
                 Search through billions of breach records and threat intelligence data.
               </p>
-              <Button asChild className="w-full">
+              <Button asChild variant="security" className="w-full">
                 <Link href="/search">
                   Launch Search
                 </Link>
               </Button>
             </div>
-          </Card>
+          </div>
 
           {/* Monitoring */}
-          <Card className="p-6">
+          <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-8 hover:border-slate-600/50 transition-all">
             <div className="text-center">
-              <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                <Shield className="h-8 w-8 text-blue-600" />
+              <div className="p-4 bg-slate-700/30 rounded-full w-16 h-16 mx-auto mb-6 flex items-center justify-center">
+                <Shield className="h-8 w-8 text-slate-300" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Set Up Monitoring</h3>
-              <p className="text-sm text-muted-foreground mb-4">
+              <h3 className="text-lg font-semibold mb-2 text-slate-200">Set Up Monitoring</h3>
+              <p className="text-sm text-slate-400 mb-6">
                 Monitor your digital assets and get real-time alerts for new threats.
               </p>
-              <Button asChild className="w-full" variant="outline">
+              <Button asChild variant="intelligence" className="w-full">
                 <Link href="/monitoring">
                   Manage Monitors
                 </Link>
               </Button>
             </div>
-          </Card>
+          </div>
 
           {/* Expert Consultation */}
-          <Card className="p-6">
+          <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-8 hover:border-slate-600/50 transition-all">
             <div className="text-center">
-              <div className="p-4 bg-green-50 dark:bg-green-950 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                <MessageSquare className="h-8 w-8 text-green-600" />
+              <div className="p-4 bg-slate-700/30 rounded-full w-16 h-16 mx-auto mb-6 flex items-center justify-center">
+                <MessageSquare className="h-8 w-8 text-slate-300" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Ask a Security Expert</h3>
-              <p className="text-sm text-muted-foreground mb-4">
+              <h3 className="text-lg font-semibold mb-2 text-slate-200">Ask a Security Expert</h3>
+              <p className="text-sm text-slate-400 mb-6">
                 Get personalized cybersecurity advice from certified experts.
               </p>
               <AskExpertButton className="w-full" />
             </div>
-          </Card>
+          </div>
         </div>
 
         {/* Quick Access Links */}
         <div className="mt-8">
-          <h2 className="text-xl font-semibold mb-4">Quick Access</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="p-4">
+          <h2 className="text-xl font-semibold mb-6 text-foreground">Quick Access</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="rounded-lg border border-slate-700/50 bg-slate-800/30 p-4 hover:border-slate-600/50 transition-all">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                  <Bell className="h-5 w-5 text-blue-600" />
+                <div className="p-2 bg-slate-700/30 rounded-lg">
+                  <Bell className="h-5 w-5 text-slate-300" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-medium">Alerts & Notifications</h3>
-                  <p className="text-sm text-muted-foreground">Manage your alert settings</p>
+                  <h3 className="font-medium text-slate-200">Alerts & Notifications</h3>
+                  <p className="text-sm text-slate-400">Manage your alert settings</p>
                 </div>
-                <Button asChild variant="ghost" size="sm">
+                <Button asChild variant="ghost" size="sm" className="text-slate-300 hover:text-slate-200 hover:bg-slate-700/30">
                   <Link href="/alerts">View</Link>
                 </Button>
               </div>
-            </Card>
+            </div>
             
-            <Card className="p-4">
+            <div className="rounded-lg border border-slate-700/50 bg-slate-800/30 p-4 hover:border-slate-600/50 transition-all">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-yellow-50 dark:bg-yellow-950 rounded-lg">
-                  <Shield className="h-5 w-5 text-yellow-600" />
+                <div className="p-2 bg-slate-700/30 rounded-lg">
+                  <Shield className="h-5 w-5 text-slate-300" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-medium">Monitoring Items</h3>
-                  <p className="text-sm text-muted-foreground">Manage what you're monitoring</p>
+                  <h3 className="font-medium text-slate-200">Monitoring Items</h3>
+                  <p className="text-sm text-slate-400">Manage what you're monitoring</p>
                 </div>
-                <Button asChild variant="ghost" size="sm">
+                <Button asChild variant="ghost" size="sm" className="text-slate-300 hover:text-slate-200 hover:bg-slate-700/30">
                   <Link href="/monitoring">View</Link>
                 </Button>
               </div>
-            </Card>
+            </div>
             
-            <Card className="p-4">
+            <div className="rounded-lg border border-slate-700/50 bg-slate-800/30 p-4 hover:border-slate-600/50 transition-all">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-50 dark:bg-green-950 rounded-lg">
-                  <MessageSquare className="h-5 w-5 text-green-600" />
+                <div className="p-2 bg-slate-700/30 rounded-lg">
+                  <MessageSquare className="h-5 w-5 text-slate-300" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-medium">Ask Expert</h3>
-                  <p className="text-sm text-muted-foreground">Get cybersecurity advice</p>
+                  <h3 className="font-medium text-slate-200">Ask Expert</h3>
+                  <p className="text-sm text-slate-400">Get cybersecurity advice</p>
                 </div>
-                <AskExpertButton variant="ghost" size="sm" className="h-8 px-3 text-sm">
+                <AskExpertButton variant="ghost" size="sm" className="h-8 px-3 text-sm text-slate-300 hover:text-slate-200 hover:bg-slate-700/30">
                   Chat
                 </AskExpertButton>
               </div>
-            </Card>
+            </div>
           </div>
         </div>
       </div>
